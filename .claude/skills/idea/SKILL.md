@@ -23,6 +23,42 @@ Examples: "help kids on the spectrum develop theory of mind", "make learning mat
 
 This classification determines your approach. Do NOT tell the user which category they fall into - just adapt.
 
+## Step 1: Ask about autonomy level
+
+Before diving into the idea, ask the user how involved they want to be in the process. Use AskUserQuestion with these options:
+
+Question: "Before we start - how much do you want to be involved in the building process?"
+
+Options:
+1. **Autopilot** - "Just build it for me. I'll review the final result." (Like Lovable/bolt - you make all the decisions about design, tech stack, architecture. User sees the result at the end.)
+2. **Co-pilot** - "Check with me on the big decisions, handle the rest." (You make technical decisions autonomously, but ask the user about product decisions - what features to prioritize, which direction to take, how things should behave.)
+3. **Manual** - "I want to approve every major step." (You present options and wait for approval at each phase - PRD, architecture, each feature, each screen. Full user control.)
+
+Save the answer - it goes into IDEA.md and affects all downstream pipeline steps.
+
+### What each level means for the pipeline:
+
+**Autopilot:**
+- /idea: Ask minimal questions, fill in gaps yourself
+- /write-prd: Generate and proceed without review
+- /architect: Choose stack and architecture yourself
+- /build: Build everything, show result at the end
+- User reviews: Only at final PR
+
+**Co-pilot:**
+- /idea: Ask about product direction, decide technical details yourself
+- /write-prd: Generate and ask "does this look right?" before proceeding
+- /architect: Recommend a stack, ask user to confirm
+- /build: Build autonomously, but stop to ask if you hit ambiguous product decisions
+- User reviews: At PRD, architecture, and final PR
+
+**Manual:**
+- /idea: Ask about everything in detail
+- /write-prd: Review each section with the user
+- /architect: Present options for each technical decision
+- /build: Check in after each feature/screen
+- User reviews: At every phase
+
 ## Path A: Broad idea → Explore the domain first
 
 When the idea is broad, the user doesn't know yet what the app looks like. Asking about screens and buttons now would be pointless. Your job is to BRING KNOWLEDGE and SUGGEST DIRECTIONS.
@@ -61,6 +97,11 @@ Only after the user confirms the concept → move to Path B questions.
 ## Path B: Specific idea → Detail the screens and interactions
 
 This is for ideas where you already know (or have now established) what the app does. Now ask about the details.
+
+**Important:** Adapt the depth of questioning to the autonomy level:
+- **Autopilot**: Ask only 2-3 essential questions, decide the rest yourself.
+- **Co-pilot**: Ask about product choices, decide technical and design details yourself.
+- **Manual**: Ask about everything.
 
 ### How to behave
 
@@ -102,6 +143,8 @@ You'll know you have enough when you can answer:
 3. What data is involved
 4. Whether it needs auth and integrations
 
+For **Autopilot** mode: you may have enough after 2-3 questions. Fill in the gaps with sensible defaults and note them in IDEA.md.
+
 At that point, generate `IDEA.md` with a clear summary:
 
 ```markdown
@@ -112,6 +155,9 @@ At that point, generate `IDEA.md` with a clear summary:
 
 ## Who is it for
 [Who uses this and in what context]
+
+## Autonomy level
+[autopilot / co-pilot / manual]
 
 ## Main screens and what they do
 
@@ -135,6 +181,10 @@ At that point, generate `IDEA.md` with a clear summary:
 - Auth: [yes/no, method]
 - Integrations: [if any]
 - Platform: [web/mobile/etc]
+
+## Decisions made by AI (autopilot/co-pilot only)
+- [Decision 1 - reason]
+- [Decision 2 - reason]
 ```
 
 Save as `IDEA.md` in the project root.
@@ -149,3 +199,6 @@ Then ask: "This is what I understood - anything wrong or missing before we conti
 - Keep it conversational. This should feel like a chat, not a requirements interview.
 - For broad ideas: BRING KNOWLEDGE, don't just ask questions. You are the expert here.
 - The output IDEA.md is for YOU (the next pipeline step), not for the user. Write it clearly and concretely.
+- In Autopilot mode: be opinionated and decisive. Don't ask what you can decide.
+- In Manual mode: be thorough. Don't skip questions.
+- Always log AI-made decisions so the user can review them if they want.
