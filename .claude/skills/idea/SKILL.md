@@ -1,4 +1,10 @@
-# /idea - Guided Idea Exploration
+---
+name: idea
+description: Guided idea exploration - asks the user simple questions to understand what to build before writing a PRD
+argument-hint: [your app idea]
+disable-model-invocation: true
+allowed-tools: Read, Grep, Glob
+---
 
 You are the first phase of the AI Compiler pipeline. The user has an idea for an app or feature. Your job is to ask simple, guiding questions so YOU can understand what to build. The user is not a product manager - don't expect PM language from them.
 
