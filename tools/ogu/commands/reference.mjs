@@ -536,6 +536,65 @@ function mostCommonStr(arr) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }
 
+/* ────────────────────── Divergence Detection + Merge Report ────────────────────── */
+
+/**
+ * Detect roles where sources significantly disagree (OKLab distance > 0.15 between any two sources).
+ * Returns array of role names that are divergent, or null if all sources mostly agree.
+ */
+function detectDivergentSources(scans, colorLayers) {
+  if (scans.length < 2) return null;
+  const divergentRoles = [];
+  const roles = ["primary", "secondary", "background", "text"];
+  for (const role of roles) {
+    const values = scans.map(s => s.colors?.[role]).filter(Boolean);
+    if (values.length < 2) continue;
+    // Check max pairwise distance
+    let maxDist = 0;
+    for (let i = 0; i < values.length; i++) {
+      for (let j = i + 1; j < values.length; j++) {
+        const a = parseHex(values[i]), b = parseHex(values[j]);
+        if (a && b) maxDist = Math.max(maxDist, oklabDistance(a, b));
+      }
+    }
+    if (maxDist > 0.15) divergentRoles.push(role);
+  }
+  return divergentRoles.length > 0 ? divergentRoles : null;
+}
+
+/**
+ * Build a merge report: for each composite decision, state where it came from.
+ */
+function buildMergeReport(scans, fileSources, colorLayers, typography) {
+  const report = {};
+  const roles = ["primary", "secondary", "background", "surface", "text", "accent"];
+  for (const role of roles) {
+    const token = colorLayers.base[role] || colorLayers.extended[role];
+    if (!token) { report[`color_${role}`] = { value: null, source: "not_found" }; continue; }
+    const source = token.sources?.[0]?.domain || token.sources?.[0]?.sourceId || "composite";
+    const inBase = !!colorLayers.base[role];
+    report[`color_${role}`] = {
+      value: token.value,
+      confidence: token.confidence,
+      source,
+      layer: inBase ? "base" : "extended",
+    };
+  }
+  if (typography.font_body) {
+    const fontSource = scans.find(s => s.typography?.font_body === typography.font_body);
+    report.font_body = { value: typography.font_body, source: fontSource?.domain || "composite" };
+  }
+  if (typography.font_heading) {
+    const fontSource = scans.find(s => s.typography?.font_heading === typography.font_heading);
+    report.font_heading = { value: typography.font_heading, source: fontSource?.domain || "composite" };
+  }
+  if (fileSources.length > 0) {
+    report._image_sources = fileSources.map(f => f.name);
+    report._note = "Image/PDF sources contribute after Claude vision analysis in /reference skill.";
+  }
+  return report;
+}
+
 /* ────────────────────── Main Composite Command ────────────────────── */
 
 async function referenceComposite(args) {
@@ -699,6 +758,12 @@ async function referenceComposite(args) {
     notesParts.push(`${extCount - baseCount} color(s) below confidence threshold (extended only).`);
   }
 
+  // Detect divergent references (sources disagree on primary role)
+  const divergent = detectDivergentSources(scans, colorLayers);
+
+  // Build merge report: per-decision provenance
+  const mergeReport = buildMergeReport(scans, fileSources, colorLayers, typography);
+
   const referenceData = {
     version: 3,
     created_at: new Date().toISOString(),
@@ -721,6 +786,15 @@ async function referenceComposite(args) {
     },
     per_site: perSite,
     image_analysis: null,
+    // Intent Map — filled by /reference skill when sources are divergent
+    intent_map: divergent ? {
+      divergent: true,
+      divergent_roles: divergent,
+      assignments: {},  // to be filled by /reference skill: { "layout": "linear.app", "typography": "stripe.com" }
+      note: "Sources disagree on these roles. The /reference skill will ask user what to take from each source.",
+    } : { divergent: false, assignments: {} },
+    // Merge Report — provenance of each design decision
+    merge_report: mergeReport,
     notes: notesParts.join(" "),
   };
 

@@ -9,8 +9,8 @@
  *   ogu brand-scan compare <domain1> <domain2>
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, statSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, statSync, rmSync, copyFileSync } from "node:fs";
+import { join, extname } from "node:path";
 import { execSync } from "node:child_process";
 import { repoRoot, readJsonSafe } from "../util.mjs";
 
@@ -243,6 +243,9 @@ async function brandScanUrl(args) {
   }
   const brandPath = join(brandsDir, `${domain}.json`);
   writeFileSync(brandPath, JSON.stringify(brandDna, null, 2) + "\n", "utf-8");
+
+  // Build asset pack
+  buildAssetPack(root, domain, brandDna, logos, fontData);
 
   // Summary
   console.log(`\n  saved    .ogu/brands/${domain}.json\n`);
@@ -2426,6 +2429,104 @@ function mergeDeepData(colors, typography, deepData) {
   }
 }
 
+/* ────────────────────── Asset Pack ────────────────────── */
+
+/**
+ * Organize brand assets into .ogu/assets/ and write manifest.json.
+ *
+ * Structure:
+ *   .ogu/assets/logo/   — primary logo + mark (SVG preferred)
+ *   .ogu/assets/fonts/  — woff2 font files
+ *   .ogu/assets/manifest.json — paths + @font-face snippet + usage notes
+ */
+function buildAssetPack(root, domain, brandDna, logos = [], fontData = {}) {
+  const assetsDir = join(root, ".ogu", "assets");
+  const logoDir = join(assetsDir, "logo");
+  const fontsDir = join(assetsDir, "fonts");
+  mkdirSync(logoDir, { recursive: true });
+  mkdirSync(fontsDir, { recursive: true });
+
+  const manifest = {
+    domain,
+    generated_at: new Date().toISOString(),
+    logo: null,
+    fonts: [],
+    font_face_css: "",
+    usage: {},
+  };
+
+  // ── Logos ──────────────────────────────────────────────────────────────
+  const primaryLogo = logos.find(l => l.type === "logo") || logos[0];
+  if (primaryLogo && primaryLogo.path && existsSync(primaryLogo.path)) {
+    const ext = primaryLogo.name.match(/\.[^.]+$/)?.[0] || ".svg";
+    const destName = `logo${ext}`;
+    const destPath = join(logoDir, destName);
+    try {
+      copyFileSync(primaryLogo.path, destPath);
+      manifest.logo = {
+        file: `.ogu/assets/logo/${destName}`,
+        public_path: `/logo${ext}`,
+        source: primaryLogo.source,
+        type: ext === ".svg" ? "svg" : "raster",
+      };
+    } catch { /* non-blocking */ }
+  }
+
+  // All non-favicon logos as alternatives
+  manifest.logo_alternatives = logos
+    .filter(l => l.type !== "favicon" && l !== primaryLogo)
+    .slice(0, 3)
+    .map(l => ({ name: l.name, source: l.source, path: l.path }));
+
+  // ── Fonts ──────────────────────────────────────────────────────────────
+  const fontFaceBlocks = [];
+
+  if (fontData.files?.length > 0) {
+    for (const f of fontData.files) {
+      if (!f.path || !existsSync(f.path)) continue;
+      const destName = f.name || f.path.split("/").pop();
+      const destPath = join(fontsDir, destName);
+      try {
+        copyFileSync(f.path, destPath);
+        manifest.fonts.push({
+          file: `.ogu/assets/fonts/${destName}`,
+          family: f.family || brandDna.typography?.font_body || "BrandFont",
+          weight: f.weight || "400",
+          style: f.style || "normal",
+        });
+        fontFaceBlocks.push(
+          `@font-face {\n  font-family: '${f.family || brandDna.typography?.font_body}';\n  src: url('/.ogu/assets/fonts/${destName}') format('woff2');\n  font-weight: ${f.weight || "400"};\n  font-style: ${f.style || "normal"};\n  font-display: swap;\n}`
+        );
+      } catch { /* non-blocking */ }
+    }
+  }
+
+  // Prefer local @font-face over Google Fonts import
+  if (fontFaceBlocks.length > 0) {
+    manifest.font_face_css = fontFaceBlocks.join("\n\n");
+  } else if (fontData.font_face_css) {
+    manifest.font_face_css = fontData.font_face_css;
+  }
+
+  // ── Usage notes ────────────────────────────────────────────────────────
+  manifest.usage = {
+    logo: manifest.logo
+      ? `<img src="${manifest.logo.public_path}" alt="${domain} logo" />`
+      : null,
+    font_import: manifest.font_face_css
+      ? "Add manifest.font_face_css to your globals.css"
+      : null,
+    font_family: brandDna.typography?.font_body
+      ? `font-family: '${brandDna.typography.font_body}', sans-serif;`
+      : null,
+    note: "Import from .ogu/assets/manifest.json — never hardcode logo paths or font-family strings directly.",
+  };
+
+  writeFileSync(join(assetsDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+  const assetCount = (manifest.logo ? 1 : 0) + manifest.fonts.length;
+  if (assetCount > 0) console.log(`  assets   .ogu/assets/ — ${assetCount} file(s) organized`);
+}
+
 /* ────────────────────── Apply to THEME.json ────────────────────── */
 
 export function applyBrandToTheme(root, brandDna) {
@@ -2486,18 +2587,15 @@ export function applyBrandToTheme(root, brandDna) {
 
   // Copy primary logo asset to public/ and record path in theme
   const logoAsset = (brandDna.logos || []).find(l => l.type === "logo") || brandDna.logos?.[0];
-  if (logoAsset && logoAsset.path) {
+  if (logoAsset && logoAsset.path && existsSync(logoAsset.path)) {
     try {
-      const { copyFileSync, mkdirSync: mks, existsSync: ex } = await import("node:fs");
-      const { join: j } = await import("node:path");
-      const { extname } = await import("node:path");
       const ext = extname(logoAsset.name || logoAsset.path);
       const destName = `logo${ext}`;
-      const publicDir = j(root, "public");
-      mks(publicDir, { recursive: true });
-      const destPath = j(publicDir, destName);
+      const publicDir = join(root, "public");
+      mkdirSync(publicDir, { recursive: true });
+      const destPath = join(publicDir, destName);
       copyFileSync(logoAsset.path, destPath);
-      themeData.brand_assets = { logo: `/public/${destName}`, logo_source: logoAsset.source };
+      themeData.brand_assets = { logo: `/${destName}`, logo_source: logoAsset.source };
       console.log(`  logo     copied → public/${destName}`);
     } catch { /* non-blocking — logo copy is best-effort */ }
   }

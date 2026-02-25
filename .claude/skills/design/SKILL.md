@@ -44,7 +44,51 @@ After reading the files above, check `.ogu/REFERENCE.json` for visual evidence:
 3. THEME.json mood (project-level defaults)
 4. Your design judgment (when evidence is absent)
 
-## Step 1: Determine design mode
+## Step 1: Design Intent Snapshot
+
+Before generating any design direction, produce a **Design Intent Snapshot** and get user confirmation.
+
+Read all input files (listed above), then output a snapshot in this exact format:
+
+```
+Design Intent Snapshot — <slug>
+
+Brand
+  Source:       <domain from brand-scan OR "none">
+  Logo:         <.ogu/assets/logo/logo.svg OR "not found">
+  Font:         <font_body from brand scan OR "not set">
+  Primary hue:  <primary color hex OR "not set">
+
+References
+  Sources:      <list of domains/files OR "none">
+  Intent map:   <assignments from intent_map.assignments OR "not defined">
+  Density:      <from screenshot analysis OR "unknown">
+  Surface depth:<from screenshot analysis OR "unknown">
+  CTA pattern:  <from screenshot analysis OR "unknown">
+
+Design Decisions (binding)
+  1. Color: primary hue from [source], usage rules from [source]
+  2. Font: [font] from [source] — @font-face [present/absent in assets]
+  3. Logo: [present/absent] — must appear in Header
+  4. Layout: [layout type] from [source]
+  5. Density: [sparse/moderate/dense] from [source]
+  6. Surface levels: [N] from [source]
+  7. Border radius: [values] from [source]
+  8. Spacing rhythm: [token scale] from [source]
+  9. Motion: [philosophy] from [theme/reference/default]
+  10. Typography scale: [H1/body sizes] from [source]
+  11. Design mode: [standard/bold/extreme]
+  12. Forbidden: [list from reference screenshots/IDEA.md]
+
+Ready to proceed? Any adjustments?
+```
+
+Wait for user confirmation before writing DESIGN.md. If the user adjusts anything, update accordingly, then proceed.
+
+For **autopilot** involvement: show the snapshot, wait 5 seconds (or proceed immediately if in batch mode), then continue without waiting for explicit confirmation.
+
+## Step 2: Determine design mode
+
 
 Check `.ogu/STATE.json` field `design_mode`:
 - `standard` (default): Produce one design direction
@@ -77,7 +121,7 @@ Same as bold, but each variant has additional hard limits:
 - Single font weight throughout
 - Maximum 1 animation per interaction
 
-## Step 3: Write DESIGN.md
+## Step 4: Write DESIGN.md
 
 Write to: `docs/vault/04_Features/<slug>/DESIGN.md`
 
@@ -152,14 +196,14 @@ Write to: `docs/vault/04_Features/<slug>/DESIGN.md`
 - [ ] [visual] Density matches reference: sparse / moderate / dense
 ```
 
-## Step 4: Generate design_assertions for VISION_SPEC
+## Step 5: Generate design_assertions for VISION_SPEC
 
 The `## Design Assertions` section in DESIGN.md will be consumed by `/vision`. Each assertion should be:
 - Specific and measurable where possible
 - Tagged as `measurable` (DOM-checkable) or `visual` (AI vision)
 - Marked `critical: true` if failure means the design is fundamentally wrong
 
-## Step 5: Validate and log
+## Step 6: Validate and log
 
 ```bash
 node tools/ogu/cli.mjs log "Design direction complete: <slug>"
@@ -194,8 +238,27 @@ Next step: Pick a variant, then `/preflight <slug>`
 
 - DESIGN.md is the source of truth for visual identity. It lives in the vault.
 - Design assertions must be concrete enough for the vision system to verify.
-- Respect the theme mood from THEME.json. If theme says "cyberpunk", don't design corporate.
-- Respect brand scan from REFERENCE.json. Use those colors/fonts as starting points.
 - Do NOT generate code. This skill produces design documentation only.
 - Every color must have a stated contrast ratio against its background.
 - If design_mode is "bold" or "extreme", variants must be genuinely different (not slight variations).
+
+### Priority hierarchy (always apply in this order):
+
+**Brand Identity Layer — RIGID:**
+1. Logo — must be the scanned logo if present, never a placeholder or invented mark
+2. Font family — must be the brand font if scanned; reference may influence scale only
+3. Primary hue — must be the brand primary if confidence ≥ 0.5; reference determines usage rules
+
+**Style Behavior Layer — from reference (FLEXIBLE):**
+4. Density — sparse/moderate/dense from screenshot evidence
+5. Surface levels — number of visual depth layers from screenshot evidence
+6. Spacing rhythm — from reference composite spacing, not invented
+7. Border radius distribution — from reference (what's rounded vs sharp)
+8. Motion philosophy — from reference or THEME.json if not in reference
+9. Color usage ratios — from reference (how much of screen each color fills)
+
+**Defaults (when no brand, no reference):**
+10. THEME.json mood → default token set
+11. Design judgment — only for things not covered above
+
+**Conflict rule:** Brand hue stays, reference determines how it's used. Brand font stays, reference determines its scale.

@@ -91,9 +91,47 @@ Save the answer — it goes into IDEA.md and affects all downstream pipeline ste
 - /build: Check in after each feature/screen
 - User reviews: At every phase
 
-## Step 1.5: Design Preferences
+## Step 1.5: Design Intake
 
-After the involvement question and AFTER core product questions (who uses it, what it does, screens, features), explore the user's design vision. Adapt depth to involvement level.
+Before asking general design questions, establish the **design starting point**. This determines whether Ogu extracts real brand DNA or starts from scratch.
+
+Ask exactly ONE question (after involvement is set, before other design questions):
+
+"Is this a new product or an extension of something that already exists?"
+- New product — no existing brand
+- Extension of an existing product — I have a live site
+
+**If extension (has existing brand):**
+Ask: "Paste the URL of your existing product — I'll scan its brand DNA."
+- When URL received: run `node tools/ogu/cli.mjs brand-scan <url> --apply --soul`
+- Log the URL as `brand_url` in IDEA.md under `## Design preferences`
+- Confirm: "Got it. I've extracted brand DNA from [domain] — logo, fonts, colors locked."
+
+**If new product:**
+Skip brand-scan. Proceed to color/mood questions below.
+
+**In both cases**, after handling the brand question, ask:
+"Any sites or apps whose design you love? Paste 1-5 links (or images/PDFs) and I'll learn from them."
+- If provided: run `node tools/ogu/cli.mjs reference <url1> <url2> [files...] --apply --soul`
+- Store `reference_sources` list in IDEA.md
+- If user says no: move on
+
+**State to track in IDEA.md (under `## Design preferences`):**
+```
+has_existing_brand: true | false
+brand_url: <url> | null
+brand_scanned: true | false
+reference_sources: [<url1>, <url2>, ...]
+reference_composited: true | false
+```
+
+**For autopilot:** If a URL was mentioned in the user's idea description, auto-run brand-scan without asking. Skip reference question.
+
+---
+
+## Step 1.6: Design Preferences
+
+After the Design Intake and AFTER core product questions (who uses it, what it does, screens, features), explore the user's design vision further. Adapt depth to involvement level.
 
 **IMPORTANT:** Ask design questions as bullet-list choices (the UI renders them as interactive buttons). Ask ONE question at a time. Wait for an answer before continuing.
 
@@ -106,24 +144,20 @@ Ask: "How do you imagine the main screen?"
 - Dashboard with sidebar (like Notion, Linear)
 - Full-width sections (like a landing page)
 
-**Colors & mood** (guided, product-focused, hands-on):
+**Colors & mood** (guided, product-focused, hands-on — skip if brand already scanned):
 Ask: "What color vibe do you want?"
 - Dark & sleek
 - Light & clean
 - Colorful & bold
-- Match my existing brand
 
-If the user picks "Match my existing brand":
-- Ask for the website URL
-- Run: `node tools/ogu/cli.mjs brand-scan <url> --apply`
-
-Otherwise, set a theme mood:
+If no brand was scanned, set a theme mood:
 ```bash
 node tools/ogu/cli.mjs theme set <chosen-mood>
 ```
 Map answers: dark & sleek → cyberpunk or minimal-dark, light & clean → minimal, colorful & bold → playful.
 
-**References** (guided, product-focused, hands-on):
+**References** (guided, product-focused, hands-on — already handled in Step 1.5 if user provided links):
+If no references were provided in Step 1.5:
 Ask: "Any websites or apps you love the design of? Send me links and I'll learn from them."
 - If the user provides URLs → run: `node tools/ogu/cli.mjs reference <url1> <url2> --apply`
 - If the user says no → move on

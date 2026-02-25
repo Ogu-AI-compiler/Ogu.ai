@@ -121,12 +121,56 @@ If `--apply` was deferred (no URLs), now apply to THEME.json:
 node tools/ogu/cli.mjs theme set <detected-mood>
 ```
 
-### 5. Present findings
+### 4c. Intent Map (when sources are divergent)
+After step 4b, check `.ogu/REFERENCE.json` field `intent_map.divergent`.
+
+If `divergent: true`, the CLI detected sources that disagree significantly on certain color roles. Before merging, ask the user:
+
+"Your sources have different approaches — let me map what to take from each. Looking at [source1] and [source2]:
+- [source1] has [dark/dense/minimal/etc] aesthetic
+- [source2] has [light/spacious/bold/etc] aesthetic
+
+What should each source contribute?"
+
+Present a quick table with one row per source, with examples:
+| Source | Best for |
+|--------|----------|
+| linear.app | layout rhythm, density |
+| stripe.com | typography scale, whitespace |
+| mockup.png | color palette, surface depth |
+
+User selects what each source contributes. Write this to REFERENCE.json:
+```json
+"intent_map": {
+  "divergent": true,
+  "assignments": {
+    "layout": "linear.app",
+    "typography": "stripe.com",
+    "colors": "mockup.png",
+    "motion": "linear.app"
+  }
+}
+```
+
+If `divergent: false`, skip this step — the composite is already well-defined.
+
+### 5. Present findings + Merge Report
 Read `.ogu/REFERENCE.json` and present:
 
 - **Per-source highlights**: "From Linear: dark mode + purple accent. From mockup.png: clean card layout with generous spacing."
 - **Composite direction**: Show the merged result — colors, fonts, spacing, mood
-- **Key decisions**: Where did each element come from?
+- **Merge Report**: Show where each decision came from, using `merge_report` in REFERENCE.json:
+  ```
+  Decision               Value         Source           Confidence
+  ─────────────────────────────────────────────────────────────────
+  Primary color          #5e6ad2       linear.app       0.85 (base)
+  Background             #0f0f0f       linear.app       1.00 (base)
+  Body font              Inter         linear.app       —
+  Density                sparse        linear.app screenshot
+  Surface levels         3             linear.app screenshot
+  CTA pattern            pill, rare    linear.app screenshot
+  ```
+  This transparency lets the user understand and correct any decision quickly.
 
 ### 6. Ask for adjustments
 "Does this capture the direction you want? Anything to adjust?"
@@ -155,6 +199,29 @@ Clear reference:
 ```bash
 node tools/ogu/cli.mjs reference clear
 ```
+
+## Priority Hierarchy
+
+When Brand DNA (from brand-scan) and Reference data conflict, apply these rules:
+
+### Brand Identity Layer — RIGID (never override)
+- Logo — always from brand-scan, never substituted
+- Font family — always from brand-scan if scanned, reference may influence scale/weights only
+- Primary hue — always from brand-scan if confidence ≥ 0.5
+
+### Style Behavior Layer — FLEXIBLE (reference wins)
+- Density (sparse/moderate/dense)
+- Spacing rhythm and token scale
+- Surface levels (how many depth layers)
+- Shadow style and usage
+- Motion philosophy and animation timing
+- Color usage ratios (how much of the screen each color fills)
+
+### Conflict resolution rules:
+- **Color conflict**: Brand hue stays, reference determines usage behavior ("use primary only on CTAs")
+- **Font conflict**: Brand family stays, reference determines scale (if Stripe uses tighter type scale, apply that)
+- **No brand scanned**: Reference wins on everything
+- **No reference**: Brand wins on identity, THEME.json defaults win on behavior
 
 ## Tips
 - This is different from `brand-scan` — brand-scan extracts YOUR brand. Reference composites INSPIRATION from others.
