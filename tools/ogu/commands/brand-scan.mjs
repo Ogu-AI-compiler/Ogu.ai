@@ -2484,6 +2484,24 @@ export function applyBrandToTheme(root, brandDna) {
     },
   };
 
+  // Copy primary logo asset to public/ and record path in theme
+  const logoAsset = (brandDna.logos || []).find(l => l.type === "logo") || brandDna.logos?.[0];
+  if (logoAsset && logoAsset.path) {
+    try {
+      const { copyFileSync, mkdirSync: mks, existsSync: ex } = await import("node:fs");
+      const { join: j } = await import("node:path");
+      const { extname } = await import("node:path");
+      const ext = extname(logoAsset.name || logoAsset.path);
+      const destName = `logo${ext}`;
+      const publicDir = j(root, "public");
+      mks(publicDir, { recursive: true });
+      const destPath = j(publicDir, destName);
+      copyFileSync(logoAsset.path, destPath);
+      themeData.brand_assets = { logo: `/public/${destName}`, logo_source: logoAsset.source };
+      console.log(`  logo     copied → public/${destName}`);
+    } catch { /* non-blocking — logo copy is best-effort */ }
+  }
+
   const themePath = join(root, ".ogu/THEME.json");
   writeFileSync(themePath, JSON.stringify(themeData, null, 2) + "\n", "utf-8");
 

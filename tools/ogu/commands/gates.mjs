@@ -887,23 +887,65 @@ async function gateBrandCompliance(root) {
     }
   }
 
-  // Check if brand logos are copied to public/ (if logos exist in brand scan)
-  if (latestBrand.logos?.length > 0 && latestBrand.domain) {
+  // Check logo: (a) copied to public/, (b) referenced in a Header/Navbar/Layout component
+  const primaryLogo = (latestBrand.logos || []).find(l => l.type === "logo") || latestBrand.logos?.[0];
+  if (primaryLogo && latestBrand.domain) {
+    // (a) Exists in public/
     const publicDir = join(root, "public");
+    let logoInPublic = false;
     if (existsSync(publicDir)) {
-      const hasLogo = latestBrand.logos.some((logo) => {
-        // Check common locations
-        const candidates = [
-          join(publicDir, logo.name),
-          join(publicDir, "images", logo.name),
-          join(publicDir, "assets", logo.name),
-          join(publicDir, "img", logo.name),
-        ];
-        return candidates.some((p) => existsSync(p));
-      });
-      if (!hasLogo) {
-        violations.push(`Brand logos not found in public/ — expected from ${latestBrand.domain}`);
-      }
+      const candidates = [
+        join(publicDir, primaryLogo.name),
+        join(publicDir, "images", primaryLogo.name),
+        join(publicDir, "assets", primaryLogo.name),
+        join(publicDir, "img", primaryLogo.name),
+        join(publicDir, "logo" + (primaryLogo.name.match(/\.[^.]+$/) || [".svg"])[0]),
+      ];
+      logoInPublic = candidates.some(p => existsSync(p));
+    }
+    if (!logoInPublic) {
+      violations.push(`Brand logo "${primaryLogo.name}" not found in public/ — run: ogu brand-scan apply ${latestBrand.domain}`);
+    }
+
+    // (b) Referenced in a Header/Navbar/Layout component
+    const logoBaseName = primaryLogo.name.replace(/\.[^.]+$/, ""); // "logo" without extension
+    const headerPatterns = [
+      "Header", "header", "Navbar", "navbar", "NavBar", "Layout", "layout",
+      "Topbar", "topbar", "TopBar", "AppBar", "appbar",
+    ];
+    const srcDir = join(root, "src");
+    const appDir = join(root, "app");
+    let logoUsedInHeader = false;
+
+    const searchLogoUsage = (dir) => {
+      if (!existsSync(dir) || logoUsedInHeader) return;
+      try {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+          if (IGNORE_DIRS.has(entry.name) || logoUsedInHeader) continue;
+          const full = join(dir, entry.name);
+          if (entry.isDirectory()) {
+            searchLogoUsage(full);
+          } else if (/\.(tsx|jsx|ts|js)$/.test(entry.name)) {
+            const isHeaderFile = headerPatterns.some(p =>
+              entry.name.toLowerCase().includes(p.toLowerCase())
+            );
+            if (!isHeaderFile) continue;
+            try {
+              const content = readFileSync(full, "utf-8");
+              if (content.includes(logoBaseName) || content.includes(primaryLogo.name)) {
+                logoUsedInHeader = true;
+              }
+            } catch { /* skip */ }
+          }
+        }
+      } catch { /* skip */ }
+    };
+
+    searchLogoUsage(srcDir);
+    searchLogoUsage(appDir);
+
+    if (logoInPublic && !logoUsedInHeader) {
+      violations.push(`Brand logo "${primaryLogo.name}" is in public/ but not referenced in any Header/Navbar/Layout component. Add it to the app header.`);
     }
   }
 
