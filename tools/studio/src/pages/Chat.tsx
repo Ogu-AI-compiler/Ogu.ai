@@ -163,23 +163,42 @@ function getInvolvementForLang(lang: string) {
 function sessionsKey(root: string) { return `ogu-sessions:${root}`; }
 function activeKey(root: string) { return `ogu-active:${root}`; }
 
+function hydrateSessionCounters(saved: Session[]): void {
+  for (const s of saved) {
+    s.loading = false;
+    const sidNum = parseInt(s.id.replace("s-", ""), 10);
+    if (sidNum > _sid) _sid = sidNum;
+    for (const l of s.lines) {
+      const lidNum = parseInt(l.id.replace("l-", ""), 10);
+      if (lidNum > _id) _id = lidNum;
+    }
+  }
+}
+
 function loadSessions(root: string): { sessions: Session[]; activeId: string } | null {
   try {
     const raw = localStorage.getItem(sessionsKey(root));
     if (!raw) return null;
     const saved: Session[] = JSON.parse(raw);
     if (!Array.isArray(saved) || saved.length === 0) return null;
-    // Reset loading state and sync counters
-    for (const s of saved) {
-      s.loading = false;
-      const sidNum = parseInt(s.id.replace("s-", ""), 10);
-      if (sidNum > _sid) _sid = sidNum;
-      for (const l of s.lines) {
-        const lidNum = parseInt(l.id.replace("l-", ""), 10);
-        if (lidNum > _id) _id = lidNum;
-      }
-    }
+    hydrateSessionCounters(saved);
     const activeId = localStorage.getItem(activeKey(root)) || saved[0].id;
+    return { sessions: saved, activeId };
+  } catch { return null; }
+}
+
+async function loadSessionsFromServer(root: string): Promise<{ sessions: Session[]; activeId: string } | null> {
+  try {
+    const res = await fetch("/api/sessions");
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.sessions?.sessions || !Array.isArray(data.sessions.sessions) || data.sessions.sessions.length === 0) return null;
+    const saved: Session[] = data.sessions.sessions;
+    hydrateSessionCounters(saved);
+    const activeId = data.sessions.activeId || saved[0].id;
+    // Restore to localStorage too
+    localStorage.setItem(sessionsKey(root), JSON.stringify(saved));
+    localStorage.setItem(activeKey(root), activeId);
     return { sessions: saved, activeId };
   } catch { return null; }
 }
@@ -194,6 +213,12 @@ function saveSessions(root: string, sessions: Session[], activeId: string) {
     }));
     localStorage.setItem(sessionsKey(root), JSON.stringify(toSave));
     localStorage.setItem(activeKey(root), activeId);
+    // Also persist to server as backup (fire-and-forget)
+    fetch("/api/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessions: toSave, activeId }),
+    }).catch(() => {});
   } catch { /* storage full — ignore */ }
 }
 
@@ -255,11 +280,13 @@ export function Chat() {
     return loaded?.activeId || "s-1";
   });
 
-  // Reset sessions when project changes
+  // Reset sessions when project changes — try localStorage first, then server backup
   const prevRootRef = useRef(projectRoot);
+  const serverRecoveryDone = useRef(false);
   useEffect(() => {
     if (prevRootRef.current !== projectRoot && projectRoot) {
       prevRootRef.current = projectRoot;
+      serverRecoveryDone.current = false;
       const loaded = loadSessions(projectRoot);
       if (loaded) {
         setSessions(loaded.sessions);
@@ -269,6 +296,20 @@ export function Chat() {
         setSessions([s]);
         setActiveId(s.id);
       }
+    }
+  }, [projectRoot]);
+  // On mount: if localStorage was empty, try recovering from server
+  useEffect(() => {
+    if (serverRecoveryDone.current) return;
+    serverRecoveryDone.current = true;
+    const local = loadSessions(projectRoot);
+    if (!local && projectRoot) {
+      loadSessionsFromServer(projectRoot).then((loaded) => {
+        if (loaded) {
+          setSessions(loaded.sessions);
+          setActiveId(loaded.activeId);
+        }
+      });
     }
   }, [projectRoot]);
   const [input, setInput] = useState("");

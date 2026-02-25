@@ -342,5 +342,34 @@ export function createApiRouter() {
     return c.json({ ok: true, deleted: resolved });
   });
 
+  // ── Session persistence (server-side backup) ──
+
+  api.get("/sessions", (c) => {
+    const root = getRoot();
+    const sessionsFile = join(root, ".ogu", "studio-sessions.json");
+    if (!existsSync(sessionsFile)) return c.json({ sessions: null });
+    try {
+      const data = JSON.parse(readFileSync(sessionsFile, "utf-8"));
+      return c.json({ sessions: data });
+    } catch {
+      return c.json({ sessions: null });
+    }
+  });
+
+  api.post("/sessions", async (c) => {
+    const { writeFileSync: wfs, mkdirSync } = await import("fs");
+    const root = getRoot();
+    const oguDir = join(root, ".ogu");
+    if (!existsSync(oguDir)) mkdirSync(oguDir, { recursive: true });
+    const body = await c.req.json();
+    const sessionsFile = join(oguDir, "studio-sessions.json");
+    try {
+      wfs(sessionsFile, JSON.stringify(body, null, 2) + "\n");
+      return c.json({ ok: true });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  });
+
   return api;
 }

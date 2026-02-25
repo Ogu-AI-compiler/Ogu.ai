@@ -273,12 +273,22 @@ The user said: ${prompt}`;
       let capturedModel = "";
       let usedWriteTool = false;
 
+      let resumeFailed = false;
+
       const processLine = async (line: string) => {
         if (!line.trim()) return;
         gotData = true;
 
         try {
           const event = JSON.parse(line);
+
+          // Detect stale resume — Claude says "No conversation found"
+          if (event.is_error && Array.isArray(event.errors)) {
+            const noConvo = event.errors.some((e: string) => /no conversation found/i.test(e));
+            if (noConvo && sessionId) {
+              resumeFailed = true;
+            }
+          }
 
           // Capture session_id from init or result events
           if (event.session_id && !capturedSessionId) {
@@ -342,6 +352,47 @@ The user said: ${prompt}`;
       await new Promise<void>((resolve) => {
         child.on("close", async (code) => {
           if (buffer.trim()) await processLine(buffer);
+
+          // ── Resume failed — retry as new conversation ──
+          if (resumeFailed) {
+            await stream.writeSSE({
+              data: JSON.stringify({ type: "status", text: "Session expired, starting fresh..." }),
+              event: "status",
+            });
+            // Rebuild args without --resume
+            const freshArgs: string[] = [];
+            const systemPrompt = buildSystemPrompt(root);
+            freshArgs.push("--system-prompt", systemPrompt, "-p", prompt);
+            freshArgs.push("--output-format", "stream-json", "--verbose", "--model", selectedModel, "--max-turns", String(maxTurns));
+            freshArgs.push("--setting-sources", "user");
+            for (const t of baseTools) freshArgs.push("--allowedTools", t);
+
+            const retryChild = spawn("claude", freshArgs, {
+              cwd: root,
+              env,
+              stdio: ["ignore", "pipe", "pipe"],
+            });
+            let retryBuf = "";
+            retryChild.stdout.on("data", async (chunk) => {
+              retryBuf += chunk.toString();
+              const lines = retryBuf.split("\n");
+              retryBuf = lines.pop() || "";
+              for (const l of lines) await processLine(l);
+            });
+            retryChild.stderr.on("data", async (chunk) => {
+              const t = chunk.toString().trim();
+              if (t) await stream.writeSSE({ data: JSON.stringify({ type: "stderr", text: t }), event: "stderr" });
+            });
+            retryChild.on("close", async (retryCode) => {
+              if (retryBuf.trim()) await processLine(retryBuf);
+              await stream.writeSSE({
+                data: JSON.stringify({ type: "done", exitCode: retryCode ?? 1, sessionId: capturedSessionId }),
+                event: "done",
+              });
+              resolve();
+            });
+            return;
+          }
 
           // ── Post-turn phase validation ──
           // If Claude used Write/Edit tools but the phase didn't advance, warn the user.
