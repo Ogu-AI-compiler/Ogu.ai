@@ -1,11 +1,11 @@
 ---
 name: done
-description: Final completion gate for a feature — runs all 10 machine-enforced gates. Use when user says "is it done", "mark complete", "finish feature", "ship it", "final check".
+description: Final completion gate for a feature — runs ogu compile to verify everything. Use when user says "is it done", "mark complete", "finish feature", "ship it", "final check".
 argument-hint: <slug>
 disable-model-invocation: true
 ---
 
-You are the final gate. A feature is NOT complete until every single check passes. No shortcuts.
+You are the final gate. A feature is NOT complete until compilation passes. No shortcuts.
 
 ## Input
 
@@ -13,84 +13,68 @@ Feature slug: $ARGUMENTS
 
 If no slug is provided, check `.ogu/STATE.json` field `current_task`. If that's also null, ask the user.
 
-## Gate checks
+## Compilation
 
-Run all 10 gates using the CLI:
+Run the compiler:
 
 ```bash
-node tools/ogu/cli.mjs gates run <slug>
+node tools/ogu/cli.mjs compile <slug>
 ```
 
-This runs all 10 gates sequentially with checkpoint/recovery:
+This runs all compilation phases:
 
-1. **Doctor** — full health check
-2. **Context lock** — rebuild context, lock hashes, validate
-3. **Plan tasks** — every task in Plan.json has its done_when met
-4. **No TODOs** — grep for TODO/FIXME/HACK/XXX in feature files
-5. **UI functional** — no empty handlers, no href="#", no stubs
-6. **Smoke test** — run E2E smoke tests (Playwright/Vitest/Jest)
-7. **Vision** — 3-tier visual verification (DOM, screenshot, AI)
-8. **Contracts** — all contract files valid, no TODOs
-9. **Preview** — preview healthy, all services up
-10. **Memory** — auto-apply memory updates
+1. **IR Load** — Load Plan.json, build IR registry, validate completeness
+2. **Spec Consistency** — Hash chain validation, spec↔IR coverage
+3. **IR Validation** — Input chain, duplicate outputs, resource conflicts
+4. **Code Verification** — No TODOs, IR outputs present, contract consistency
+5. **Design Verification** — Design invariants, inline style checks (if DESIGN.md exists)
+6. **Runtime Verification** — UI functional, vision assertions, preview health (if app running)
 
-If a gate fails, it stops and reports. On retry, it resumes from the failed gate (checkpoint recovery).
+Compilation produces formal error codes (OGU####) for every issue found.
 
 ### Useful commands
 
 ```bash
-node tools/ogu/cli.mjs gates status <slug>         # Show current gate state
-node tools/ogu/cli.mjs gates reset <slug>           # Clear checkpoints
-node tools/ogu/cli.mjs gates run <slug> --force     # Re-run all gates
-node tools/ogu/cli.mjs gates run <slug> --gate 6    # Run specific gate
+node tools/ogu/cli.mjs compile <slug> --verbose   # Show per-phase detail
+node tools/ogu/cli.mjs compile <slug> --gate 3     # Stop at phase 3
+node tools/ogu/cli.mjs compile <slug> --fix         # Attempt auto-fix for fixable errors
+node tools/ogu/cli.mjs gates status <slug>          # Show gate checkpoint state
+node tools/ogu/cli.mjs gates run <slug> --gate 13   # Run specific gate (for debugging)
 ```
 
 ## Output
 
-The `gates run` command outputs:
-
 ```
-Completion Gates: <slug>
+Ogu Compiler v1.0.0 — compiling "<slug>"
 
-  [1] doctor           PASS
-  [2] context_lock     PASS
-  [3] plan_tasks       PASS
-  [4] no_todos         PASS
-  [5] ui_functional    PASS
-  [6] smoke_test       PASS
-  [7] vision           PASS
-  [8] contracts        PASS
-  [9] preview          PASS
-  [10] memory          PASS
+Phase 1: IR Load .................. ✔ (12 tasks, 34 outputs)
+Phase 2: Spec Consistency ......... ✔ (hash chain valid, 8/8 sections covered)
+Phase 3: IR Validation ............ ✔ (all inputs resolved, no duplicates)
+Phase 4: Code Verification ........ ✔ (34/34 outputs present, 0 TODOs)
+Phase 5: Design Verification ...... ✔ (all invariants satisfied)
+Phase 6: Runtime Verification ..... ✔ (UI functional, vision 100%, preview healthy)
 
-  Completion Gate: PASSED
-  Feature "<slug>" is COMPLETE.
+────────────────────────────────────
+Compilation PASSED ✔ — 0 error(s), 0 warning(s)
+
+Feature "<slug>" is production-ready.
 ```
 
 Or on failure:
 
 ```
-  [1] doctor           PASS
-  ...
-  [6] smoke_test       FAIL
-       tests/smoke/my-feature.test.ts: Expected element to be visible
+Phase 4: Code Verification ........ ✖ 2 errors, 1 warning
+  ✖ OGU0305: IR output missing from codebase: API:/settings GET
+  ✖ OGU0401: TODO/FIXME found: apps/api/routes/users.ts:42
+  ⚠ OGU1001: IR output COMPONENT:SettingsPanel has no matching contract entry
 
-  Completion Gate: FAILED at gate 6
-  Feature "<slug>" is NOT complete.
-  Fix the issue and re-run: ogu gates run <slug>
+────────────────────────────────────
+Compilation FAILED — 2 error(s), 1 warning(s)
 ```
-
-## Metrics
-
-Gate results are automatically written to `.ogu/METRICS.json` by the `gates` command. No manual metric collection needed — it tracks:
-- Pass/fail per gate
-- Attempt count per gate
-- Failure details
-- Start/completion timestamps
 
 ## Post-completion
 
-After all 10 gates pass:
+After compilation passes:
 
 1. Consider setting up production observation: run `/observe` if deploying.
 2. Run `node tools/ogu/cli.mjs learn` to extract patterns for cross-project learning.
@@ -100,16 +84,15 @@ After all 10 gates pass:
 ## Log
 
 ```bash
-node tools/ogu/cli.mjs log "Completion gate <PASSED/FAILED at gate N>: <slug>"
+node tools/ogu/cli.mjs log "Compilation <PASSED/FAILED>: <slug>"
 ```
 
 If passed, clear `current_task` in `.ogu/STATE.json` to null.
 
 ## Rules
 
-- All 10 gates must pass. 9 out of 10 is not complete.
-- Gates run in order. Stop at first failure.
-- Gates are machine-enforced functions, not prose. They return pass/fail deterministically.
+- Compilation must pass with 0 errors. Warnings are allowed but should be addressed.
+- Error codes (OGU####) are greppable and documented in `docs/vault/05_Runbooks/Error_Codes.md`.
 - This skill does not fix anything. It only verifies and reports.
 - After passing, the feature is done. No more changes without a new Plan.json task and ADR.
-- Metrics are ALWAYS written, even on failure. This data feeds the learning loop.
+- `ogu compile` supersedes `ogu gates run` as the primary verification command.

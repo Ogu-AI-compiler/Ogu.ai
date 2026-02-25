@@ -47,32 +47,61 @@ Tell the user: "First baselines recorded. These are the reference screenshots. F
 
 If baselines exist, compare current screenshots against baselines visually.
 
+## Step 2.5: Check Design Assertions
+
+Read `docs/vault/04_Features/<slug>/DESIGN.md` if it exists. Extract the `## Design Assertions` section. These become structured checks for each screen.
+
+If DESIGN.md doesn't exist, skip this step.
+
 ## Step 3: AI Vision verification (Tier 3)
 
 This is the critical step. For each screen:
 
 1. **Read the screenshot image** from `.ogu/vision/<slug>/current/<screen-name>-loaded.png`
 2. **Read the Spec.md section** for that screen
-3. **Compare** — answer these questions for each screen:
+3. **Read DESIGN.md** for design assertions specific to this screen
+4. **Answer measurable assertions** (DOM-based, at 1280x720 viewport):
+   - Text contrast >= 4.5:1 on solid backgrounds → extract `color` and `backgroundColor` from `[data-testid]` elements
+   - Border-radius count → count unique `borderRadius` values on `[data-testid]` elements (ignore 0px)
+   - Typography hierarchy → verify `fontSize` descends: H1 > H2 > H3 > body
+   - Spacing from tokens → compare `margin`, `padding` to token values (±2px tolerance)
 
-   - Does the layout match the spec description?
-   - Are all critical elements visible and correctly positioned?
-   - Is the visual hierarchy correct (headers larger than body, primary actions prominent)?
-   - Are there any visual issues? (overflow, misalignment, broken styling, missing content)
-   - Does the color/spacing/typography look consistent with a design system?
-   - If `.ogu/THEME.json` exists: does the overall aesthetic match the theme mood? (e.g., cyberpunk = dark with neon accents and glow? minimal = white with lots of whitespace? brutalist = raw borders and system fonts?)
-   - For each state (empty, loaded, error): is the UI appropriate?
+5. **Answer visual assertions** (AI vision with boolean YES/NO):
+   For each `visual` type assertion in DESIGN.md, ask a specific boolean question:
+   - "Is the primary CTA button using the primary color (#hex)? PASS or FAIL."
+   - "Does the overall mood match the theme? PASS or FAIL."
+   Do NOT use open-ended "does it look good?" — every question must have a concrete PASS/FAIL answer.
 
-4. **Rate each screen**: PASS / WARN / FAIL
-   - PASS: Matches spec, no visual issues
-   - WARN: Minor issues that don't break functionality (slight misalignment, non-critical text different)
-   - FAIL: Major mismatch with spec, broken layout, missing critical elements
+6. **Rate each screen**: PASS / WARN / FAIL
+   - PASS: All critical assertions pass, non-critical pass rate >= 80%
+   - WARN: All critical pass but non-critical rate < 80%
+   - FAIL: ANY critical assertion fails
+
+**Critical vs non-critical assertions:**
+- `critical: true` in DESIGN.md → must pass (100% required)
+- `critical: false` → contributes to pass rate (>= 80% threshold)
+- Gate 9 fails if ANY critical assertion fails OR non-critical pass rate < 80%
 
 ## Step 4: Update Vision Report
 
-Update `.ogu/vision/<slug>/VISION_REPORT.md` with Tier 3 results:
+Update `.ogu/vision/<slug>/VISION_REPORT.md` with results including design assertions:
 
-For each screen, add under the **Tier 3 — AI Vision** section:
+For each screen, add a design assertions table:
+```markdown
+## Design Assertions: <screen>
+| ID | Rule | Type | Result | Details |
+|----|------|------|--------|---------|
+| contrast | Text contrast >= 4.5:1 | measurable | PASS | Min ratio: 5.2:1 |
+| radius-count | Max 2 border-radius values | measurable | PASS | Found: 4px, 8px |
+| heading-hierarchy | H1 > H2 > H3 > body | measurable | FAIL | H2 (18px) < H3 (20px) |
+| primary-cta | Primary buttons use primary | visual | PASS | Confirmed via AI vision |
+
+Critical: 2/3 PASS
+Non-critical: 1/2 PASS (50%)
+Screen result: FAIL (critical heading-hierarchy failed)
+```
+
+Also include the Tier 3 AI Vision section:
 ```
 **Tier 3 — AI Vision:** PASS/WARN/FAIL
 

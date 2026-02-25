@@ -25,9 +25,18 @@ node tools/ogu/cli.mjs observe
 
 This fetches data from all enabled sources, normalizes events, deduplicates, correlates with releases, and generates `.ogu/OBSERVATION_REPORT.md`.
 
+## Step 1.5: Run drift detection
+
+If there's an active feature (check `.ogu/STATE.json` field `current_task`):
+```bash
+node tools/ogu/cli.mjs drift <active-feature>
+```
+
+Include drift findings in the observation report. This catches code that has drifted from spec, contracts, or design tokens since deployment.
+
 ## Step 2: Analyze the report
 
-Read `.ogu/OBSERVATION_REPORT.md` and analyze:
+Read `.ogu/OBSERVATION_REPORT.md` and `.ogu/DRIFT_REPORT.md` (if exists). Analyze:
 
 1. **Severity triage** — Are there critical/error events? These need immediate attention.
 2. **Release correlation** — Did issues start after a specific deploy? Which feature caused them?

@@ -150,6 +150,15 @@ Ask: "Animations and transitions?"
 - **product-focused**: Ask layout + colors + references + screen vision for main screen (4-5 questions)
 - **hands-on**: Ask ALL categories including per-screen vision and component feel (6+ questions)
 
+**Design boldness** (guided, product-focused, hands-on):
+Ask: "How adventurous should the design be?"
+- Standard — clean, professional, predictable
+- Bold — I'll generate 3 wildly different design directions, you pick one
+- Extreme — bold + hard constraints (max 2 colors, single font weight, etc.)
+
+Save the answer to `.ogu/STATE.json` field `design_mode` ("standard", "bold", or "extreme").
+If autopilot: default to "standard".
+
 ### What to capture in IDEA.md:
 Add a `## Design preferences` section with whatever was discussed:
 - Layout style chosen
@@ -158,6 +167,7 @@ Add a `## Design preferences` section with whatever was discussed:
 - Reference URLs (if provided)
 - Per-screen vision notes (if discussed)
 - Component style preferences (if discussed)
+- Design mode (standard/bold/extreme)
 
 ## Path A: Broad idea → Explore the domain first
 

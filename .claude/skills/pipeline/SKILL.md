@@ -44,7 +44,18 @@ If this fails, the feature needs `/architect`:
 - Check if Spec.md still has `<!-- TO BE FILLED BY /architect -->` markers → STOP. Tell user to run `/architect <slug>` first.
 - If Plan.json is missing or empty → STOP. Tell user to run `/architect <slug>` first.
 
-### Stage 4: Preflight
+### Stage 4: Design Direction
+
+If `docs/vault/04_Features/<slug>/DESIGN.md` doesn't exist, run the `/design` skill.
+
+Check `.ogu/STATE.json` field `design_mode`. If "bold" or "extreme" and no variant has been picked yet (DESIGN.md doesn't contain `**Variant:**`), ask the user to pick a variant:
+```bash
+node tools/ogu/cli.mjs design:show <slug>
+```
+
+If DESIGN.md already exists with a selected variant or standard mode, continue.
+
+### Stage 5: Preflight
 
 Run the `/preflight` skill for the feature:
 
@@ -55,7 +66,7 @@ node tools/ogu/cli.mjs context --feature <slug>
 
 Read `.ogu/CONTEXT.md`. Extract invariants, contracts, patterns. If doctor fails → STOP.
 
-### Stage 5: Build
+### Stage 6: Build
 
 Read `docs/vault/04_Features/<slug>/Plan.json` and execute each task in order:
 
@@ -69,17 +80,17 @@ If Plan.json has a DAG (tasks with `depends_on`), check if orchestrate supports 
 node tools/ogu/cli.mjs orchestrate <slug>
 ```
 
-### Stage 6: Completion gates
+### Stage 7: Compilation
 
 ```bash
-node tools/ogu/cli.mjs gates run <slug>
+node tools/ogu/cli.mjs compile <slug>
 ```
 
-If any gate fails → STOP. Report which gate failed and what to fix.
+If compilation fails → STOP. Report errors with OGU codes and what to fix.
 
-If all 10 gates pass → feature is DONE.
+If compilation passes → feature is DONE.
 
-### Stage 7: Post-completion
+### Stage 8: Post-completion
 
 After all gates pass:
 
@@ -97,13 +108,14 @@ Report progress at each stage:
 ```
 Pipeline: <slug>
 
-  [1/7] Doctor           PASS
-  [2/7] Feature (ph1)    PASS
-  [3/7] Architect (ph2)  PASS
-  [4/7] Preflight        PASS
-  [5/7] Build            PASS (N tasks completed)
-  [6/7] Gates            PASS (10/10)
-  [7/7] Post-completion  DONE
+  [1/8] Doctor           PASS
+  [2/8] Feature (ph1)    PASS
+  [3/8] Architect (ph2)  PASS
+  [4/8] Design           PASS
+  [5/8] Preflight        PASS
+  [6/8] Build            PASS (N tasks completed)
+  [7/8] Compile          PASS (0 errors, 0 warnings)
+  [8/8] Post-completion  DONE
 
 Pipeline COMPLETE. Feature "<slug>" is shipped.
 ```
@@ -113,9 +125,9 @@ Or on failure:
 ```
 Pipeline: <slug>
 
-  [1/7] Doctor           PASS
-  [2/7] Feature (ph1)    PASS
-  [3/7] Architect (ph2)  FAIL
+  [1/8] Doctor           PASS
+  [2/8] Feature (ph1)    PASS
+  [3/8] Architect (ph2)  FAIL
        Spec.md still has architect markers. Run /architect <slug> first.
 
 Pipeline STOPPED at stage 3.

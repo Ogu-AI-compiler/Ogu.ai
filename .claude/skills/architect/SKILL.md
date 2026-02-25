@@ -151,11 +151,29 @@ Now that architecture is defined, create `docs/vault/04_Features/<slug>/Plan.jso
       "spec_section": "Which Spec.md section this implements",
       "depends_on": [],
       "touches": ["paths/this/task/modifies"],
-      "done_when": "Concrete, verifiable condition"
+      "done_when": "Concrete, verifiable condition",
+      "inputs": ["CONTRACT:user-schema", "SCHEMA:users-table"],
+      "outputs": ["API:/users POST", "API:/users GET"],
+      "resources": ["CONTRACT:api", "ROUTE:/users"]
     }
   ]
 }
 ```
+
+### IR fields (Product IR)
+
+Every task SHOULD include `inputs`, `outputs`, and `resources` fields. These form the Product IR — the formal specification of what each task consumes and produces.
+
+**Input/Output format:** `TYPE:identifier`
+- Types: `CONTRACT`, `API`, `ROUTE`, `SCHEMA`, `COMPONENT`, `TOKEN`, `FILE`, `TEST`
+- Examples: `API:/users GET`, `COMPONENT:UserCard`, `ROUTE:/dashboard`, `SCHEMA:User`, `CONTRACT:api`
+
+**Rules:**
+- `inputs` = what this task needs to exist BEFORE it starts (from prior tasks or pre-existing in repo)
+- `outputs` = what this task PRODUCES (verified after build and during drift detection)
+- `resources` = shared resources this task MODIFIES (used for parallel conflict detection)
+- Two tasks CANNOT produce the same output (duplicate outputs = error at `feature:validate --phase-2`)
+- If `inputs`/`outputs`/`resources` are absent, the task works in legacy mode (backward compatible)
 
 ### Task grouping
 
@@ -221,6 +239,21 @@ Write the rules to `docs/vault/01_Architecture/Invariants.md`, keeping the heade
 
 If Invariants.md already has real rules (from a previous feature), merge: keep existing rules, add new ones that arise from this feature's architecture. Do not duplicate.
 
+### Design Rules (under `## Design Rules` section)
+
+Also generate machine-verifiable design rules under the `## Design Rules` section. These are checked by Gate 6 and `ogu compile`. All computed-style checks run at 1280x720 viewport, scoped to `[data-testid]` elements.
+
+Derive from the UI design decisions:
+- Max N unique border-radius values (e.g. `- Max 3 unique border-radius values (excluding 0px)`)
+- Max N accent colors beyond token set
+- WCAG AA contrast (4.5:1) on solid backgrounds
+- Typography scale must decrease monotonically
+- No inline color/font/spacing in style attributes
+- Spacing must come from token set (±2px tolerance)
+- Animation presence/absence must match theme setting
+
+Write at least 3 design rules. Each must be measurable by Playwright or static grep.
+
 ## Step 10: Validate and log
 
 ```bash
@@ -241,9 +274,10 @@ Mock API: <count> endpoints planned
 UI components: <count> new, <count> reused
 ADRs created: <count>
 Plan tasks: <count>
-Invariants: <count> rules generated
+IR outputs: <count>
+Invariants: <count> rules generated (<count> design rules)
 
-Next step: `/preflight <slug>` then `/build <slug>`
+Next step: `/design <slug>` then `/preflight <slug>` then `/build <slug>`
 ```
 
 ## Rules

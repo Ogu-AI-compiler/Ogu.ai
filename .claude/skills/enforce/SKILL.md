@@ -23,6 +23,21 @@ Read these files in full:
 
 If a slug was provided, also read:
 - `docs/vault/04_Features/<slug>/Spec.md`
+- `docs/vault/04_Features/<slug>/DESIGN.md` (if exists)
+
+## Step 1.5: Check IR completeness
+
+If a slug was provided, check IR (Product IR) first:
+```bash
+node tools/ogu/cli.mjs compile <slug> --gate 3
+```
+
+This validates:
+- IR outputs are complete (every task has outputs)
+- Input chain is resolved (every input comes from a prior output or pre-existing)
+- No duplicate outputs
+
+If IR validation fails, report the OGU error codes and STOP. Code cannot be correct if the IR is incomplete.
 
 ## Step 2: Validate contracts are clean
 

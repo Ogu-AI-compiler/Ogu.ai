@@ -57,6 +57,17 @@ To change an invariant, create an ADR first.
 <!-- - TypeScript everywhere — no .js files -->
 <!-- - All API routes return JSON with { data } or { error } shape -->
 <!-- - Authentication required for all non-public routes -->
+
+## Design Rules
+
+<!-- Machine-verifiable design rules. Checked by Gate 6 and ogu compile. -->
+<!-- All computed-style checks run at 1280x720 viewport, scoped to [data-testid] elements. -->
+<!-- Example format: -->
+<!-- - Max 3 unique border-radius values (excluding 0px) -->
+<!-- - Max 5 accent colors beyond the token set -->
+<!-- - WCAG AA contrast (4.5:1) on all solid backgrounds -->
+<!-- - Typography scale: heading font sizes must decrease monotonically -->
+<!-- - No inline color/font/spacing in style attributes -->
 `,
 
   "docs/vault/01_Architecture/Default_Stack.md": `# Default Stack
@@ -294,6 +305,8 @@ None
     last_context_build: null,
     last_repo_map_update: null,
     recent_adrs: [],
+    recent_scrs: [],
+    design_mode: "standard",
     notes: ""
   }, null, 2) + "\n",
 

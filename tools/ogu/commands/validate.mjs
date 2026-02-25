@@ -95,6 +95,9 @@ export async function validate() {
   // Validate .contract.json files if present
   validateContractSchemas(root, errors);
 
+  // Validate spec hashes in lock if present
+  validateSpecLock(root, errors);
+
   // Print results
   console.log("");
   if (errors.length === 0) {
@@ -196,6 +199,46 @@ function validateContextLock(root, lockPath, errors) {
     } else if (current !== lock[key]) {
       errors.push(`Lock mismatch: ${relPath} has changed since last lock. Run \`ogu context:lock\` to update.`);
     }
+  }
+}
+
+function validateSpecLock(root, errors) {
+  const lockPath = join(root, ".ogu/CONTEXT_LOCK.json");
+  if (!existsSync(lockPath)) return;
+
+  let lock;
+  try {
+    lock = JSON.parse(readFileSync(lockPath, "utf-8"));
+  } catch {
+    return;
+  }
+
+  if (!lock.spec_hashes) return;
+
+  for (const [slug, lockedHash] of Object.entries(lock.spec_hashes)) {
+    const specPath = `docs/vault/04_Features/${slug}/Spec.md`;
+    const currentHash = hashFile(root, specPath);
+    if (!currentHash) {
+      errors.push(`Spec lock: ${specPath} referenced in lock but file is missing`);
+    } else if (currentHash !== lockedHash) {
+      // Check if SCRs bridge the gap
+      const featureDir = join(root, `docs/vault/04_Features/${slug}`);
+      const scrFiles = getSCRFiles(featureDir);
+      if (scrFiles.length === 0) {
+        errors.push(`Spec lock mismatch: ${specPath} changed since lock. Run \`ogu spec:patch ${slug} "description"\` or \`ogu context:lock\``);
+      }
+      // If SCRs exist, the chain is validated by gates (gate 13), not validate
+    }
+  }
+}
+
+function getSCRFiles(featureDir) {
+  try {
+    return readdirSync(featureDir)
+      .filter((f) => /^SCR_\d{3}/.test(f) && f.endsWith(".md"))
+      .sort();
+  } catch {
+    return [];
   }
 }
 

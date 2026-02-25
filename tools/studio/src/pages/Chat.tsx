@@ -677,6 +677,37 @@ export function Chat() {
       return;
     }
 
+    // Check for ?select pattern: ?select\nQuestion?\nlabel|description|value\n...
+    // Renders as choice buttons with descriptions (richer than plain bullet lists)
+    const selectMatch = text.match(/\?select\n([^\n]*\?[^\n]*)\n((?:.*\|.*\n?)+)/);
+    if (selectMatch) {
+      // Parse everything before ?select as normal text
+      const beforeSelect = text.slice(0, text.indexOf("?select")).trim();
+      if (beforeSelect) {
+        appendReplyLines(sid, beforeSelect);
+      }
+      // Emit the question line
+      const question = selectMatch[1].trim();
+      appendLine(sid, { id: uid(), type: "reply", text: cleanMarkdown(question), dir: detectDir(question) === "rtl" ? "rtl" : lastPromptDirRef.current });
+      // Parse pipe-delimited options into bullet-style choices for the existing renderer
+      const optLines = selectMatch[2].trim().split("\n").filter(Boolean);
+      const choiceLabels = optLines.map((line) => {
+        const parts = line.split("|").map((s) => s.trim());
+        // Format as "Label - Description" for the choice button
+        if (parts[1]) return `- **${parts[0]}** - ${parts[1]}`;
+        return `- ${parts[0]}`;
+      });
+      if (choiceLabels.length >= 2) {
+        appendLine(sid, { id: uid(), type: "choices", text: "", choices: choiceLabels });
+      }
+      // Parse everything after the select block as normal text
+      const afterSelect = text.slice(text.indexOf("?select") + selectMatch[0].length).trim();
+      if (afterSelect) {
+        appendReplyLines(sid, afterSelect);
+      }
+      return;
+    }
+
     // Pre-process: remove code fences (``` lines) and --- separators, keep blank lines as spacers
     const rawLines = text.split("\n");
     const processed: (string | null)[] = []; // null = spacer

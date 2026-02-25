@@ -232,15 +232,18 @@ export function guardPhase(root: string, message: string): PhaseGuardResult {
     return { allowed: true, currentPhase: "discovery", intendedPhase, involvement, slug };
   }
 
-  // If user tries to jump ahead, check prerequisites
+  // If user tries to jump far ahead, check prerequisites.
+  // Only block jumps of 3+ phases — the system prompt hard-locks behavior per phase,
+  // so small jumps (e.g. "build" while at "feature") are handled by prompt wrapping.
+  // This prevents false positives from natural language like "בוא נבנה" (let's build)
+  // which users say conversationally, not as a phase-skip intent.
   if (intendedPhase) {
     const currentIdx = PHASES.indexOf(currentPhase);
     const intendedIdx = PHASES.indexOf(intendedPhase);
 
-    if (intendedIdx > currentIdx + 1) {
-      // Trying to skip phases
+    if (intendedIdx > currentIdx + 2) {
+      // Trying to skip 3+ phases — genuinely out of order
       const missing = checkPrerequisites(root, slug, intendedPhase);
-      const nextPhase = PHASES[currentIdx + 1] || currentPhase;
       return {
         allowed: false,
         currentPhase,

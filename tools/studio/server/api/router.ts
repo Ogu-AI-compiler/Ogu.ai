@@ -308,14 +308,18 @@ export function createApiRouter() {
     if (!projectPath) return c.json({ error: "path is required" }, 400);
 
     const resolved = resolve(projectPath);
-    if (!existsSync(resolved)) return c.json({ error: "Directory does not exist" }, 404);
 
-    // Safety: only delete if it has .ogu (it's an Ogu project)
-    if (!existsSync(join(resolved, ".ogu"))) {
-      return c.json({ error: "Not an Ogu project" }, 400);
+    // If directory doesn't exist, still return success (already gone)
+    if (!existsSync(resolved)) {
+      // Clean up OGU_ROOT if it was this project
+      if (process.env.OGU_ROOT === resolved) delete process.env.OGU_ROOT;
+      return c.json({ ok: true, deleted: resolved });
     }
 
-    rmSync(resolved, { recursive: true, force: true });
+    // Safety: only delete files if it has .ogu or docs/vault (it's an Ogu project)
+    if (existsSync(join(resolved, ".ogu")) || existsSync(join(resolved, "docs", "vault"))) {
+      rmSync(resolved, { recursive: true, force: true });
+    }
 
     // Clear OGU_ROOT if it was this project
     if (process.env.OGU_ROOT === resolved) {

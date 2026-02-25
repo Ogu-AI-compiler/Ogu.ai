@@ -36,6 +36,11 @@ import { brandScan } from "./commands/brand-scan.mjs";
 import { reference } from "./commands/reference.mjs";
 import { phase } from "./commands/phase.mjs";
 import { ports } from "./commands/ports.mjs";
+import { specPatch } from "./commands/spec-patch.mjs";
+import { drift } from "./commands/drift.mjs";
+import { compile } from "./commands/compile.mjs";
+import { designShow } from "./commands/design-show.mjs";
+import { designPick } from "./commands/design-pick.mjs";
 
 const command = process.argv[2];
 
@@ -72,11 +77,17 @@ const commands = {
   reference,
   phase,
   ports,
+  "spec:patch": specPatch,
+  drift,
+  compile,
+  "design:show": designShow,
+  "design:pick": designPick,
 };
 
 if (!command || !commands[command]) {
   console.log("Usage: ogu <command> [options]\n");
   console.log("Core Pipeline:");
+  console.log("  compile <slug>      Single compilation entry point (--fix, --gate N, --verbose)");
   console.log("  doctor              Full end-to-end health check (--strict, --report <path>)");
   console.log("  context             Assemble CONTEXT.md (--feature <slug>, --budget <tokens>)");
   console.log("  context:lock        Lock context/state/repo-map hashes");
@@ -85,6 +96,7 @@ if (!command || !commands[command]) {
   console.log("  gates               Completion gates (run/status/reset <slug>, --force, --gate N)");
   console.log("  phase               Show current pipeline phase for active feature");
   console.log("  preview             Start local preview and verify health (--stop)");
+  console.log("  spec:patch          Create Spec Change Record (SCR)");
   console.log("");
   console.log("Architecture & Contracts:");
   console.log("  profile             Detect project platform and service needs");
@@ -99,6 +111,7 @@ if (!command || !commands[command]) {
   console.log("Visual & Testing:");
   console.log("  vision              Run visual verification (DOM + screenshots)");
   console.log("  vision:baseline     Manage baselines (record/update/list <slug>)");
+  console.log("  drift <slug>        Detect drift from spec, contracts, and design");
   console.log("");
   console.log("Memory & Learning:");
   console.log("  remember            Memory updates (--apply, --auto, --prune)");
@@ -121,6 +134,10 @@ if (!command || !commands[command]) {
   console.log("  theme show          Display current theme");
   console.log("  theme apply         Write tokens to design.tokens.json");
   console.log("  theme presets       List built-in presets");
+  console.log("");
+  console.log("Design:");
+  console.log("  design:show <slug>  Show design variant summaries");
+  console.log("  design:pick <slug> <N> Apply chosen design variant");
   console.log("");
   console.log("Brand:");
   console.log("  brand-scan <url>    Scan website brand DNA (--deep, --apply, --soul)");

@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
 import { repoRoot, readJsonSafe } from "../util.mjs";
+import { normalizeIR, normalizeRouteForConflict } from "./lib/normalize-ir.mjs";
 
 export async function orchestrate() {
   const args = process.argv.slice(3);
@@ -56,8 +57,12 @@ export async function orchestrate() {
   // Build DAG using Kahn's algorithm
   const waves = buildWaves(plan.tasks, taskMap);
 
-  // Detect scope conflicts within waves
+  // Detect scope conflicts (file overlap) within waves
   const conflicts = detectScopeConflicts(waves, taskMap);
+
+  // Detect resource conflicts within waves
+  const resourceConflicts = detectResourceConflicts(waves, taskMap);
+  conflicts.push(...resourceConflicts);
 
   // Resolve conflicts by pushing overlapping tasks to later waves
   const resolvedWaves = resolveConflicts(waves, conflicts, taskMap);
@@ -78,7 +83,8 @@ export async function orchestrate() {
     waves: resolvedWaves,
     critical_path: criticalPath,
     max_parallelism: maxParallelism,
-    scope_conflicts: conflicts,
+    scope_conflicts: conflicts.filter((c) => !c.resource),
+    resource_conflicts: conflicts.filter((c) => c.resource),
     total_tasks: plan.tasks.length,
     parallelizable: hasTouches,
     post_wave_validation: postWaveValidation,
@@ -197,6 +203,67 @@ function detectScopeConflicts(waves, taskMap) {
   }
 
   return conflicts;
+}
+
+function detectResourceConflicts(waves, taskMap) {
+  const conflicts = [];
+
+  for (const wave of waves) {
+    if (wave.tasks.length < 2) continue;
+
+    for (let i = 0; i < wave.tasks.length; i++) {
+      for (let j = i + 1; j < wave.tasks.length; j++) {
+        const taskA = taskMap.get(wave.tasks[i]);
+        const taskB = taskMap.get(wave.tasks[j]);
+        const resourcesA = (taskA.resources || []).map(normalizeIR);
+        const resourcesB = (taskB.resources || []).map(normalizeIR);
+
+        if (resourcesA.length === 0 || resourcesB.length === 0) continue;
+
+        const overlap = findResourceOverlap(resourcesA, resourcesB);
+        if (overlap.length > 0) {
+          conflicts.push({
+            tasks: [wave.tasks[i], wave.tasks[j]],
+            wave: wave.wave,
+            resource: overlap[0],
+            overlap,
+            resolution: "sequential",
+          });
+        }
+      }
+    }
+  }
+
+  return conflicts;
+}
+
+function findResourceOverlap(resourcesA, resourcesB) {
+  const overlaps = [];
+  for (const a of resourcesA) {
+    for (const b of resourcesB) {
+      // Exact match
+      if (a === b) {
+        overlaps.push(a);
+        continue;
+      }
+      // Wildcard: CONTRACT:* conflicts with any CONTRACT:*
+      const [typeA] = a.split(":");
+      const [typeB] = b.split(":");
+      if (typeA === typeB && (a.endsWith(":*") || b.endsWith(":*"))) {
+        overlaps.push(a.endsWith(":*") ? a : b);
+        continue;
+      }
+      // Prefix match for routes: ROUTE:/users conflicts with ROUTE:/users/:id
+      if (typeA === "ROUTE" && typeB === "ROUTE") {
+        const normA = normalizeRouteForConflict(a);
+        const normB = normalizeRouteForConflict(b);
+        if (normA === normB || normA.startsWith(normB) || normB.startsWith(normA)) {
+          overlaps.push(`${a} <> ${b}`);
+        }
+      }
+    }
+  }
+  return [...new Set(overlaps)];
 }
 
 function findOverlap(touchesA, touchesB) {

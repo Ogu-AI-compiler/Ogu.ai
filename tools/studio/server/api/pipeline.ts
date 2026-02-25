@@ -660,6 +660,13 @@ Rules:
 - Keep each option SHORT (3-8 words)
 - WAIT for the user's answer before continuing. Do NOT answer your own question.
 - For the involvement slider, use the ?involvement pattern (see Discovery phase above)
+- For questions with descriptions per option, use the ?select pattern:
+
+?select
+Question text here?
+Option A|Short description of option A|value-a
+Option B|Short description of option B|value-b
+Option C|Short description of option C|value-c
 
 NEVER use markdown tables (| syntax). The chat does not render them. Use bullet lists instead.
 NEVER use the em dash character (—). Use a hyphen (-) instead.

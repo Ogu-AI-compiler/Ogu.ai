@@ -1,6 +1,11 @@
 import { existsSync, readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { repoRoot, readJsonSafe } from "../util.mjs";
+import { loadIR, scanPreExisting } from "./lib/ir-registry.mjs";
+import { normalizeIR } from "./lib/normalize-ir.mjs";
+import { verifyOutput } from "./lib/drift-verifiers.mjs";
+import { oguError } from "./lib/errors.mjs";
 
 const GATE_NAMES = [
   "doctor",
@@ -15,6 +20,8 @@ const GATE_NAMES = [
   "contracts",
   "preview",
   "memory",
+  "spec_consistency",
+  "drift_check",
 ];
 
 const SOURCE_EXTS = /\.(ts|tsx|js|jsx|mjs|cjs)$/;
@@ -27,9 +34,9 @@ export async function gates() {
   if (!subcommand || !["run", "reset", "status"].includes(subcommand)) {
     console.log("Usage: ogu gates <subcommand> <slug>");
     console.log("");
-    console.log("  run <slug>              Run all 12 gates (resumes from checkpoint)");
+    console.log("  run <slug>              Run all 14 gates (resumes from checkpoint)");
     console.log("  run <slug> --force      Re-run all gates from scratch");
-    console.log("  run <slug> --gate <N>   Run specific gate (1-12)");
+    console.log("  run <slug> --gate <N>   Run specific gate (1-14)");
     console.log("  reset <slug>            Clear checkpoint state");
     console.log("  status <slug>           Show current gate state");
     return 0;
@@ -79,9 +86,11 @@ async function runGates(root, slug, args) {
     (r, s) => gateBrandCompliance(r),
     (r, s) => gateSmokeTest(r, s),
     (r, s) => gateVision(r, s),
-    (r, s) => gateContracts(r),
+    (r, s) => gateContracts(r, s),
     (r, s) => gatePreview(r),
     (r, s) => gateMemory(r),
+    (r, s) => gateSpecConsistency(r, s),
+    (r, s) => gateDriftCheck(r, s),
   ];
 
   // Single gate mode
@@ -313,16 +322,34 @@ async function gatePlanTasks(root, slug) {
   }
 
   const incomplete = [];
-  for (const task of plan.tasks) {
-    // Check done_when — basic verification by searching for evidence in codebase
-    if (task.done_when) {
-      const evidence = checkDoneWhen(root, task);
-      if (!evidence) {
-        incomplete.push(`Task ${task.id}: ${task.title} — done_when not met: "${task.done_when}"`);
+  const ir = loadIR(root, slug);
+
+  // If IR is available, verify outputs exist in codebase
+  if (ir && ir.hasIR()) {
+    for (const output of ir.allOutputs) {
+      const result = verifyOutput(root, output);
+      if (result.status !== "present") {
+        incomplete.push(`IR output missing: ${output} — ${result.evidence}`);
       }
     }
 
-    // Check touches — verify files exist
+    // Verify input chain
+    const preExisting = scanPreExisting(root);
+    const available = new Set([...preExisting]);
+    for (const task of ir.tasks) {
+      for (const input of (task.inputs || []).map(normalizeIR)) {
+        if (!available.has(input)) {
+          incomplete.push(`Task ${task.id}: unresolved input ${input}`);
+        }
+      }
+      for (const output of (task.outputs || []).map(normalizeIR)) {
+        available.add(output);
+      }
+    }
+  }
+
+  // Check touches — verify files exist
+  for (const task of plan.tasks) {
     if (task.touches) {
       for (const touchPath of task.touches) {
         const fullPath = join(root, touchPath);
@@ -331,13 +358,22 @@ async function gatePlanTasks(root, slug) {
         }
       }
     }
+
+    // Legacy done_when check (only if no IR)
+    if (!ir?.hasIR() && task.done_when) {
+      const evidence = checkDoneWhen(root, task);
+      if (!evidence) {
+        incomplete.push(`Task ${task.id}: ${task.title} — done_when not met: "${task.done_when}"`);
+      }
+    }
   }
 
   if (incomplete.length > 0) {
     return { passed: false, details: incomplete.join("\n") };
   }
 
-  return { passed: true, details: `All ${plan.tasks.length} tasks verified` };
+  const irNote = ir?.hasIR() ? `, ${ir.allOutputs.length} IR outputs verified` : "";
+  return { passed: true, details: `All ${plan.tasks.length} tasks verified${irNote}` };
 }
 
 function checkDoneWhen(root, task) {
@@ -703,7 +739,7 @@ async function gateVision(root, slug) {
 // Gate 7: Contracts
 // ---------------------------------------------------------------------------
 
-async function gateContracts(root) {
+async function gateContracts(root, slug) {
   const { contractsValidate } = await import("./contracts-validate.mjs");
   const result = await callCommand(contractsValidate);
 
@@ -711,7 +747,30 @@ async function gateContracts(root) {
     return { passed: false, details: result.output || "Contract validation failed" };
   }
 
-  return { passed: true, details: "All contracts valid" };
+  // IR cross-reference: check contracts against IR outputs
+  const ir = loadIR(root, slug);
+  const warnings = [];
+  if (ir && ir.hasIR()) {
+    const contractsDir = join(root, "docs/vault/02_Contracts");
+    if (existsSync(contractsDir)) {
+      try {
+        const contractFiles = readdirSync(contractsDir).filter((f) => f.endsWith(".contract.json"));
+        for (const file of contractFiles) {
+          const name = file.replace(".contract.json", "");
+          const irRef = normalizeIR(`CONTRACT:${name}`);
+          if (!ir.hasOutput(irRef)) {
+            warnings.push(`OGU1002: Contract ${name} is orphaned (no IR output references it)`);
+          }
+        }
+      } catch { /* skip */ }
+    }
+  }
+
+  const detail = warnings.length > 0
+    ? `Contracts valid. ${warnings.length} warning(s):\n${warnings.join("\n")}`
+    : "All contracts valid";
+
+  return { passed: true, details: detail };
 }
 
 // ---------------------------------------------------------------------------
@@ -1160,6 +1219,152 @@ function collectDesignFiles(dir, root, jsxFiles, cssFiles) {
       }
     }
   } catch { /* skip */ }
+}
+
+// ---------------------------------------------------------------------------
+// Gate 13: Spec Consistency
+// ---------------------------------------------------------------------------
+
+async function gateSpecConsistency(root, slug) {
+  const featureDir = join(root, `docs/vault/04_Features/${slug}`);
+  const specPath = join(featureDir, "Spec.md");
+
+  if (!existsSync(specPath)) {
+    return { passed: true, details: "No Spec.md found — gate skipped" };
+  }
+
+  const specContent = readFileSync(specPath, "utf-8");
+  const actualHash = createHash("sha256").update(specContent).digest("hex");
+
+  // Check lock
+  const lockPath = join(root, ".ogu/CONTEXT_LOCK.json");
+  if (!existsSync(lockPath)) {
+    return { passed: true, details: "No context lock — gate skipped" };
+  }
+
+  const lock = readJsonSafe(lockPath);
+  const lockedHash = lock?.spec_hashes?.[slug];
+
+  if (!lockedHash) {
+    return { passed: true, details: "No spec hash in lock — gate skipped (run context:lock first)" };
+  }
+
+  if (lockedHash === actualHash) {
+    // Hash matches — check IR coverage
+    return checkSpecIRCoverage(root, slug, specContent);
+  }
+
+  // Hash mismatch — traverse SCR chain
+  const scrFiles = getSCRFilesFromDir(featureDir);
+  if (scrFiles.length === 0) {
+    return {
+      passed: false,
+      details: `Spec.md changed (locked: ${lockedHash.slice(0, 12)}, actual: ${actualHash.slice(0, 12)}) but no SCRs found. Run: ogu spec:patch ${slug} "description"`,
+    };
+  }
+
+  // Build hash chain: locked → SCR1.current → SCR2.current → ... → actual
+  const scrData = [];
+  for (const file of scrFiles) {
+    const content = readFileSync(join(featureDir, file), "utf-8");
+    const prevMatch = content.match(/previous_spec_hash:\s*(\S+)/);
+    const currMatch = content.match(/current_spec_hash:\s*(\S+)/);
+    if (prevMatch && currMatch) {
+      scrData.push({ file, previous: prevMatch[1], current: currMatch[1] });
+    }
+  }
+
+  // Traverse chain
+  let current = lockedHash;
+  const visited = new Set();
+
+  while (current !== actualHash) {
+    if (visited.has(current)) {
+      return { passed: false, details: `Spec hash chain has cycle at ${current.slice(0, 12)}` };
+    }
+    visited.add(current);
+    const next = scrData.find((s) => s.previous === current);
+    if (!next) {
+      return {
+        passed: false,
+        details: `Spec hash chain broken: locked ${lockedHash.slice(0, 12)} → ... → dead end at ${current.slice(0, 12)}. Actual: ${actualHash.slice(0, 12)}`,
+      };
+    }
+    current = next.current;
+  }
+
+  // Chain valid — also check IR coverage
+  const coverage = checkSpecIRCoverage(root, slug, specContent);
+  return {
+    passed: coverage.passed,
+    details: `Hash chain valid (${scrData.length} SCR(s)). ${coverage.details}`,
+  };
+}
+
+function checkSpecIRCoverage(root, slug, specContent) {
+  const ir = loadIR(root, slug);
+  if (!ir || !ir.hasIR()) {
+    return { passed: true, details: "No IR — spec coverage check skipped" };
+  }
+
+  // Check every spec_section in IR tasks still exists in Spec.md
+  const missing = [];
+  for (const section of ir.allSpecSections) {
+    // Normalize: "## API" should match "## API" heading in spec
+    const heading = section.startsWith("## ") ? section.slice(3) : section;
+    if (!specContent.includes(`## ${heading}`)) {
+      missing.push(section);
+    }
+  }
+
+  if (missing.length > 0) {
+    return {
+      passed: false,
+      details: `IR references ${missing.length} spec section(s) not found in Spec.md: ${missing.join(", ")}`,
+    };
+  }
+
+  return { passed: true, details: `All ${ir.allSpecSections.length} spec sections present` };
+}
+
+function getSCRFilesFromDir(featureDir) {
+  try {
+    return readdirSync(featureDir)
+      .filter((f) => /^SCR_\d{3}/.test(f) && f.endsWith(".md"))
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Gate 14: Drift Check
+// ---------------------------------------------------------------------------
+
+async function gateDriftCheck(root, slug) {
+  const { drift } = await import("./drift.mjs");
+
+  const savedArgv = [...process.argv];
+  process.argv = [savedArgv[0], savedArgv[1], "drift", slug];
+  const result = await callCommand(drift);
+  process.argv = savedArgv;
+
+  // Check DRIFT_REPORT.md for errors
+  const reportPath = join(root, ".ogu/DRIFT_REPORT.md");
+  if (existsSync(reportPath)) {
+    const report = readFileSync(reportPath, "utf-8");
+    const hasError = report.includes("\u274C");
+    if (hasError) {
+      const errorLines = report.split("\n").filter((l) => l.includes("\u274C")).slice(0, 5);
+      return { passed: false, details: errorLines.join("\n") };
+    }
+  }
+
+  if (result.code !== 0) {
+    return { passed: false, details: result.output || "Drift detection found issues" };
+  }
+
+  return { passed: true, details: "No drift detected" };
 }
 
 // ---------------------------------------------------------------------------

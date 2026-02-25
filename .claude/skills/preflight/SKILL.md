@@ -39,6 +39,14 @@ node tools/ogu/cli.mjs context --feature <slug>
 
 Read `.ogu/CONTEXT.md` in full.
 
+## Step 4.5: Check DESIGN.md
+
+Check if `docs/vault/04_Features/<slug>/DESIGN.md` exists:
+- If it exists: include design direction summary in the output (color system, typography, key constraints)
+- If it doesn't exist: warn the user. Say: "DESIGN.md not found. Consider running `/design <slug>` for visual direction before building."
+
+This is a warning, not a blocker — preflight still passes without DESIGN.md.
+
 ## Step 5: Extract constraints
 
 From CONTEXT.md, extract and list for the user:

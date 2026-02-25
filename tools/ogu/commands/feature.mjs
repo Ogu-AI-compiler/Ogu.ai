@@ -1,6 +1,8 @@
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { repoRoot } from "../util.mjs";
+import { repoRoot, readJsonSafe } from "../util.mjs";
+import { loadIR, scanPreExisting } from "./lib/ir-registry.mjs";
+import { normalizeIR } from "./lib/normalize-ir.mjs";
 
 // Phase 1 files: created by /feature
 const FEATURE_FILES = ["PRD.md", "Spec.md", "QA.md"];
@@ -297,6 +299,59 @@ export async function featureValidate() {
       if (phase === 2 && specContent.includes("<!-- TO BE FILLED BY /architect -->")) {
         errors.push("Spec.md still has unfilled architect sections");
       }
+
+      // IR validation: if Plan.json has IR fields, validate them
+      const ir = loadIR(root, slug);
+      if (ir && ir.hasIR()) {
+        // Spec→Plan traceability (reversed direction):
+        // Every Spec.md ## heading that describes a deliverable should have at least one IR task
+        const specHeadings = specContent.split("\n")
+          .filter((l) => /^## /.test(l))
+          .map((l) => l.trim())
+          .filter((h) => !["## Overview", "## References", "## Changelog", "## History"].includes(h));
+
+        for (const heading of specHeadings) {
+          const headingText = heading.slice(3);
+          const hasCoverage = ir.allSpecSections.some((s) =>
+            s === heading || s === `## ${headingText}` || s.includes(headingText) || headingText.includes(s.replace("## ", ""))
+          );
+          if (!hasCoverage) {
+            warnings.push(`Spec section "${heading}" has no IR task coverage (OGU0201)`);
+          }
+        }
+
+        // Duplicate outputs check
+        const outputMap = {};
+        for (const task of ir.tasks) {
+          for (const output of (task.outputs || []).map(normalizeIR)) {
+            if (outputMap[output] !== undefined) {
+              errors.push(`Duplicate IR output: ${output} in tasks ${outputMap[output]} and ${task.id} (OGU0303)`);
+            } else {
+              outputMap[output] = task.id;
+            }
+          }
+        }
+
+        // Input chain check
+        const preExisting = scanPreExisting(root);
+        const available = new Set([...preExisting]);
+        for (const task of ir.tasks) {
+          for (const input of (task.inputs || []).map(normalizeIR)) {
+            if (!available.has(input)) {
+              errors.push(`Unresolved IR input: ${input} in task ${task.id} (OGU0302)`);
+            }
+          }
+          for (const output of (task.outputs || []).map(normalizeIR)) {
+            available.add(output);
+          }
+        }
+      }
+    }
+
+    // Optional DESIGN.md check
+    const designPath = join(featureDir, "DESIGN.md");
+    if (!existsSync(designPath)) {
+      warnings.push("DESIGN.md not found — consider running /design for visual direction");
     }
   }
 
