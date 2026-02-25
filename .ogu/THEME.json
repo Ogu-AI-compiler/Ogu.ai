@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "mood": "minimal",
+  "description": "Clean, white, lots of breathing room. Less is more.",
+  "references": [
+    "apple.com",
+    "linear.app",
+    "notion"
+  ],
+  "constraints": {
+    "dark_mode": false,
+    "high_contrast": false,
+    "animations": "subtle-fade",
+    "typography_feel": "clean-sans",
+    "color_palette": "neutral-with-accent"
+  },
+  "generated_tokens": {
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#6366f1",
+      "background": "#ffffff",
+      "surface": "#f8f9fa",
+      "error": "#ef4444",
+      "success": "#22c55e",
+      "warning": "#f59e0b",
+      "text": "#111827",
+      "text_muted": "#9ca3af"
+    },
+    "spacing": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "16px",
+      "lg": "24px",
+      "xl": "40px",
+      "2xl": "64px"
+    },
+    "radius": {
+      "sm": "6px",
+      "md": "8px",
+      "lg": "12px"
+    },
+    "typography": {
+      "font_body": "'Inter', -apple-system, system-ui, sans-serif",
+      "font_heading": "'Inter', -apple-system, system-ui, sans-serif",
+      "font_mono": "'SF Mono', 'Fira Code', monospace"
+    },
+    "effects": {
+      "glow": "none",
+      "border_style": "1px solid #e5e7eb",
+      "shadow": "0 1px 3px rgba(0, 0, 0, 0.1)"
+    }
+  }
+}

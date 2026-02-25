@@ -1,0 +1,18 @@
+{
+  "version": "1.1.0",
+  "last_updated": "2026-02-22T09:10:05.523Z",
+  "changelog": [
+    {
+      "version": "1.1.0",
+      "date": "2026-02-22",
+      "summary": "Added user endpoints"
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-02-22",
+      "summary": "Initial API contract schema"
+    }
+  ],
+  "endpoints": [],
+  "models": {}
+}

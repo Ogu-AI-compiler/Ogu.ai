@@ -1,0 +1,243 @@
+{
+  "version": 1,
+  "domain": "stripe.com",
+  "url": "https://stripe.com",
+  "scanned_at": "2026-02-23T09:12:13.952Z",
+  "scan_mode": "lightweight",
+  "colors": {
+    "primary": "#32325d",
+    "secondary": "#533afd",
+    "background": "#ffffff",
+    "surface": "#e5edf5",
+    "text": "#000000",
+    "text_muted": "#32325d",
+    "error": "#ff6118",
+    "success": "#00d66f",
+    "warning": "#ffcc55",
+    "is_dark_mode": false,
+    "all_extracted": [
+      {
+        "hex": "#ffffff",
+        "count": 47,
+        "role": "background"
+      },
+      {
+        "hex": "#000000",
+        "count": 41,
+        "role": "text"
+      },
+      {
+        "hex": "#32325d",
+        "count": 24,
+        "role": "text_muted"
+      },
+      {
+        "hex": "#533afd",
+        "count": 23,
+        "role": "secondary"
+      },
+      {
+        "hex": "#ff6118",
+        "count": 16,
+        "role": null
+      },
+      {
+        "hex": "#f8fafd",
+        "count": 16,
+        "role": null
+      },
+      {
+        "hex": "#ea2261",
+        "count": 14,
+        "role": null
+      },
+      {
+        "hex": "#ffcc55",
+        "count": 10,
+        "role": null
+      },
+      {
+        "hex": "#e5edf5",
+        "count": 9,
+        "role": "surface"
+      },
+      {
+        "hex": "#9966ff",
+        "count": 9,
+        "role": null
+      },
+      {
+        "hex": "#fb76fa",
+        "count": 8,
+        "role": null
+      },
+      {
+        "hex": "#fcfdfe",
+        "count": 8,
+        "role": null
+      },
+      {
+        "hex": "#f363f3",
+        "count": 7,
+        "role": null
+      },
+      {
+        "hex": "#2863b1",
+        "count": 7,
+        "role": null
+      },
+      {
+        "hex": "#061b31",
+        "count": 7,
+        "role": null
+      },
+      {
+        "hex": "#7232f1",
+        "count": 6,
+        "role": null
+      },
+      {
+        "hex": "#f6f9fc",
+        "count": 6,
+        "role": null
+      },
+      {
+        "hex": "#1318c1",
+        "count": 6,
+        "role": null
+      },
+      {
+        "hex": "#101d51",
+        "count": 5,
+        "role": null
+      },
+      {
+        "hex": "#ffcf5e",
+        "count": 5,
+        "role": null
+      },
+      {
+        "hex": "#fd6252",
+        "count": 5,
+        "role": null
+      },
+      {
+        "hex": "#e3ecf7",
+        "count": 5,
+        "role": null
+      },
+      {
+        "hex": "#0d1738",
+        "count": 5,
+        "role": null
+      },
+      {
+        "hex": "#635bff",
+        "count": 5,
+        "role": null
+      },
+      {
+        "hex": "#f44bcc",
+        "count": 4,
+        "role": null
+      },
+      {
+        "hex": "#00d66f",
+        "count": 4,
+        "role": null
+      },
+      {
+        "hex": "#0073e6",
+        "count": 4,
+        "role": null
+      },
+      {
+        "hex": "#c2c8f1",
+        "count": 4,
+        "role": null
+      },
+      {
+        "hex": "#b4d8ff",
+        "count": 4,
+        "role": null
+      },
+      {
+        "hex": "#1c1e54",
+        "count": 4,
+        "role": null
+      }
+    ]
+  },
+  "typography": {
+    "font_body": "sohne-var",
+    "font_heading": "Ubuntu",
+    "font_mono": "SourceCodePro",
+    "google_fonts": [],
+    "font_face": [
+      "sohne-var",
+      "SourceCodePro"
+    ],
+    "all_detected": [
+      {
+        "name": "sohne-var",
+        "count": 3
+      },
+      {
+        "name": "SourceCodePro",
+        "count": 1
+      },
+      {
+        "name": "Ubuntu",
+        "count": 1
+      },
+      {
+        "name": "SF Pro Display",
+        "count": 1
+      }
+    ]
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "10px",
+    "lg": "12px",
+    "xl": "14px",
+    "2xl": "16px"
+  },
+  "radius": {
+    "sm": "4px",
+    "md": "5px",
+    "lg": "6px"
+  },
+  "effects": {
+    "glow": "none",
+    "border_style": "1px solid var(--hds-color-util-neutral-50)",
+    "shadow": "var(--hds-canary-ui-shadow)"
+  },
+  "brand_tone": {
+    "title": "Stripe | Financial Infrastructure to Grow Your Revenue",
+    "meta_description": "Stripe is a financial services platform that helps all types of businesses accept payments, build flexible billing models, and manage money movement.",
+    "og_title": "Stripe | Financial Infrastructure to Grow Your Revenue",
+    "headings": [
+      "Financial infrastructure to grow your revenue. Accept payments, offer financial services, and implement custom revenue models—from your first transaction to your billionth.",
+      "Financial infrastructure to grow your revenue. Accept payments, offer financial services, and implement custom revenue models—from your first transaction to your billionth.",
+      "Flexible solutions for every business model.",
+      "Accept and optimize payments globally—online and in person",
+      "Enable any billing model",
+      "Monetize through agentic commerce",
+      "Create a card issuing program",
+      "Access borderless money movement with stablecoins and crypto",
+      "Embed payments in your platform",
+      "The backbone of global commerce"
+    ],
+    "tone_markers": [
+      "developer-focused",
+      "enterprise"
+    ]
+  },
+  "icons": [
+    "font-awesome",
+    "bootstrap-icons"
+  ],
+  "deep_scan": null
+}

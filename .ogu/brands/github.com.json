@@ -1,0 +1,292 @@
+{
+  "version": 1,
+  "domain": "github.com",
+  "url": "https://github.com",
+  "scanned_at": "2026-02-23T09:12:25.162Z",
+  "scan_mode": "lightweight",
+  "colors": {
+    "primary": "#023b95",
+    "secondary": "#0969da",
+    "background": "#ffffff",
+    "surface": "#f0f6fc",
+    "text": "#010409",
+    "text_muted": "#656c76",
+    "error": "#3c0614",
+    "success": "#122117",
+    "warning": "#241c14",
+    "is_dark_mode": false,
+    "all_extracted": [
+      {
+        "hex": "#ffffff",
+        "count": 1190,
+        "role": "background"
+      },
+      {
+        "hex": "#010409",
+        "count": 732,
+        "role": "text"
+      },
+      {
+        "hex": "#656c76",
+        "count": 396,
+        "role": "text_muted"
+      },
+      {
+        "hex": "#f0f6fc",
+        "count": 317,
+        "role": "surface"
+      },
+      {
+        "hex": "#3d444d",
+        "count": 272,
+        "role": null
+      },
+      {
+        "hex": "#59636e",
+        "count": 246,
+        "role": null
+      },
+      {
+        "hex": "#000000",
+        "count": 218,
+        "role": null
+      },
+      {
+        "hex": "#818b98",
+        "count": 204,
+        "role": null
+      },
+      {
+        "hex": "#2a313c",
+        "count": 204,
+        "role": null
+      },
+      {
+        "hex": "#25292e",
+        "count": 192,
+        "role": null
+      },
+      {
+        "hex": "#023b95",
+        "count": 164,
+        "role": "primary"
+      },
+      {
+        "hex": "#2f3742",
+        "count": 164,
+        "role": null
+      },
+      {
+        "hex": "#0969da",
+        "count": 162,
+        "role": "secondary"
+      },
+      {
+        "hex": "#3c0614",
+        "count": 160,
+        "role": null
+      },
+      {
+        "hex": "#212830",
+        "count": 156,
+        "role": null
+      },
+      {
+        "hex": "#d1d9e0",
+        "count": 154,
+        "role": null
+      },
+      {
+        "hex": "#1f2328",
+        "count": 146,
+        "role": null
+      },
+      {
+        "hex": "#b7bdc8",
+        "count": 140,
+        "role": null
+      },
+      {
+        "hex": "#9198a1",
+        "count": 132,
+        "role": null
+      },
+      {
+        "hex": "#d4b7b5",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#271817",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#001a47",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#241c14",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#1c1c1c",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#122117",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#291d00",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#141f0f",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#171e0b",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#311708",
+        "count": 128,
+        "role": null
+      },
+      {
+        "hex": "#082119",
+        "count": 128,
+        "role": null
+      }
+    ]
+  },
+  "typography": {
+    "font_body": "Helvetica",
+    "font_heading": "Mona Sans",
+    "font_mono": "SFMono-Regular",
+    "google_fonts": [],
+    "font_face": [
+      "Noto Sans",
+      "Mona Sans",
+      "Mona Sans Mono",
+      "Hubot Sans",
+      "Mona Sans Fallback",
+      "Mona Sans Header Fallback"
+    ],
+    "all_detected": [
+      {
+        "name": "Helvetica",
+        "count": 12
+      },
+      {
+        "name": "SFMono-Regular",
+        "count": 12
+      },
+      {
+        "name": "SF Mono",
+        "count": 12
+      },
+      {
+        "name": "Menlo",
+        "count": 12
+      },
+      {
+        "name": "Consolas",
+        "count": 12
+      },
+      {
+        "name": "Liberation Mono",
+        "count": 12
+      },
+      {
+        "name": "monospace)",
+        "count": 11
+      },
+      {
+        "name": "Mona Sans",
+        "count": 9
+      },
+      {
+        "name": "Mona Sans Fallback",
+        "count": 5
+      },
+      {
+        "name": "Mona Sans Header Fallback",
+        "count": 5
+      },
+      {
+        "name": "Segoe UI Symbol!important",
+        "count": 4
+      },
+      {
+        "name": "Segoe UI Emoji\")",
+        "count": 3
+      },
+      {
+        "name": "Hubot Sans",
+        "count": 2
+      },
+      {
+        "name": "monospace)!important",
+        "count": 1
+      },
+      {
+        "name": "Segoe UI Emoji\")!important",
+        "count": 1
+      }
+    ]
+  },
+  "spacing": {
+    "xs": "1px",
+    "sm": "2px",
+    "md": "3px",
+    "lg": "5px",
+    "xl": "6px",
+    "2xl": "10px"
+  },
+  "radius": {
+    "sm": "1px",
+    "md": "4px",
+    "lg": "6px"
+  },
+  "effects": {
+    "glow": "none",
+    "border_style": "0",
+    "shadow": "none"
+  },
+  "brand_tone": {
+    "title": "GitHub · Change is constant. GitHub keeps you ahead. · GitHub",
+    "meta_description": "Join the world&#39;s most widely adopted, AI-powered developer platform where millions of developers, businesses, and the largest open source community build software that advances humanity.",
+    "og_title": "GitHub · Change is constant. GitHub keeps you ahead.",
+    "headings": [
+      "Navigation Menu",
+      "Search code, repositories, users, issues, pull requests...",
+      "Provide feedback",
+      "Saved searches",
+      "Use saved searches to filter your results more quickly",
+      "The future of building happens together",
+      "GitHub features",
+      "GitHub customers",
+      "Accelerate your entire workflow",
+      "Your AI partner everywhere. Copilot is ready to work with you at each step of the software development lifecycle."
+    ],
+    "tone_markers": [
+      "powerful",
+      "collaborative",
+      "open",
+      "developer-focused"
+    ]
+  },
+  "icons": [
+    "font-awesome"
+  ],
+  "deep_scan": null
+}

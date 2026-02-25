@@ -1,0 +1,11 @@
+{
+  "platform": "web",
+  "needs_db": false,
+  "needs_jobs": false,
+  "needs_storage": false,
+  "needs_realtime": false,
+  "needs_auth": false,
+  "needs_video": false,
+  "needs_search": false,
+  "services": []
+}

@@ -1,0 +1,120 @@
+{
+  "version": "1.0.15",
+  "last_updated": "2026-02-22T12:15:42.916Z",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-22",
+      "summary": "Initial design tokens schema"
+    },
+    {
+      "version": "1.0.1",
+      "date": "2026-02-22",
+      "summary": "Applied theme: cyberpunk"
+    },
+    {
+      "version": "1.0.2",
+      "date": "2026-02-22",
+      "summary": "Applied theme: minimal"
+    },
+    {
+      "version": "1.0.3",
+      "date": "2026-02-22",
+      "summary": "Applied theme: retro-pixel"
+    },
+    {
+      "version": "1.0.4",
+      "date": "2026-02-22",
+      "summary": "Applied theme: corporate"
+    },
+    {
+      "version": "1.0.5",
+      "date": "2026-02-22",
+      "summary": "Applied theme: playful"
+    },
+    {
+      "version": "1.0.6",
+      "date": "2026-02-22",
+      "summary": "Applied theme: brutalist"
+    },
+    {
+      "version": "1.0.7",
+      "date": "2026-02-22",
+      "summary": "Applied theme: minimal"
+    },
+    {
+      "version": "1.0.8",
+      "date": "2026-02-22",
+      "summary": "Applied theme: cyberpunk"
+    },
+    {
+      "version": "1.0.9",
+      "date": "2026-02-22",
+      "summary": "Applied theme: minimal"
+    },
+    {
+      "version": "1.0.10",
+      "date": "2026-02-22",
+      "summary": "Applied theme: cyberpunk"
+    },
+    {
+      "version": "1.0.11",
+      "date": "2026-02-22",
+      "summary": "Applied theme: minimal"
+    },
+    {
+      "version": "1.0.12",
+      "date": "2026-02-22",
+      "summary": "Applied theme: brutalist"
+    },
+    {
+      "version": "1.0.13",
+      "date": "2026-02-22",
+      "summary": "Applied theme: playful"
+    },
+    {
+      "version": "1.0.14",
+      "date": "2026-02-22",
+      "summary": "Applied theme: retro-pixel"
+    },
+    {
+      "version": "1.0.15",
+      "date": "2026-02-22",
+      "summary": "Applied theme: cyberpunk"
+    }
+  ],
+  "colors": {
+    "primary": "#00ff9f",
+    "secondary": "#00d4ff",
+    "background": "#0a0a0f",
+    "surface": "#1a1a2e",
+    "error": "#ff0044",
+    "success": "#00ff9f",
+    "warning": "#ffb800",
+    "text": "#e0e0e0",
+    "text_muted": "#666680"
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px",
+    "2xl": "48px"
+  },
+  "radius": {
+    "sm": "2px",
+    "md": "4px",
+    "lg": "8px"
+  },
+  "typography": {
+    "font_body": "'JetBrains Mono', 'Fira Code', monospace",
+    "font_heading": "'Orbitron', 'Space Grotesk', sans-serif",
+    "font_mono": "'JetBrains Mono', monospace"
+  },
+  "effects": {
+    "glow": "0 0 10px rgba(0, 255, 159, 0.3)",
+    "border_style": "1px solid rgba(0, 255, 159, 0.2)",
+    "shadow": "0 4px 20px rgba(0, 0, 0, 0.5)"
+  }
+}

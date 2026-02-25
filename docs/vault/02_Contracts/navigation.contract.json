@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-02-22T10:00:00Z",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-22",
+      "summary": "Initial navigation contract schema"
+    }
+  ],
+  "routes": []
+}
