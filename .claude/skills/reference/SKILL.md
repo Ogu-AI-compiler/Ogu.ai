@@ -34,6 +34,7 @@ node tools/ogu/cli.mjs reference <url1> <url2> <file1.png> [more...] --apply --s
 
 This will:
 - Scan each URL for colors, fonts, spacing, effects, tone
+- **Capture a 1280×720 screenshot of each URL** (if Playwright is available) — stored in `.ogu/references/screenshots/<domain>.png` and referenced in REFERENCE.json as `screenshot_path`
 - Copy images/PDFs to `.ogu/references/`
 - Composite URL-based scans into a merged design direction
 - Save to `.ogu/REFERENCE.json`
@@ -74,6 +75,38 @@ Read the current `.ogu/REFERENCE.json`, then update the `image_analysis` field:
   }
 }
 ```
+
+### 4b. Analyze URL Screenshots (Visual Evidence)
+After step 4, check `.ogu/REFERENCE.json` for URL sources that have a `screenshot_path` field.
+
+**For each URL source** (type = "url") where `screenshot_path` is present:
+1. Read the screenshot at `<project_root>/<source.screenshot_path>` using the Read tool
+2. Analyze the same fields as images (dominant colors, typography feel, mood, spacing, patterns, layout)
+3. Pay special attention to:
+   - **Color dominance**: how much of the screen is each color? Is the primary color used sparingly (CTAs only) or everywhere?
+   - **Surface depth**: how many visual layers exist? (e.g., background → card → elevated card = 3 levels)
+   - **Component density**: sparse / moderate / dense — elements per viewport
+   - **CTA pattern**: what does the primary action look like? Size, color, placement
+4. Write analysis to REFERENCE.json under:
+   ```json
+   "image_analysis": {
+     "<domain>.screenshot": {
+       "colors": { "primary": "#...", ... },
+       "typography_feel": "...",
+       "mood": [...],
+       "spacing": "...",
+       "patterns": [...],
+       "layout": "...",
+       "color_dominance": "primary used sparingly on CTAs only (~5% of screen area)",
+       "surface_levels": 3,
+       "density": "sparse",
+       "cta_pattern": "solid primary-color pill button, single per screen",
+       "notes": "..."
+     }
+   }
+   ```
+
+This screenshot evidence is the primary input for `/design`. It tells Ogu *how* tokens are used, not just *what* they are.
 
 **Merge into composite:**
 After analyzing all images, update the composite in REFERENCE.json:

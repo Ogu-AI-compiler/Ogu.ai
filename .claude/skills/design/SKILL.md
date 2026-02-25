@@ -24,6 +24,26 @@ Read these files in full:
 6. Latest brand scan from `.ogu/brands/` (if exists)
 7. `design.tokens.json` (if exists) — current token set
 
+### Visual Evidence (most important input)
+
+After reading the files above, check `.ogu/REFERENCE.json` for visual evidence:
+
+**URL screenshots** — for each source with `screenshot_path`, read the image:
+- Observe color dominance: which color fills most of the screen vs. used sparingly?
+- Count surface levels: how many depth layers are visible?
+- Assess density: sparse / moderate / dense?
+- Note the CTA pattern: size, color, placement, frequency
+
+**image_analysis entries** — read `image_analysis["<domain>.screenshot"]` in REFERENCE.json for pre-extracted observations from the `/reference` skill.
+
+**This visual evidence is your primary design input.** Tokens tell you *what*. Screenshots tell you *how*. If a screenshot shows the primary color used only on a single CTA button and nowhere else — that's a design rule, not just a token value. Capture it in DESIGN.md and in assertions.
+
+**Priority order for design decisions:**
+1. Visual evidence from screenshots + image_analysis (what you can actually see)
+2. REFERENCE.json composite tokens (evidence-backed)
+3. THEME.json mood (project-level defaults)
+4. Your design judgment (when evidence is absent)
+
 ## Step 1: Determine design mode
 
 Check `.ogu/STATE.json` field `design_mode`:
@@ -65,6 +85,12 @@ Write to: `docs/vault/04_Features/<slug>/DESIGN.md`
 
 ```markdown
 # Design Direction: <feature>
+
+## Evidence Sources
+<!-- List what you actually observed, not what you invented -->
+- linear.app screenshot: dark surface, primary color on CTA only (~5% of screen), 3 depth levels, sparse density
+- stripe.com screenshot: white base, blue accent on primary actions, generous whitespace, 2 depth levels
+- mockup.png: card-heavy layout, rounded 8px corners, purple/teal gradient headers
 
 ## Color System
 - Primary action: <hex> — used for CTAs, active states
@@ -114,11 +140,16 @@ Write to: `docs/vault/04_Features/<slug>/DESIGN.md`
 [Describe the card: bg, border, radius, padding, shadow behavior]
 
 ## Design Assertions (for Vision)
-- [ ] Primary CTA buttons use primary color
-- [ ] Text contrast >= 4.5:1 on all solid backgrounds
-- [ ] No more than N border-radius values on [data-testid] elements per screen
-- [ ] Heading font sizes decrease monotonically (H1 > H2 > H3 > body)
-- [ ] All spacing values match token set (+-2px tolerance at 1280px viewport)
+<!-- measurable = DOM-checkable via Playwright. visual = AI screenshot review. -->
+<!-- critical = failure blocks /done. non-critical = warning only. -->
+- [ ] [measurable, critical] Primary CTA buttons use primary color
+- [ ] [measurable, critical] Text contrast >= 4.5:1 on all solid backgrounds
+- [ ] [measurable] No more than N border-radius values on [data-testid] elements per screen
+- [ ] [measurable] Heading font sizes decrease monotonically (H1 > H2 > H3 > body)
+- [ ] [measurable] All spacing values match token set (+-2px tolerance at 1280px viewport)
+- [ ] [visual, critical] Primary color used sparingly — only on CTAs and active states, not as fill
+- [ ] [visual] Surface depth matches reference: N visual layers visible (background → card → elevated)
+- [ ] [visual] Density matches reference: sparse / moderate / dense
 ```
 
 ## Step 4: Generate design_assertions for VISION_SPEC

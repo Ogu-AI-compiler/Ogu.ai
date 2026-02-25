@@ -941,6 +941,39 @@ async function gateBrandCompliance(root) {
     if (!fontFound) {
       violations.push(`Brand font "${brandFont}" not referenced in style files or HTML`);
     }
+
+    // Stronger check: if brand scan includes @font-face, project CSS must include it too
+    const brandFontFaceCss = latestBrand.typography?.font_face_css;
+    if (brandFontFaceCss && String(brandFontFaceCss).includes("@font-face")) {
+      const globalCssFiles = findCssFiles(root);
+      let fontFaceFound = false;
+      for (const p of globalCssFiles) {
+        try {
+          const content = readFileSync(join(root, p), "utf-8");
+          if (content.includes("@font-face") && content.toLowerCase().includes(normalizedFont)) {
+            fontFaceFound = true;
+            break;
+          }
+        } catch { /* skip */ }
+      }
+      if (!fontFaceFound && globalCssFiles.length > 0) {
+        violations.push(`Brand provides @font-face for "${brandFont}" but no @font-face found in global CSS. Add the font-face declaration to your globals.css.`);
+      }
+    }
+
+    // Prevent system-ui fallback when brand font exists
+    const globalCssFiles = findCssFiles(root);
+    for (const p of globalCssFiles) {
+      try {
+        const content = readFileSync(join(root, p), "utf-8").toLowerCase();
+        const hasSystemFallback = content.includes("system-ui") || content.includes("ui-sans-serif");
+        const hasBrandFont = content.includes(normalizedFont);
+        if (hasSystemFallback && !hasBrandFont) {
+          violations.push(`"system-ui" found in ${p} but brand font "${brandFont}" is absent. Globals must use the brand font, not a system fallback.`);
+          break;
+        }
+      } catch { /* skip */ }
+    }
   }
 
   if (violations.length > 0) {
@@ -951,6 +984,15 @@ async function gateBrandCompliance(root) {
   }
 
   return { passed: true, details: `Brand compliance verified (source: ${latestBrand.url || latestBrand.domain || "unknown"})` };
+}
+
+/** Find global CSS entry points — the files that must load brand fonts */
+function findCssFiles(root) {
+  const candidates = [
+    "src/index.css", "src/globals.css", "src/app/globals.css", "app/globals.css",
+    "src/styles/globals.css", "styles/globals.css",
+  ];
+  return candidates.filter(p => existsSync(join(root, p)));
 }
 
 /** Find CSS, Tailwind config, and style-related files */

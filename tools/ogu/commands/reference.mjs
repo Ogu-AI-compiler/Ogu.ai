@@ -13,6 +13,7 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, copyFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { join, extname, basename, resolve, isAbsolute } from "node:path";
+import { spawnSync } from "node:child_process";
 import { repoRoot, readJsonSafe } from "../util.mjs";
 import {
   fetchPage, extractCssLinks, extractInlineStyles, extractAllColors,
@@ -28,6 +29,33 @@ import {
 const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 const PDF_EXTS = new Set([".pdf"]);
 const ALL_FILE_EXTS = new Set([...IMAGE_EXTS, ...PDF_EXTS]);
+
+/* ────────────────────── Screenshot Helpers ────────────────────── */
+
+function isPlaywrightAvailable(root) {
+  const res = spawnSync(process.execPath, ["-e", "require('playwright')"], {
+    cwd: root, stdio: "ignore",
+  });
+  return res.status === 0;
+}
+
+function takeScreenshot(root, url, outPath) {
+  if (!isPlaywrightAvailable(root)) return { ok: false, reason: "playwright_missing" };
+  mkdirSync(join(root, ".ogu", "references", "screenshots"), { recursive: true });
+  const script = `
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  await page.goto(${JSON.stringify(url)}, { waitUntil: 'networkidle', timeout: 30000 });
+  await page.screenshot({ path: ${JSON.stringify(outPath)}, fullPage: false });
+  await browser.close();
+})().catch(e => { process.stderr.write(String(e)); process.exit(1); });
+`;
+  const res = spawnSync(process.execPath, ["-e", script], { cwd: root, encoding: "utf-8" });
+  if (res.status !== 0) return { ok: false, reason: "failed", error: (res.stderr || "").slice(0, 300) };
+  return { ok: true };
+}
 
 /* ────────────────────── Input Classification ────────────────────── */
 
@@ -551,11 +579,26 @@ async function referenceComposite(args) {
 
   console.log(`\n  Reference  Compositing design from ${parts}\n`);
 
-  // Process URL inputs — scan sites
+  // Process URL inputs — scan sites + capture screenshots
   const scans = [];
+  const urlScreenshots = {}; // domain → relative path
   for (const url of urls) {
     const scan = await scanSite(url);
-    if (scan) scans.push(scan);
+    if (scan) {
+      scans.push(scan);
+      // Capture screenshot for /design evidence
+      const domain = scan.domain;
+      const outAbs = join(root, ".ogu", "references", "screenshots", `${domain}.png`);
+      const relPath = join(".ogu", "references", "screenshots", `${domain}.png`);
+      process.stdout.write(`  shot     ${domain} ... `);
+      const result = takeScreenshot(root, url, outAbs);
+      if (result.ok) {
+        urlScreenshots[domain] = relPath;
+        process.stdout.write(`saved\n`);
+      } else {
+        process.stdout.write(`skipped (${result.reason})\n`);
+      }
+    }
   }
 
   // Process file inputs — copy to .ogu/references/
@@ -615,14 +658,16 @@ async function referenceComposite(args) {
     };
   }
 
-  // Build sources list
+  // Build sources list — include screenshot_path if captured
   const sources = [
-    ...scans.map(s => ({
-      type: "url",
-      domain: s.domain,
-      url: s.url,
-      scanned_at: s.scanned_at,
-    })),
+    ...scans.map(s => {
+      const entry = { type: "url", domain: s.domain, url: s.url, scanned_at: s.scanned_at };
+      if (urlScreenshots[s.domain]) {
+        entry.screenshot_path = urlScreenshots[s.domain];
+        entry.screenshot_viewport = { width: 1280, height: 720 };
+      }
+      return entry;
+    }),
     ...fileSources,
   ];
 
