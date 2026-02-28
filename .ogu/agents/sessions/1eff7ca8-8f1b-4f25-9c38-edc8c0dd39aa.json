@@ -1,0 +1,11 @@
+{
+  "sessionId": "1eff7ca8-8f1b-4f25-9c38-edc8c0dd39aa",
+  "roleId": "test-dev",
+  "featureSlug": "rt-test",
+  "taskId": "wave-a",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T23:19:23.082Z",
+  "lastActivityAt": "2026-02-28T23:19:23.082Z",
+  "endedAt": "2026-02-28T23:19:23.088Z"
+}

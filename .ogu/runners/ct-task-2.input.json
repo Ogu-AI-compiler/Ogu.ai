@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "taskId": "ct-task-2",
+  "featureSlug": "compile-test-mod",
+  "taskName": "ct-task-2",
+  "agent": {
+    "roleId": "backend-dev",
+    "sessionId": "71982bef-ea74-455a-abb4-b3162c8ca5de",
+    "capabilities": [
+      "code_generation",
+      "testing",
+      "documentation"
+    ]
+  },
+  "prompt": "Execute task \"ct-task-2\" for feature \"compile-test-mod\".",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5-20251001",
+    "tier": "fast",
+    "reason": "Default routing from Kadima scheduler",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 100000,
+    "maxCost": 10,
+    "remainingDaily": 50,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "blockedPaths": [],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "none",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:23:30.983Z",
+  "idempotencyKey": "ct-task-2-1772321010983",
+  "taskSpec": {
+    "name": "Create main module",
+    "description": "Create src/compile-test/index.mjs",
+    "output": {
+      "files": [
+        {
+          "path": "src/compile-test/index.mjs",
+          "action": "create",
+          "content": "import { add, multiply } from './utils.mjs';\n\nexport function calculate(a, b) {\n  return { sum: add(a, b), product: multiply(a, b) };\n}\n"
+        }
+      ]
+    }
+  }
+}

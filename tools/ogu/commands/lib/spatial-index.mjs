@@ -1,0 +1,1 @@
+../lib-generic/spatial-index.mjs

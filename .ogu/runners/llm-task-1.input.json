@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "taskId": "llm-task-1",
+  "featureSlug": "llm-test-feature",
+  "taskName": "Create greeting module",
+  "agent": {
+    "roleId": "backend-dev",
+    "sessionId": "ee658ad2-cafa-4ea8-a201-912869609dcf",
+    "capabilities": [
+      "code_generation",
+      "testing",
+      "documentation"
+    ]
+  },
+  "prompt": "Create a module that exports a greet function",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6-20250514",
+    "tier": "standard",
+    "reason": "Best match for role \"backend-dev\"",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 100000,
+    "maxCost": 0.3,
+    "remainingDaily": 50,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "blockedPaths": [
+      ".env",
+      ".ogu/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "internal",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:22:08.992Z",
+  "idempotencyKey": "llm-task-1-1772320928992"
+}

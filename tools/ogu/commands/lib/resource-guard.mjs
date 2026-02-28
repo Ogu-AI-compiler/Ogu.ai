@@ -1,0 +1,1 @@
+../lib-generic/resource-guard.mjs

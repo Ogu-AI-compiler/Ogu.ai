@@ -1,0 +1,40 @@
+{
+  "featureSlug": "compile-test-mod",
+  "version": 1,
+  "tasks": [
+    {
+      "id": "ct-task-1",
+      "name": "Create utils module",
+      "description": "Create src/compile-test/utils.mjs",
+      "requiredRole": "developer",
+      "output": {
+        "files": [
+          {
+            "path": "src/compile-test/utils.mjs",
+            "action": "create",
+            "content": "export function add(a, b) {\n  return a + b;\n}\n\nexport function multiply(a, b) {\n  return a * b;\n}\n"
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "id": "ct-task-2",
+      "name": "Create main module",
+      "description": "Create src/compile-test/index.mjs",
+      "requiredRole": "developer",
+      "output": {
+        "files": [
+          {
+            "path": "src/compile-test/index.mjs",
+            "action": "create",
+            "content": "import { add, multiply } from './utils.mjs';\n\nexport function calculate(a, b) {\n  return { sum: add(a, b), product: multiply(a, b) };\n}\n"
+          }
+        ]
+      },
+      "dependsOn": [
+        "ct-task-1"
+      ]
+    }
+  ]
+}

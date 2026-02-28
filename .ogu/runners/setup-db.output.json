@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "taskId": "setup-db",
+  "featureSlug": "test-wave",
+  "status": "success",
+  "files": [
+    {
+      "path": "db/schema.sql",
+      "action": "created",
+      "linesAdded": 1,
+      "linesRemoved": 0
+    }
+  ],
+  "tokensUsed": {
+    "input": 103,
+    "output": 10,
+    "total": 113,
+    "cost": 0.000459,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 92700,
+    "isolationLevel": "L0",
+    "durationMs": 3
+  },
+  "startedAt": "2026-02-28T23:22:53.950Z",
+  "completedAt": "2026-02-28T23:22:53.953Z",
+  "idempotencyKey": "setup-db-1772320973951"
+}

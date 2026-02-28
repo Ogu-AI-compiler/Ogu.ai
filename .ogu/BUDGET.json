@@ -1,0 +1,19 @@
+{
+  "$schema": "OguBudget/1.0",
+  "version": 1,
+  "dailyLimit": 50,
+  "monthlyLimit": 1000,
+  "currency": "USD",
+  "alertThresholds": [0.5, 0.75, 0.9],
+  "perRoleLimits": {
+    "pm": { "dailyTokens": 500000, "maxCostPerTask": 2.0 },
+    "architect": { "dailyTokens": 2000000, "maxCostPerTask": 10.0 },
+    "backend-dev": { "dailyTokens": 1000000, "maxCostPerTask": 5.0 },
+    "frontend-dev": { "dailyTokens": 1000000, "maxCostPerTask": 5.0 },
+    "qa": { "dailyTokens": 1000000, "maxCostPerTask": 5.0 },
+    "security": { "dailyTokens": 500000, "maxCostPerTask": 5.0 },
+    "tech-lead": { "dailyTokens": 3000000, "maxCostPerTask": 15.0 },
+    "cto": { "dailyTokens": 5000000, "maxCostPerTask": 25.0 }
+  },
+  "createdAt": "2026-02-28T00:00:00.000Z"
+}

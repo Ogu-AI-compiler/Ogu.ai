@@ -1,0 +1,1 @@
+../lib-generic/binary-search-variants.mjs

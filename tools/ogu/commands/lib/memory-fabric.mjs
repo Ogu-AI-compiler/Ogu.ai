@@ -1,0 +1,1 @@
+../lib-generic/memory-fabric.mjs

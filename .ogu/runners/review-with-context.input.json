@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "taskId": "review-with-context",
+  "featureSlug": "slice7-multi-agent",
+  "taskName": "review-with-context",
+  "agent": {
+    "roleId": "reviewer",
+    "sessionId": "fa7f7543-1cb3-487d-b261-21ac4dc7f179",
+    "capabilities": [
+      "review",
+      "code_generation"
+    ]
+  },
+  "prompt": "Execute task \"review-with-context\" for feature \"slice7-multi-agent\".",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6-20250514",
+    "tier": "standard",
+    "reason": "Best match for role \"reviewer\"",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 50000,
+    "maxCost": 0.15,
+    "remainingDaily": 50,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "src/**",
+      "docs/**"
+    ],
+    "blockedPaths": [],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "none",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "src/**",
+      "docs/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:23:27.340Z",
+  "idempotencyKey": "review-with-context-1772321007340",
+  "handoffContext": {
+    "developer.output": {
+      "files": [
+        "src/auth/login.mjs"
+      ],
+      "summary": "Implemented login flow"
+    }
+  }
+}

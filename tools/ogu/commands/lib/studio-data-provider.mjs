@@ -1,0 +1,1 @@
+../lib-generic/studio-data-provider.mjs

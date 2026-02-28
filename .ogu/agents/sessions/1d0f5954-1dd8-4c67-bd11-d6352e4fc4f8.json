@@ -1,0 +1,11 @@
+{
+  "sessionId": "1d0f5954-1dd8-4c67-bd11-d6352e4fc4f8",
+  "roleId": "reviewer",
+  "featureSlug": "slice7-multi-agent",
+  "taskId": "review-with-context",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T23:21:08.914Z",
+  "lastActivityAt": "2026-02-28T23:21:08.914Z",
+  "endedAt": "2026-02-28T23:21:08.918Z"
+}

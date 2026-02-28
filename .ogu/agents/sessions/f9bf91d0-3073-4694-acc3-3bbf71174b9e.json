@@ -1,0 +1,11 @@
+{
+  "sessionId": "f9bf91d0-3073-4694-acc3-3bbf71174b9e",
+  "roleId": "test-dev",
+  "featureSlug": "test",
+  "taskId": "sim-task-1",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T19:01:23.154Z",
+  "lastActivityAt": "2026-02-28T19:01:23.154Z",
+  "endedAt": "2026-02-28T19:01:23.155Z"
+}

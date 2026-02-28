@@ -1,0 +1,1 @@
+../lib-generic/schema-registry.mjs

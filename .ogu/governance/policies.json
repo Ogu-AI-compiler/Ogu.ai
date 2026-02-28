@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "description": "Default governance policies",
+  "policies": [
+    { "id": "p1", "name": "Cross-boundary review", "trigger": "cross_boundary", "action": "require_approval", "approvers": ["tech-lead"], "enabled": true },
+    { "id": "p2", "name": "High-risk approval", "trigger": "risk_tier", "riskThreshold": "high", "action": "require_approval", "approvers": ["tech-lead", "cto"], "enabled": true },
+    { "id": "p3", "name": "Budget alert", "trigger": "budget_exceeded", "threshold": 0.8, "action": "notify", "notify": ["pm", "tech-lead"], "enabled": true },
+    { "id": "p4", "name": "Security file guard", "trigger": "path_match", "patterns": [".env*", "*.key", "*.pem", "**/secrets/**"], "action": "deny", "enabled": true },
+    { "id": "p5", "name": "Scope violation", "trigger": "scope_violation", "action": "require_approval", "approvers": ["tech-lead"], "enabled": true },
+    { "id": "p6", "name": "Production change", "trigger": "path_match", "patterns": ["infra/**", "docker/**", ".github/**"], "action": "require_approval", "approvers": ["devops", "tech-lead"], "enabled": true }
+  ]
+}

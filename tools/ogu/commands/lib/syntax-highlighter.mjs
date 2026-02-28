@@ -1,0 +1,1 @@
+../lib-generic/syntax-highlighter.mjs

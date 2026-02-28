@@ -1,0 +1,1 @@
+../lib-generic/opcode-table.mjs

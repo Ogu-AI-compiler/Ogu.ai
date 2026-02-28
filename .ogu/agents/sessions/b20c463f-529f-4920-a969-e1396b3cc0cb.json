@@ -1,0 +1,11 @@
+{
+  "sessionId": "b20c463f-529f-4920-a969-e1396b3cc0cb",
+  "roleId": "pm",
+  "featureSlug": "slice1-test-feature",
+  "taskId": "write-hello-world",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T22:35:57.708Z",
+  "lastActivityAt": "2026-02-28T22:35:57.708Z",
+  "endedAt": "2026-02-28T22:35:57.711Z"
+}

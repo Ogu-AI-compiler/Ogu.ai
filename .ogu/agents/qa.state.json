@@ -1,0 +1,14 @@
+{
+  "roleId": "qa",
+  "tokensUsed": 3180,
+  "tokensUsedToday": 3180,
+  "costUsed": 0.01314000000000001,
+  "costToday": 0.01314000000000001,
+  "tasksCompleted": 30,
+  "tasksFailed": 0,
+  "escalations": 0,
+  "lastActiveAt": "2026-02-28T23:22:53.987Z",
+  "currentTask": null,
+  "history": [],
+  "lastAction": "write-tests"
+}

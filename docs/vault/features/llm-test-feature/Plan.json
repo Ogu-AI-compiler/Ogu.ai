@@ -1,0 +1,22 @@
+{
+  "featureSlug": "llm-test-feature",
+  "version": 1,
+  "tasks": [
+    {
+      "id": "llm-task-1",
+      "name": "Create greeting module",
+      "description": "Create a module that exports a greet function",
+      "requiredRole": "developer",
+      "output": {
+        "files": [
+          {
+            "path": "src/llm-test/greet.mjs",
+            "action": "create",
+            "content": "export function greet(name) {\n  return `Hello, ${name}!`;\n}\n"
+          }
+        ]
+      },
+      "dependsOn": []
+    }
+  ]
+}

@@ -10,19 +10,35 @@
 
 ## Directories
 
+### `db/`
+Project directory
+
 ### `docs/`
 Documentation and knowledge vault
 
-Subdirectories: `vault`
+Subdirectories: `agentic_company_os_full`, `arcive`, `vault`
 
 ### `output/`
 Generated output
 
+### `server/`
+Project directory
+
+### `src/`
+Application source code
+
+Subdirectories: `compile-test`
+
 ### `templates/`
 Template files
+
+### `tests/`
+Test files
+
+Subdirectories: `e2e`
 
 ### `tools/`
 Developer tooling and scripts
 
-Subdirectories: `ogu`, `studio`
+Subdirectories: `contracts`, `kadima`, `ogu`, `runner`, `studio`
 

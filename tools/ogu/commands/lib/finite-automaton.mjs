@@ -1,0 +1,1 @@
+../lib-generic/finite-automaton.mjs

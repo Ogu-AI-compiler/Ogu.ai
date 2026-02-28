@@ -1,0 +1,1 @@
+../lib-generic/signal-handler.mjs

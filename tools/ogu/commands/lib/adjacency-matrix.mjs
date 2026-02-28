@@ -1,0 +1,1 @@
+../lib-generic/adjacency-matrix.mjs

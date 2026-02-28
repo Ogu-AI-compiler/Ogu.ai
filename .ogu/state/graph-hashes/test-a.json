@@ -1,0 +1,18 @@
+{
+  "$schema": "ExecutionGraphHash/1.0",
+  "featureSlug": "test-a",
+  "graphHash": "aacf4c0da1e0cb75e20e29d4b1dee64ea35c7c81f61417a692c34dd1c6f9d23e",
+  "components": {
+    "planHash": "no-plan",
+    "policyVersionAtExecution": 0,
+    "policyASTHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "orgSpecVersion": "0.0.0",
+    "orgSpecHash": "f80c58f6e67120715d67570c723f6fd0225185c984c15e994388973ecc967667",
+    "modelRoutingDecisions": [],
+    "modelDecisionSetHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "taskSnapshotHashes": {},
+    "taskSnapshotChainHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "computedAt": "2026-02-28T23:21:44.153Z",
+  "replayGuarantee": "Identical graphHash = identical execution results (given same model responses)"
+}

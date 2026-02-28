@@ -1,0 +1,1 @@
+../lib-generic/studio-event-typed.mjs

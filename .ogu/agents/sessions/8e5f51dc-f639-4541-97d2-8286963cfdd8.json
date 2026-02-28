@@ -1,0 +1,11 @@
+{
+  "sessionId": "8e5f51dc-f639-4541-97d2-8286963cfdd8",
+  "roleId": "pm",
+  "featureSlug": "slice2-security-feature",
+  "taskId": "secure-auth-rewrite",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T22:32:45.216Z",
+  "lastActivityAt": "2026-02-28T22:32:45.216Z",
+  "endedAt": "2026-02-28T22:32:45.219Z"
+}

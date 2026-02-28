@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "taskId": "ic-c",
+  "featureSlug": "incr-compile-test",
+  "taskName": "ic-c",
+  "agent": {
+    "roleId": "backend-dev",
+    "sessionId": "c49de30a-e00c-4b3a-8c84-7305ad98263d",
+    "capabilities": [
+      "code_generation",
+      "testing",
+      "documentation"
+    ]
+  },
+  "prompt": "Execute task \"ic-c\" for feature \"incr-compile-test\".",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5-20251001",
+    "tier": "fast",
+    "reason": "Default routing from Kadima scheduler",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 100000,
+    "maxCost": 10,
+    "remainingDaily": 50,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "blockedPaths": [],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "none",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:22:31.350Z",
+  "idempotencyKey": "ic-c-1772320951350",
+  "taskSpec": {
+    "name": "Create combined",
+    "description": "Create src/incr-test/combined.mjs",
+    "output": {
+      "files": [
+        {
+          "path": "src/incr-test/combined.mjs",
+          "action": "create",
+          "content": "import { helperA } from './a.mjs';\nimport { helperB } from './b.mjs';\nexport function combined() {\n  return helperA() + helperB();\n}\n"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "taskId": "retry-task-001",
+  "featureSlug": "slice6-retry-test",
+  "status": "success",
+  "files": [],
+  "tokensUsed": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "cost": 0,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 96673,
+    "isolationLevel": "L0",
+    "durationMs": 13
+  },
+  "startedAt": "2026-02-28T23:23:25.274Z",
+  "completedAt": "2026-02-28T23:23:25.287Z",
+  "idempotencyKey": "retry-task-001-1772321005284"
+}

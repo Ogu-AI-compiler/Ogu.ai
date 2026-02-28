@@ -1,0 +1,1 @@
+../lib-generic/cooling-schedule.mjs

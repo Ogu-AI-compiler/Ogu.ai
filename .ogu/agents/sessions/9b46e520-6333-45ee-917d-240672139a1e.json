@@ -1,0 +1,11 @@
+{
+  "sessionId": "9b46e520-6333-45ee-917d-240672139a1e",
+  "roleId": "security",
+  "featureSlug": "slice7-multi-agent",
+  "taskId": "audit-auth-code",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T22:31:19.886Z",
+  "lastActivityAt": "2026-02-28T22:31:19.886Z",
+  "endedAt": "2026-02-28T22:31:19.889Z"
+}

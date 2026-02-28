@@ -1,0 +1,1 @@
+../lib-generic/string-template.mjs

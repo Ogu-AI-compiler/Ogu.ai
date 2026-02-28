@@ -1,0 +1,1 @@
+../lib-generic/full-text-search.mjs

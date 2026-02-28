@@ -1,0 +1,11 @@
+{
+  "sessionId": "6b62f4af-6675-4995-ac47-9b77416eb691",
+  "roleId": "test-dev",
+  "featureSlug": "rt-test",
+  "taskId": "rt-task-1",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T19:11:47.537Z",
+  "lastActivityAt": "2026-02-28T19:11:47.537Z",
+  "endedAt": "2026-02-28T19:11:47.541Z"
+}

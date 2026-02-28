@@ -1,0 +1,1 @@
+../lib-generic/spell-checker.mjs

@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "taskId": "sse-task-2",
+  "featureSlug": "sse-test-feature",
+  "taskName": "sse-task-2",
+  "agent": {
+    "roleId": "backend-dev",
+    "sessionId": "6c2f74b4-3682-44d4-b380-cc94e81e61ed",
+    "capabilities": [
+      "code_generation",
+      "testing",
+      "documentation"
+    ]
+  },
+  "prompt": "Execute task \"sse-task-2\" for feature \"sse-test-feature\".",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5-20251001",
+    "tier": "fast",
+    "reason": "Default routing from Kadima scheduler",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 100000,
+    "maxCost": 10,
+    "remainingDaily": 50,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "blockedPaths": [],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "none",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:21:57.239Z",
+  "idempotencyKey": "sse-task-2-1772320917239"
+}

@@ -1,0 +1,11 @@
+{
+  "sessionId": "cc8dbfa0-a4f0-4e98-a32f-fb29b3056075",
+  "roleId": "developer",
+  "featureSlug": "slice7-multi-agent",
+  "taskId": "write-auth-code",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T23:21:08.397Z",
+  "lastActivityAt": "2026-02-28T23:21:08.397Z",
+  "endedAt": "2026-02-28T23:21:08.400Z"
+}

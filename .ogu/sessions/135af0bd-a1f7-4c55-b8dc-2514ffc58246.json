@@ -1,0 +1,11 @@
+{
+  "sessionId": "135af0bd-a1f7-4c55-b8dc-2514ffc58246",
+  "featureSlug": "slice2-security-feature",
+  "taskId": "secure-auth-rewrite",
+  "roleId": "default",
+  "model": "pending",
+  "provider": "pending",
+  "startedAt": "2026-02-28T23:22:51.311Z",
+  "status": "completed",
+  "completedAt": "2026-02-28T23:22:51.314Z"
+}

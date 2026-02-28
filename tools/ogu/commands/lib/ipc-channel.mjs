@@ -1,0 +1,1 @@
+../lib-generic/ipc-channel.mjs

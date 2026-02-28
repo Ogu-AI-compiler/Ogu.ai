@@ -1,0 +1,11 @@
+{
+  "sessionId": "5bf128a5-4d79-4403-a1c8-7fbaee248eb2",
+  "featureSlug": "slice6-retry-test",
+  "taskId": "escalate-task-001",
+  "roleId": "default",
+  "model": "pending",
+  "provider": "pending",
+  "startedAt": "2026-02-28T22:31:18.305Z",
+  "status": "completed",
+  "completedAt": "2026-02-28T22:31:18.320Z"
+}

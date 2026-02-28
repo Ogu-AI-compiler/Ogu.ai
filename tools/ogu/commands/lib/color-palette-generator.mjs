@@ -1,0 +1,1 @@
+../lib-generic/color-palette-generator.mjs

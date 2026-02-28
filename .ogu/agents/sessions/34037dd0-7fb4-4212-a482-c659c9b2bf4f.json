@@ -1,0 +1,11 @@
+{
+  "sessionId": "34037dd0-7fb4-4212-a482-c659c9b2bf4f",
+  "roleId": "backend-dev",
+  "featureSlug": "llm-test-feature",
+  "taskId": "llm-task-1",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T22:30:05.591Z",
+  "lastActivityAt": "2026-02-28T22:30:05.591Z",
+  "endedAt": "2026-02-28T22:30:05.595Z"
+}

@@ -1,0 +1,13 @@
+{
+  "roleId": "developer",
+  "tokensUsed": 40000,
+  "tokensUsedToday": 40000,
+  "costUsed": 4,
+  "costToday": 4,
+  "tasksCompleted": 0,
+  "tasksFailed": 0,
+  "escalations": 0,
+  "lastActiveAt": "2026-02-28T23:23:26.823Z",
+  "currentTask": null,
+  "history": []
+}

@@ -1,0 +1,11 @@
+{
+  "sessionId": "32ccef39-0ec9-4c57-ba78-14ded20aa3b7",
+  "roleId": "qa",
+  "featureSlug": "test-wave",
+  "taskId": "write-tests",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T23:20:35.358Z",
+  "lastActivityAt": "2026-02-28T23:20:35.358Z",
+  "endedAt": "2026-02-28T23:20:35.359Z"
+}

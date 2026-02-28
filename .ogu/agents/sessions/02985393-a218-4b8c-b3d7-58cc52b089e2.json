@@ -1,0 +1,11 @@
+{
+  "sessionId": "02985393-a218-4b8c-b3d7-58cc52b089e2",
+  "roleId": "test-dev",
+  "featureSlug": "test",
+  "taskId": "dry-task-1",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T19:50:32.165Z",
+  "lastActivityAt": "2026-02-28T19:50:32.165Z",
+  "endedAt": "2026-02-28T19:50:32.169Z"
+}

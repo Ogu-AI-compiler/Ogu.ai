@@ -1,0 +1,11 @@
+{
+  "sessionId": "1f5e8ddd-1b03-427b-9def-ca5398acb0e8",
+  "featureSlug": "slice6-retry-test",
+  "taskId": "fail-all-tiers",
+  "roleId": "default",
+  "model": "pending",
+  "provider": "pending",
+  "startedAt": "2026-02-28T22:22:49.450Z",
+  "status": "completed",
+  "completedAt": "2026-02-28T22:22:49.464Z"
+}

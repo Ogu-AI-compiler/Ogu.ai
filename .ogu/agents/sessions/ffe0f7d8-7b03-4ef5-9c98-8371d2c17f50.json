@@ -1,0 +1,11 @@
+{
+  "sessionId": "ffe0f7d8-7b03-4ef5-9c98-8371d2c17f50",
+  "roleId": "backend-dev",
+  "featureSlug": "test-wave",
+  "taskId": "write-endpoints",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T22:54:52.470Z",
+  "lastActivityAt": "2026-02-28T22:54:52.470Z",
+  "endedAt": "2026-02-28T22:54:52.471Z"
+}

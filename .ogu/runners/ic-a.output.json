@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "taskId": "ic-a",
+  "featureSlug": "incr-compile-test",
+  "status": "success",
+  "files": [
+    {
+      "path": "src/incr-test/a.mjs",
+      "action": "created",
+      "linesAdded": 4,
+      "linesRemoved": 0
+    }
+  ],
+  "tokensUsed": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "cost": 0,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 91317,
+    "isolationLevel": "L0",
+    "durationMs": 2
+  },
+  "startedAt": "2026-02-28T23:22:30.395Z",
+  "completedAt": "2026-02-28T23:22:30.397Z",
+  "idempotencyKey": "ic-a-1772320950357"
+}

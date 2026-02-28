@@ -1,0 +1,1 @@
+../lib-generic/report-generator.mjs

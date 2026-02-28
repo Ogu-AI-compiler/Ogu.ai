@@ -35,6 +35,7 @@ const ERRORS = {
   OGU0603: { gate: "06-design", severity: "error", message: "Too many border-radius values: found {n}, max {max}" },
   OGU0604: { gate: "06-design", severity: "error", message: "Spacing token violation: {element} has {actual}px, nearest token {expected}px (tolerance ±2px)" },
   OGU0605: { gate: "06-design", severity: "error", message: "Inline style forbidden: {file}:{line} — {property}" },
+  OGU0606: { gate: "06-runtime", severity: "error", message: "Strict mode: {detail}" },
 
   // 07 — Brand
   OGU0701: { gate: "07-brand", severity: "warn", message: "Brand color mismatch: {token} expected {expected}, found {actual}" },

@@ -1,0 +1,52 @@
+
+organization:
+  name: AgenticTechCo
+  version: 1.0
+
+roles:
+
+  - id: ceo
+    authority: strategic
+    canOverrideBudget: true
+
+  - id: cto
+    owns: ["architecture/**"]
+    approves: ["cross_boundary_change"]
+
+  - id: ciso
+    owns: ["auth/**", "security/**"]
+    canBlockMerge: true
+    riskTier: critical
+
+  - id: frontend_architect
+    owns: ["apps/web/**"]
+    approves: ["frontend_builder"]
+
+  - id: backend_architect
+    owns: ["services/api/**", "db/**"]
+    approves: ["backend_builder"]
+
+  - id: frontend_builder
+    owns: ["apps/web/**"]
+    riskTier: medium
+    defaultModel: balanced
+    requiresApprovalFrom: ["frontend_architect"]
+
+  - id: backend_builder
+    owns: ["services/api/**", "db/**"]
+    riskTier: high
+    defaultModel: strong
+    requiresApprovalFrom: ["backend_architect"]
+
+  - id: qa_engineer
+    owns: ["tests/**"]
+    canBlockMerge: true
+
+  - id: devops_engineer
+    owns: ["infra/**", "docker/**", ".github/**"]
+
+  - id: performance_engineer
+    owns: ["perf/**"]
+
+  - id: documentation_engineer
+    owns: ["docs/**"]

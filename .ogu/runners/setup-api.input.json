@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "taskId": "setup-api",
+  "featureSlug": "test-wave",
+  "taskName": "Setup API framework",
+  "agent": {
+    "roleId": "backend-dev",
+    "sessionId": "0a2a959e-d2ae-4026-a7c0-7edd295a947e",
+    "capabilities": [
+      "code_generation",
+      "testing",
+      "documentation"
+    ]
+  },
+  "prompt": "Create API boilerplate",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6-20250514",
+    "tier": "standard",
+    "reason": "Best match for role \"backend-dev\"",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 100000,
+    "maxCost": 0.3,
+    "remainingDaily": 49.489995,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "blockedPaths": [
+      ".env",
+      ".ogu/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "internal",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:22:53.948Z",
+  "idempotencyKey": "setup-api-1772320973948"
+}

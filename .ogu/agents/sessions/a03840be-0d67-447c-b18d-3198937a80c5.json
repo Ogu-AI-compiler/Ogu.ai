@@ -1,0 +1,11 @@
+{
+  "sessionId": "a03840be-0d67-447c-b18d-3198937a80c5",
+  "roleId": "backend-dev",
+  "featureSlug": "test-wave",
+  "taskId": "setup-api",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T22:32:47.186Z",
+  "lastActivityAt": "2026-02-28T22:32:47.186Z",
+  "endedAt": "2026-02-28T22:32:47.194Z"
+}

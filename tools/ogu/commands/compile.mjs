@@ -1,5 +1,5 @@
 // ogu compile — Single compilation entry point.
-// Usage: ogu compile <slug> [--fix] [--gate N] [--verbose]
+// Usage: ogu compile <slug> [--fix] [--gate N] [--verbose] [--strict]
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -9,6 +9,7 @@ import { loadIR, scanPreExisting } from "./lib/ir-registry.mjs";
 import { normalizeIR, normalizeRouteForConflict } from "./lib/normalize-ir.mjs";
 import { verifyOutput } from "./lib/drift-verifiers.mjs";
 import { oguError, formatErrors, hasErrors } from "./lib/errors.mjs";
+import { emitAudit } from "./lib/audit-emitter.mjs";
 
 const VERSION = "1.0.0";
 const SOURCE_EXTS = /\.(ts|tsx|js|jsx|mjs|cjs)$/;
@@ -18,11 +19,12 @@ export async function compile() {
   const args = process.argv.slice(3);
   const slug = args.find((a) => !a.startsWith("--"));
   const verbose = args.includes("--verbose");
+  const strict = args.includes("--strict");
   const maxGate = parseFlag(args, "--gate");
   const fix = args.includes("--fix");
 
   if (!slug) {
-    console.error("Usage: ogu compile <slug> [--fix] [--gate N] [--verbose]");
+    console.error("Usage: ogu compile <slug> [--fix] [--gate N] [--verbose] [--strict]");
     return 1;
   }
 
@@ -38,6 +40,10 @@ export async function compile() {
 
   const allErrors = [];
   let aborted = false;
+  const compileContext = { slug };
+  const compileStartMs = Date.now();
+
+  emitAudit("compile.started", { featureSlug: slug, strict, maxGate, fix });
 
   // ─── Phase 1: IR Load ───
   const phase1 = await runPhase("Phase 1: IR Load", verbose, () => {
@@ -61,7 +67,7 @@ export async function compile() {
     }
 
     return { ok: true, summary: `${taskCount} tasks, ${outputCount} outputs` };
-  });
+  }, compileContext);
 
   if (phase1.aborted) return 2;
   if (shouldStop(1, maxGate)) return printSummary(slug, allErrors);
@@ -128,7 +134,7 @@ export async function compile() {
 
     const ok = hashChainValid;
     return { ok, summary: `${chainDetail}, ${coveredCount}/${specHeadings.length} sections covered` };
-  });
+  }, compileContext);
 
   if (shouldStop(2, maxGate)) return printSummary(slug, allErrors);
 
@@ -174,7 +180,7 @@ export async function compile() {
       ok: allErrors.filter((e) => ["OGU0302", "OGU0303"].includes(e.code)).length === 0,
       summary: `all inputs resolved, ${duplicateCount} duplicate(s)`,
     };
-  });
+  }, compileContext);
 
   if (shouldStop(3, maxGate)) return printSummary(slug, allErrors);
 
@@ -229,7 +235,7 @@ export async function compile() {
       ok: todoCount === 0 && (outputsPresent === outputsTotal || !ir?.hasIR()),
       summary,
     };
-  });
+  }, compileContext);
 
   if (shouldStop(4, maxGate)) return printSummary(slug, allErrors);
 
@@ -239,6 +245,10 @@ export async function compile() {
 
   const phase5 = await runPhase("Phase 5: Design Verification", verbose, () => {
     if (!hasDesign) {
+      if (strict) {
+        allErrors.push(oguError("OGU0601", { path: `docs/vault/04_Features/${slug}/DESIGN.md` }));
+        return { ok: false, summary: "DESIGN.md required in strict mode" };
+      }
       return { ok: true, summary: "skipped (no DESIGN.md)", skipped: true };
     }
 
@@ -261,7 +271,7 @@ export async function compile() {
       ok: inlineViolations.length === 0,
       summary: `${designRules.length} rules, ${inlineViolations.length} violations`,
     };
-  });
+  }, compileContext);
 
   if (shouldStop(5, maxGate)) return printSummary(slug, allErrors);
 
@@ -281,24 +291,46 @@ export async function compile() {
     }
 
     if (!appRunning) {
+      if (strict) {
+        allErrors.push(oguError("OGU0606", { detail: "app not running on port 3000 or 5173" }));
+        return { ok: false, summary: "FAILED — app not running (strict mode)" };
+      }
       return { ok: true, summary: "skipped (app not running)", skipped: true };
     }
 
     return { ok: true, summary: "app running (detailed checks require gates)" };
-  });
+  }, compileContext);
 
   // ─── Phase 7: Summary ───
+  // In strict mode, promote warnings to errors
+  if (strict) {
+    for (const e of allErrors) {
+      if (e.severity === "warn") e.severity = "error";
+    }
+  }
+
+  const errorCount = allErrors.filter((e) => e.severity === "error").length;
+  const compileDurationMs = Date.now() - compileStartMs;
+
+  emitAudit(errorCount === 0 ? "compile.passed" : "compile.failed", {
+    featureSlug: slug,
+    errors: errorCount,
+    warnings: allErrors.filter((e) => e.severity === "warn").length,
+    durationMs: compileDurationMs,
+  });
+
   return printSummary(slug, allErrors);
 }
 
 // ─── Helpers ───
 
-async function runPhase(name, verbose, fn) {
+async function runPhase(name, verbose, fn, context = {}) {
   const paddedName = name.padEnd(30, " ");
+  const startMs = Date.now();
   try {
     const result = await fn();
+    const durationMs = Date.now() - startMs;
     const icon = result.skipped ? "\u2298" : result.ok ? "\u2714" : "\u2716";
-    const errCount = result.ok ? "" : ` ${result.errors || ""} `;
 
     if (result.ok || result.skipped) {
       console.log(`${paddedName} ${icon} (${result.summary})`);
@@ -306,13 +338,29 @@ async function runPhase(name, verbose, fn) {
       console.log(`${paddedName} ${icon} ${result.summary}`);
     }
 
-    if (verbose && !result.ok) {
-      // Detailed output handled by caller
+    // Emit audit event
+    if (!result.skipped) {
+      emitAudit(result.ok ? "gate.passed" : "gate.failed", {
+        gate: name,
+        featureSlug: context.slug,
+        ok: result.ok,
+        summary: result.summary,
+        durationMs,
+      });
     }
 
     return result;
   } catch (err) {
+    const durationMs = Date.now() - startMs;
     console.log(`${paddedName} \u2716 ABORTED: ${err.message}`);
+    emitAudit("gate.failed", {
+      gate: name,
+      featureSlug: context.slug,
+      ok: false,
+      summary: err.message,
+      durationMs,
+      aborted: true,
+    });
     return { ok: false, aborted: true, summary: err.message };
   }
 }

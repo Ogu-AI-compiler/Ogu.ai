@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "taskId": "ic-a",
+  "featureSlug": "incr-compile-test",
+  "taskName": "ic-a",
+  "agent": {
+    "roleId": "backend-dev",
+    "sessionId": "73e7e092-f1d1-41b4-be8d-1081fc8f07d4",
+    "capabilities": [
+      "code_generation",
+      "testing",
+      "documentation"
+    ]
+  },
+  "prompt": "Execute task \"ic-a\" for feature \"incr-compile-test\".",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5-20251001",
+    "tier": "fast",
+    "reason": "Default routing from Kadima scheduler",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 100000,
+    "maxCost": 10,
+    "remainingDaily": 50,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "blockedPaths": [],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "none",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "server/**",
+      "api/**",
+      "lib/**",
+      "tests/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:22:30.357Z",
+  "idempotencyKey": "ic-a-1772320950357",
+  "taskSpec": {
+    "name": "Create helper A",
+    "description": "Create src/incr-test/a.mjs",
+    "output": {
+      "files": [
+        {
+          "path": "src/incr-test/a.mjs",
+          "action": "create",
+          "content": "export function helperA() {\n  return 'A';\n}\n"
+        }
+      ]
+    }
+  }
+}

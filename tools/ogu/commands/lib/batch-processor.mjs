@@ -1,0 +1,1 @@
+../lib-generic/batch-processor.mjs

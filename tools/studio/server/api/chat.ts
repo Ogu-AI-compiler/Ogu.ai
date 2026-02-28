@@ -3,6 +3,48 @@ import { spawn } from "child_process";
 import { streamSSE } from "hono/streaming";
 import { buildSystemPrompt, getStateSummary } from "./pipeline.js";
 import { guardPhase, detectCurrentPhase, getActiveSlug } from "./phase-guard.js";
+import { routeChat, recordChatSpend, computeCost, getBudgetStatus, type RoutingDecision } from "./model-bridge.js";
+import { existsSync, readFileSync, readdirSync, statSync, appendFileSync, mkdirSync } from "fs";
+import { join } from "path";
+
+/** Emit a lightweight audit event for chat activity. */
+function emitChatAudit(root: string, type: string, data: Record<string, unknown>) {
+  try {
+    const auditDir = join(root, ".ogu", "audit");
+    if (!existsSync(auditDir)) mkdirSync(auditDir, { recursive: true });
+    const entry = { type, timestamp: new Date().toISOString(), data, source: "studio-chat" };
+    appendFileSync(join(auditDir, "current.jsonl"), JSON.stringify(entry) + "\n");
+  } catch { /* audit is best-effort */ }
+}
+
+/** Build a conversation summary from stored session lines for context recovery */
+function buildSessionContext(root: string, targetSessionId?: string): string {
+  const sessionsFile = join(root, ".ogu", "studio-sessions.json");
+  if (!existsSync(sessionsFile)) return "";
+  try {
+    const data = JSON.parse(readFileSync(sessionsFile, "utf-8"));
+    const sessions = data.sessions || [];
+    // Find the session that matches the stale claudeSessionId
+    const session = targetSessionId
+      ? sessions.find((s: any) => s.claudeSessionId === targetSessionId)
+      : sessions[sessions.length - 1];
+    if (!session?.lines?.length) return "";
+
+    // Extract user prompts and assistant replies (skip tool/meta/status lines)
+    const relevant = session.lines
+      .filter((l: any) => l.type === "prompt" || l.type === "reply")
+      .slice(-20); // Last 20 exchanges max
+    if (relevant.length === 0) return "";
+
+    const summary = relevant
+      .map((l: any) => l.type === "prompt" ? `User: ${l.text.replace(/^>\s*/, "")}` : `Ogu: ${l.text}`)
+      .join("\n");
+
+    return `\n\n[PREVIOUS CONVERSATION CONTEXT — session expired, continuing seamlessly]\nHere is what was discussed in the previous session. Continue naturally from this context:\n\n${summary}\n\n[END OF PREVIOUS CONTEXT]\n`;
+  } catch {
+    return "";
+  }
+}
 
 export function createChatRouter() {
   const chat = new Hono();
@@ -247,8 +289,9 @@ The user said: ${prompt}`;
       const systemPrompt = buildSystemPrompt(root);
       args.push("--system-prompt", systemPrompt, "-p", prompt);
     }
-    const validModels = ["sonnet", "opus", "haiku"];
-    const selectedModel = model && validModels.includes(model) ? model : "sonnet";
+    // ── Model routing via model-bridge ──
+    const routing = routeChat(root, model, phase);
+    const selectedModel = routing.model;
     args.push("--output-format", "stream-json", "--verbose", "--model", selectedModel, "--max-turns", String(maxTurns));
     // Prevent loading project-level .claude/settings.json — only load user-level global settings.
     // Project CLAUDE.md files contain instructions for other AI tools, not for Ogu.
@@ -256,6 +299,9 @@ The user said: ${prompt}`;
     for (const tool of baseTools) {
       args.push("--allowedTools", tool);
     }
+
+    // Emit chat.started audit event
+    emitChatAudit(root, "chat.started", { phase, model: selectedModel, sessionId: sessionId || "new" });
 
     return streamSSE(c, async (stream) => {
       const env = { ...process.env };
@@ -272,8 +318,23 @@ The user said: ${prompt}`;
       let capturedSessionId = "";
       let capturedModel = "";
       let usedWriteTool = false;
+      let totalInputTokens = 0;
+      let totalOutputTokens = 0;
 
       let resumeFailed = false;
+
+      // Emit routing decision to client
+      await stream.writeSSE({
+        data: JSON.stringify({
+          type: "routing",
+          model: routing.model,
+          provider: routing.provider,
+          reason: routing.reason,
+          tier: routing.tier,
+          budget: getBudgetStatus(root),
+        }),
+        event: "routing",
+      });
 
       const processLine = async (line: string) => {
         if (!line.trim()) return;
@@ -306,6 +367,12 @@ The user said: ${prompt}`;
               data: JSON.stringify({ type: "model_info", model: capturedModel }),
               event: "model_info",
             });
+          }
+
+          // Track token usage from Claude result events
+          if (event.type === "result" && event.usage) {
+            totalInputTokens += event.usage.input_tokens || 0;
+            totalOutputTokens += event.usage.output_tokens || 0;
           }
 
           // Track if Claude used file-writing tools
@@ -353,16 +420,21 @@ The user said: ${prompt}`;
         child.on("close", async (code) => {
           if (buffer.trim()) await processLine(buffer);
 
-          // ── Resume failed — retry as new conversation ──
+          // ── Resume failed — retry as new conversation with context recovery ──
           if (resumeFailed) {
             await stream.writeSSE({
-              data: JSON.stringify({ type: "status", text: "Session expired, starting fresh..." }),
-              event: "status",
+              data: JSON.stringify({ type: "session_recover" }),
+              event: "session_recover",
             });
-            // Rebuild args without --resume
+            // Build context from stored session history
+            const prevContext = buildSessionContext(root, sessionId);
+            // Rebuild args without --resume, inject previous conversation context
             const freshArgs: string[] = [];
             const systemPrompt = buildSystemPrompt(root);
-            freshArgs.push("--system-prompt", systemPrompt, "-p", prompt);
+            const freshPrompt = prevContext
+              ? `${prompt}${prevContext}`
+              : prompt;
+            freshArgs.push("--system-prompt", systemPrompt, "-p", freshPrompt);
             freshArgs.push("--output-format", "stream-json", "--verbose", "--model", selectedModel, "--max-turns", String(maxTurns));
             freshArgs.push("--setting-sources", "user");
             for (const t of baseTools) freshArgs.push("--allowedTools", t);
@@ -398,7 +470,18 @@ The user said: ${prompt}`;
           // If Claude used Write/Edit tools but the phase didn't advance, warn the user.
           if (usedWriteTool && (code ?? 1) === 0 && ["discovery", "feature", "architect"].includes(phase)) {
             try {
-              const postSlug = getActiveSlug(root);
+              // Try active slug first; fall back to most recently modified feature dir
+              let postSlug = getActiveSlug(root);
+              if (!postSlug) {
+                const featuresDir = join(root, "docs/vault/04_Features");
+                if (existsSync(featuresDir)) {
+                  const entries = readdirSync(featuresDir, { withFileTypes: true })
+                    .filter(e => e.isDirectory())
+                    .map(e => ({ name: e.name, mtime: statSync(join(featuresDir, e.name)).mtimeMs }))
+                    .sort((a, b) => b.mtime - a.mtime);
+                  postSlug = entries[0]?.name || null;
+                }
+              }
               const postPhase = detectCurrentPhase(root, postSlug);
               if (postPhase === phase) {
                 await stream.writeSSE({
@@ -412,6 +495,42 @@ The user said: ${prompt}`;
               }
             } catch { /* never block the done event */ }
           }
+
+          // ── Record token spend to budget tracker ──
+          if (totalInputTokens > 0 || totalOutputTokens > 0) {
+            try {
+              const cost = computeCost(selectedModel, totalInputTokens, totalOutputTokens);
+              recordChatSpend(root, {
+                timestamp: new Date().toISOString(),
+                model: selectedModel,
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens,
+                cost,
+                sessionId: capturedSessionId,
+                phase,
+              });
+              await stream.writeSSE({
+                data: JSON.stringify({
+                  type: "budget_update",
+                  inputTokens: totalInputTokens,
+                  outputTokens: totalOutputTokens,
+                  cost,
+                  budget: getBudgetStatus(root),
+                }),
+                event: "budget_update",
+              });
+            } catch { /* budget tracking is best-effort */ }
+          }
+
+          // Emit chat.completed audit event
+          emitChatAudit(root, "chat.completed", {
+            sessionId: capturedSessionId,
+            model: selectedModel,
+            inputTokens: totalInputTokens,
+            outputTokens: totalOutputTokens,
+            exitCode: code ?? 1,
+            phase,
+          });
 
           await stream.writeSSE({
             data: JSON.stringify({ type: "done", exitCode: code ?? 1, sessionId: capturedSessionId }),

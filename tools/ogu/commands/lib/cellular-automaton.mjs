@@ -1,0 +1,1 @@
+../lib-generic/cellular-automaton.mjs

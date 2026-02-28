@@ -1,0 +1,11 @@
+{
+  "sessionId": "28988e4f-c1b1-4fca-833a-b9f4cf6c66e6",
+  "featureSlug": "slice7-multi-agent",
+  "taskId": "review-auth-code",
+  "roleId": "reviewer",
+  "model": "pending",
+  "provider": "pending",
+  "startedAt": "2026-02-28T23:23:26.887Z",
+  "status": "completed",
+  "completedAt": "2026-02-28T23:23:26.907Z"
+}

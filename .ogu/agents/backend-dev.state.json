@@ -1,0 +1,14 @@
+{
+  "roleId": "backend-dev",
+  "tokensUsed": 2271,
+  "tokensUsedToday": 2271,
+  "costUsed": 0.009213,
+  "costToday": 0.009213,
+  "tasksCompleted": 20,
+  "tasksFailed": 0,
+  "escalations": 0,
+  "lastActiveAt": "2026-02-28T23:22:53.971Z",
+  "currentTask": null,
+  "history": [],
+  "lastAction": "write-endpoints"
+}

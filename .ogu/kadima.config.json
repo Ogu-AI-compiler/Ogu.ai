@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "loops": {
+    "scheduler": {
+      "intervalMs": 1000,
+      "enabled": true
+    },
+    "stateMachine": {
+      "intervalMs": 1000,
+      "enabled": true
+    }
+  },
+  "api": {
+    "host": "127.0.0.1",
+    "port": 4200,
+    "metricsPort": 4201
+  },
+  "runners": {
+    "maxConcurrent": 4,
+    "spawnMode": "local",
+    "timeoutMs": 30000
+  }
+}

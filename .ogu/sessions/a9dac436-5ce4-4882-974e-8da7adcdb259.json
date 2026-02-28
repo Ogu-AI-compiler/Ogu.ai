@@ -1,0 +1,11 @@
+{
+  "sessionId": "a9dac436-5ce4-4882-974e-8da7adcdb259",
+  "featureSlug": "slice6-retry-test",
+  "taskId": "retry-task-001",
+  "roleId": "default",
+  "model": "pending",
+  "provider": "pending",
+  "startedAt": "2026-02-28T23:13:54.545Z",
+  "status": "completed",
+  "completedAt": "2026-02-28T23:13:54.558Z"
+}

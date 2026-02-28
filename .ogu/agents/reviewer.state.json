@@ -1,0 +1,13 @@
+{
+  "roleId": "reviewer",
+  "tokensUsed": 0,
+  "tokensUsedToday": 0,
+  "costUsed": 0,
+  "costToday": 0,
+  "tasksCompleted": 0,
+  "tasksFailed": 0,
+  "escalations": 0,
+  "lastActiveAt": "2026-02-28T23:23:27.343Z",
+  "currentTask": null,
+  "history": []
+}

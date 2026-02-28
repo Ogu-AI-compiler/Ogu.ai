@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "taskId": "sse-task-2",
+  "featureSlug": "sse-test-feature",
+  "status": "success",
+  "files": [],
+  "tokensUsed": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "cost": 0,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 90768,
+    "isolationLevel": "L0",
+    "durationMs": 0
+  },
+  "startedAt": "2026-02-28T23:21:57.239Z",
+  "completedAt": "2026-02-28T23:21:57.239Z",
+  "idempotencyKey": "sse-task-2-1772320917239"
+}

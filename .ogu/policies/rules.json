@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "require-approval-critical",
+      "name": "Require approval for critical risk",
+      "enabled": true,
+      "priority": 100,
+      "when": {
+        "field": "task.riskTier",
+        "op": "eq",
+        "value": "critical"
+      },
+      "then": [
+        {
+          "effect": "requireApprovals",
+          "params": {
+            "count": 1,
+            "fromRoles": [
+              "tech-lead"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "deny-production-direct",
+      "name": "Deny direct production changes",
+      "enabled": true,
+      "priority": 200,
+      "when": {
+        "field": "task.touches",
+        "op": "matches_any",
+        "value": [
+          "production/**",
+          "deploy/**"
+        ]
+      },
+      "then": [
+        {
+          "effect": "deny",
+          "params": {
+            "reason": "Direct production changes are not allowed"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cross-boundary-alert",
+      "name": "Alert on cross-boundary access",
+      "enabled": true,
+      "priority": 50,
+      "when": {
+        "field": "task.touches",
+        "op": "matches_any",
+        "value": [
+          ".env*",
+          ".ogu/audit/**",
+          "secrets/**"
+        ]
+      },
+      "then": [
+        {
+          "effect": "requireApprovals",
+          "params": {
+            "count": 1,
+            "fromRoles": [
+              "security"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

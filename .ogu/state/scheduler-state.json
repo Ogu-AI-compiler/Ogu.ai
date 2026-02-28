@@ -1,0 +1,360 @@
+{
+  "version": 2,
+  "queue": [
+    {
+      "taskId": "t2",
+      "status": "dispatch_failed",
+      "priority": 50,
+      "dispatchedAt": "2026-02-28T16:23:45.740Z",
+      "error": "[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"featureSlug\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+    },
+    {
+      "taskId": "t3",
+      "status": "dispatched",
+      "priority": 70
+    },
+    {
+      "taskId": "sse-task-1",
+      "featureSlug": "sse-test-feature",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:21:53.116Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:21:53.229Z",
+      "dispatchedAt": "2026-02-28T23:21:53.230Z",
+      "completedAt": "2026-02-28T23:21:53.232Z"
+    },
+    {
+      "taskId": "sse-task-2",
+      "featureSlug": "sse-test-feature",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:21:57.116Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:21:57.238Z",
+      "dispatchedAt": "2026-02-28T23:21:57.239Z",
+      "completedAt": "2026-02-28T23:21:57.240Z"
+    },
+    {
+      "taskId": "sse-task-3",
+      "featureSlug": "sse-test-feature",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:22:04.119Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:22:04.251Z",
+      "dispatchedAt": "2026-02-28T23:22:04.252Z",
+      "completedAt": "2026-02-28T23:22:04.252Z"
+    },
+    {
+      "taskId": "ic-a",
+      "featureSlug": "incr-compile-test",
+      "status": "completed",
+      "priority": 50,
+      "estimatedCost": 0,
+      "resourceType": "model_call",
+      "blockedBy": [],
+      "enqueuedAt": "2026-02-28T23:22:30.280Z",
+      "promotions": 0,
+      "teamId": null,
+      "taskSpec": {
+        "name": "Create helper A",
+        "description": "Create src/incr-test/a.mjs",
+        "output": {
+          "files": [
+            {
+              "path": "src/incr-test/a.mjs",
+              "action": "create",
+              "content": "export function helperA() {\n  return 'A';\n}\n"
+            }
+          ]
+        }
+      },
+      "scheduledAt": "2026-02-28T23:22:30.356Z",
+      "dispatchedAt": "2026-02-28T23:22:30.357Z",
+      "completedAt": "2026-02-28T23:22:30.401Z"
+    },
+    {
+      "taskId": "ic-b",
+      "featureSlug": "incr-compile-test",
+      "status": "completed",
+      "priority": 50,
+      "estimatedCost": 0,
+      "resourceType": "model_call",
+      "blockedBy": [],
+      "enqueuedAt": "2026-02-28T23:22:30.282Z",
+      "promotions": 0,
+      "teamId": null,
+      "taskSpec": {
+        "name": "Create helper B",
+        "description": "Create src/incr-test/b.mjs",
+        "output": {
+          "files": [
+            {
+              "path": "src/incr-test/b.mjs",
+              "action": "create",
+              "content": "export function helperB() {\n  return 'B';\n}\n"
+            }
+          ]
+        }
+      },
+      "scheduledAt": "2026-02-28T23:22:30.848Z",
+      "dispatchedAt": "2026-02-28T23:22:30.849Z",
+      "completedAt": "2026-02-28T23:22:30.896Z"
+    },
+    {
+      "taskId": "ic-c",
+      "featureSlug": "incr-compile-test",
+      "status": "completed",
+      "priority": 50,
+      "estimatedCost": 0,
+      "resourceType": "model_call",
+      "blockedBy": [],
+      "enqueuedAt": "2026-02-28T23:22:30.283Z",
+      "promotions": 0,
+      "teamId": null,
+      "taskSpec": {
+        "name": "Create combined",
+        "description": "Create src/incr-test/combined.mjs",
+        "output": {
+          "files": [
+            {
+              "path": "src/incr-test/combined.mjs",
+              "action": "create",
+              "content": "import { helperA } from './a.mjs';\nimport { helperB } from './b.mjs';\nexport function combined() {\n  return helperA() + helperB();\n}\n"
+            }
+          ]
+        }
+      },
+      "scheduledAt": "2026-02-28T23:22:31.348Z",
+      "dispatchedAt": "2026-02-28T23:22:31.349Z",
+      "completedAt": "2026-02-28T23:22:31.390Z"
+    },
+    {
+      "taskId": "daemon-task-001",
+      "featureSlug": "slice3-daemon-test",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:23:03.036Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:23:03.579Z",
+      "dispatchedAt": "2026-02-28T23:23:03.580Z",
+      "completedAt": "2026-02-28T23:23:03.583Z"
+    },
+    {
+      "taskId": "daemon-task-002",
+      "featureSlug": "slice3-daemon-test",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:23:04.144Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:23:04.589Z",
+      "dispatchedAt": "2026-02-28T23:23:04.590Z",
+      "completedAt": "2026-02-28T23:23:04.591Z"
+    },
+    {
+      "taskId": "daemon-task-003",
+      "featureSlug": "slice3-daemon-test",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:23:04.210Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:23:05.581Z",
+      "dispatchedAt": "2026-02-28T23:23:05.582Z",
+      "completedAt": "2026-02-28T23:23:05.583Z"
+    },
+    {
+      "taskId": "par-A",
+      "featureSlug": "slice4-parallel-test",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:23:14.151Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:23:14.388Z",
+      "dispatchedAt": "2026-02-28T23:23:14.389Z",
+      "completedAt": "2026-02-28T23:23:14.391Z"
+    },
+    {
+      "taskId": "par-B",
+      "featureSlug": "slice4-parallel-test",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:23:14.220Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:23:14.882Z",
+      "dispatchedAt": "2026-02-28T23:23:14.884Z",
+      "completedAt": "2026-02-28T23:23:14.886Z"
+    },
+    {
+      "taskId": "par-C",
+      "featureSlug": "slice4-parallel-test",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:23:14.289Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:23:15.383Z",
+      "dispatchedAt": "2026-02-28T23:23:15.383Z",
+      "completedAt": "2026-02-28T23:23:15.384Z"
+    },
+    {
+      "taskId": "par-D",
+      "featureSlug": "slice4-parallel-test",
+      "status": "completed",
+      "dryRun": true,
+      "enqueuedAt": "2026-02-28T23:23:14.357Z",
+      "blockedBy": [],
+      "scheduledAt": "2026-02-28T23:23:15.885Z",
+      "dispatchedAt": "2026-02-28T23:23:15.886Z",
+      "completedAt": "2026-02-28T23:23:15.887Z"
+    },
+    {
+      "taskId": "greeting-task-1",
+      "featureSlug": "greeting-module",
+      "status": "completed",
+      "priority": 50,
+      "estimatedCost": 0,
+      "resourceType": "model_call",
+      "blockedBy": [],
+      "enqueuedAt": "2026-02-28T23:23:20.828Z",
+      "promotions": 0,
+      "teamId": null,
+      "taskSpec": {
+        "name": "Create greeting index",
+        "description": "Create src/greeting/index.mjs that exports greet()",
+        "output": {
+          "files": [
+            {
+              "path": "src/greeting/index.mjs",
+              "action": "create",
+              "content": "export { greet } from './format.mjs';\nexport { main } from './main.mjs';\n"
+            }
+          ]
+        }
+      },
+      "scheduledAt": "2026-02-28T23:23:20.974Z",
+      "dispatchedAt": "2026-02-28T23:23:20.975Z",
+      "completedAt": "2026-02-28T23:23:21.023Z"
+    },
+    {
+      "taskId": "greeting-task-2",
+      "featureSlug": "greeting-module",
+      "status": "completed",
+      "priority": 50,
+      "estimatedCost": 0,
+      "resourceType": "model_call",
+      "blockedBy": [],
+      "enqueuedAt": "2026-02-28T23:23:20.829Z",
+      "promotions": 0,
+      "teamId": null,
+      "taskSpec": {
+        "name": "Create greeting formatter",
+        "description": "Create src/greeting/format.mjs with greet() function",
+        "output": {
+          "files": [
+            {
+              "path": "src/greeting/format.mjs",
+              "action": "create",
+              "content": "export function greet(name) {\n  return `Hello, ${name}!`;\n}\n"
+            }
+          ]
+        }
+      },
+      "scheduledAt": "2026-02-28T23:23:21.464Z",
+      "dispatchedAt": "2026-02-28T23:23:21.465Z",
+      "completedAt": "2026-02-28T23:23:21.510Z"
+    },
+    {
+      "taskId": "greeting-task-3",
+      "featureSlug": "greeting-module",
+      "status": "completed",
+      "priority": 50,
+      "estimatedCost": 0,
+      "resourceType": "model_call",
+      "blockedBy": [],
+      "enqueuedAt": "2026-02-28T23:23:20.830Z",
+      "promotions": 0,
+      "teamId": null,
+      "taskSpec": {
+        "name": "Create greeting main",
+        "description": "Create src/greeting/main.mjs that ties it together",
+        "output": {
+          "files": [
+            {
+              "path": "src/greeting/main.mjs",
+              "action": "create",
+              "content": "import { greet } from './format.mjs';\n\nexport function main() {\n  console.log(greet('World'));\n}\n"
+            }
+          ]
+        }
+      },
+      "scheduledAt": "2026-02-28T23:23:21.967Z",
+      "dispatchedAt": "2026-02-28T23:23:21.968Z",
+      "completedAt": "2026-02-28T23:23:22.030Z"
+    },
+    {
+      "taskId": "ct-task-1",
+      "featureSlug": "compile-test-mod",
+      "status": "completed",
+      "priority": 50,
+      "estimatedCost": 0,
+      "resourceType": "model_call",
+      "blockedBy": [],
+      "enqueuedAt": "2026-02-28T23:23:30.321Z",
+      "promotions": 0,
+      "teamId": null,
+      "taskSpec": {
+        "name": "Create utils module",
+        "description": "Create src/compile-test/utils.mjs",
+        "output": {
+          "files": [
+            {
+              "path": "src/compile-test/utils.mjs",
+              "action": "create",
+              "content": "export function add(a, b) {\n  return a + b;\n}\n\nexport function multiply(a, b) {\n  return a * b;\n}\n"
+            }
+          ]
+        }
+      },
+      "scheduledAt": "2026-02-28T23:23:30.482Z",
+      "dispatchedAt": "2026-02-28T23:23:30.483Z",
+      "completedAt": "2026-02-28T23:23:30.532Z"
+    },
+    {
+      "taskId": "ct-task-2",
+      "featureSlug": "compile-test-mod",
+      "status": "completed",
+      "priority": 50,
+      "estimatedCost": 0,
+      "resourceType": "model_call",
+      "blockedBy": [],
+      "enqueuedAt": "2026-02-28T23:23:30.323Z",
+      "promotions": 0,
+      "teamId": null,
+      "taskSpec": {
+        "name": "Create main module",
+        "description": "Create src/compile-test/index.mjs",
+        "output": {
+          "files": [
+            {
+              "path": "src/compile-test/index.mjs",
+              "action": "create",
+              "content": "import { add, multiply } from './utils.mjs';\n\nexport function calculate(a, b) {\n  return { sum: add(a, b), product: multiply(a, b) };\n}\n"
+            }
+          ]
+        }
+      },
+      "scheduledAt": "2026-02-28T23:23:30.982Z",
+      "dispatchedAt": "2026-02-28T23:23:30.983Z",
+      "completedAt": "2026-02-28T23:23:31.035Z"
+    }
+  ],
+  "virtualClocks": {
+    "slice3-daemon-test": 18,
+    "slice4-parallel-test": 24,
+    "sse-test-feature": 9,
+    "incr-compile-test": 9,
+    "greeting-module": 9,
+    "compile-test-mod": 6
+  },
+  "updatedAt": "2026-02-28T23:23:31.035Z"
+}

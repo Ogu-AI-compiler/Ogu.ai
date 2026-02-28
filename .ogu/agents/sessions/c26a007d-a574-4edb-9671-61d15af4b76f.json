@@ -1,0 +1,11 @@
+{
+  "sessionId": "c26a007d-a574-4edb-9671-61d15af4b76f",
+  "roleId": "pm",
+  "featureSlug": "slice6-retry-test",
+  "taskId": "fail-all-tiers",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T22:14:12.001Z",
+  "lastActivityAt": "2026-02-28T22:14:12.001Z",
+  "endedAt": "2026-02-28T22:14:12.005Z"
+}

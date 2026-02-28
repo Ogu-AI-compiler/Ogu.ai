@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "taskId": "review-auth-code",
+  "featureSlug": "slice7-multi-agent",
+  "status": "success",
+  "files": [],
+  "tokensUsed": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "cost": 0,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 97175,
+    "isolationLevel": "L0",
+    "durationMs": 16
+  },
+  "startedAt": "2026-02-28T23:23:26.890Z",
+  "completedAt": "2026-02-28T23:23:26.906Z",
+  "idempotencyKey": "review-auth-code-1772321006904"
+}

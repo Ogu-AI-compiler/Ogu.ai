@@ -1,0 +1,1 @@
+../lib-generic/release-manager.mjs

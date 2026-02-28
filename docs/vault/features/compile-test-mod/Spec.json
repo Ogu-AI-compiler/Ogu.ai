@@ -1,0 +1,33 @@
+{
+  "featureSlug": "compile-test-mod",
+  "expectations": [
+    {
+      "type": "file-exists",
+      "path": "src/compile-test/utils.mjs"
+    },
+    {
+      "type": "file-exists",
+      "path": "src/compile-test/index.mjs"
+    },
+    {
+      "type": "export-exists",
+      "path": "src/compile-test/utils.mjs",
+      "export": "add"
+    },
+    {
+      "type": "export-exists",
+      "path": "src/compile-test/utils.mjs",
+      "export": "multiply"
+    },
+    {
+      "type": "export-exists",
+      "path": "src/compile-test/index.mjs",
+      "export": "calculate"
+    },
+    {
+      "type": "no-pattern",
+      "path": "src/compile-test/**",
+      "pattern": "TODO"
+    }
+  ]
+}

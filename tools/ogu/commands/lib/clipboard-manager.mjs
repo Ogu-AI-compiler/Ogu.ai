@@ -1,0 +1,1 @@
+../lib-generic/clipboard-manager.mjs

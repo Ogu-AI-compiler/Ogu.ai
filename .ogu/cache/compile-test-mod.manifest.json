@@ -1,0 +1,21 @@
+{
+  "featureSlug": "compile-test-mod",
+  "compiledAt": "2026-02-28T23:23:33.401Z",
+  "result": "PASS",
+  "tasks": {
+    "ct-task-1": {
+      "hash": "64c8d8874d6f3cda",
+      "compiledAt": "2026-02-28T23:23:33.401Z",
+      "files": [
+        "src/compile-test/utils.mjs"
+      ]
+    },
+    "ct-task-2": {
+      "hash": "49188d3fc2b2635e",
+      "compiledAt": "2026-02-28T23:23:33.401Z",
+      "files": [
+        "src/compile-test/index.mjs"
+      ]
+    }
+  }
+}

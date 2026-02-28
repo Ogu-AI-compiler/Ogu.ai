@@ -1,0 +1,1 @@
+../lib-generic/di-container.mjs

@@ -1,0 +1,11 @@
+{
+  "sessionId": "e27aca48-4f6e-458c-b4d0-2f43088f3e02",
+  "featureSlug": "llm-test-feature",
+  "taskId": "llm-task-1",
+  "roleId": "backend-dev",
+  "model": "pending",
+  "provider": "pending",
+  "startedAt": "2026-02-28T23:16:04.068Z",
+  "status": "completed",
+  "completedAt": "2026-02-28T23:16:04.093Z"
+}

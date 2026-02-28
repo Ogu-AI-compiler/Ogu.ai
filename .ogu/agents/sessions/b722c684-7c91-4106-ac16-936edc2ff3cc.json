@@ -1,0 +1,11 @@
+{
+  "sessionId": "b722c684-7c91-4106-ac16-936edc2ff3cc",
+  "roleId": "pm",
+  "featureSlug": "slice2-security-feature",
+  "taskId": "simple-refactor",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T22:28:06.030Z",
+  "lastActivityAt": "2026-02-28T22:28:06.030Z",
+  "endedAt": "2026-02-28T22:28:06.034Z"
+}

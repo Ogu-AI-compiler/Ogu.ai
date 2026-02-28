@@ -41,6 +41,54 @@ import { drift } from "./commands/drift.mjs";
 import { compile } from "./commands/compile.mjs";
 import { designShow } from "./commands/design-show.mjs";
 import { designPick } from "./commands/design-pick.mjs";
+import { orgInit, orgShow, orgValidate } from "./commands/org.mjs";
+import { featureState } from "./commands/feature-state.mjs";
+import { agentRun } from "./commands/agent-run.mjs";
+import { governanceCheck, approve, deny, escalate } from "./commands/governance.mjs";
+import { kadimaStart, kadimaStop, kadimaStatus, kadimaEnqueue } from "./commands/kadima.mjs";
+import { dagValidate } from "./commands/dag-validate.mjs";
+import { buildDispatch } from "./commands/build-dispatch.mjs";
+import { buildStatus } from "./commands/build-status.mjs";
+import { routeSelectCmd } from "./commands/route-select.mjs";
+import { budgetStatus, budgetCheck } from "./commands/budget-cmd.mjs";
+import { contextWrite, contextRead, contextList } from "./commands/context-store.mjs";
+import { sessionList } from "./commands/session-cmd.mjs";
+import { compileRun } from "./commands/compile-run.mjs";
+import { agentList, agentShow, agentCreate } from "./commands/agent-cmd.mjs";
+import { kadimaAllocate } from "./commands/kadima-allocate.mjs";
+import { agentStatus, agentStop, agentEscalate } from "./commands/agent-manage.mjs";
+import { auditShow, auditSearch, auditExport, auditReplay } from "./commands/audit-cmd.mjs";
+import { budgetRecord, budgetReport } from "./commands/budget-report.mjs";
+import { taskAllocate, taskAllocatePlan } from "./commands/task-allocate.mjs";
+import { artifactList, artifactGet } from "./commands/artifact-cmd.mjs";
+import { waveRun } from "./commands/wave-run.mjs";
+import { lockAcquire, lockRelease, lockList } from "./commands/lock-cmd.mjs";
+import { attestCreate, attestVerify } from "./commands/attest-cmd.mjs";
+import { recoverClassify, recoverStrategy, recoverRewind } from "./commands/recover-cmd.mjs";
+import { isolationResolve, isolationLevels } from "./commands/isolation-cmd.mjs";
+import { governanceDiffCheck } from "./commands/governance-diff.mjs";
+import { orgHealth } from "./commands/org-health.mjs";
+import { snapshotCreate, snapshotList, snapshotShow } from "./commands/snapshot-cmd.mjs";
+import { capabilityResolve, capabilityList } from "./commands/capability-cmd.mjs";
+import { overrideCreate, overrideList, overrideRevoke } from "./commands/override-cmd.mjs";
+import { companySnapshot } from "./commands/company-cmd.mjs";
+import { deterministicEnable, deterministicDisable, deterministicStatus, freezeCmd, thawCmd } from "./commands/deterministic-cmd.mjs";
+import { verifyUiCmd } from "./commands/verify-ui-cmd.mjs";
+import { chaosPlan, chaosRun, chaosList, chaosInject } from "./commands/chaos-cmd.mjs";
+import { performanceIndex, kadimaStandup } from "./commands/performance-cmd.mjs";
+import { modelProviders, modelStatus, modelRoute } from "./commands/model-cmd.mjs";
+import { budgetSet } from "./commands/budget-set.mjs";
+import { memorySearch, memoryList, memoryStore } from "./commands/memory-cmd.mjs";
+import { contractGenerate, contractList } from "./commands/contract-cmd.mjs";
+import { schedulerStatus, schedulerQueue, schedulerFairness, schedulerSimulate } from "./commands/scheduler-cmd.mjs";
+import { systemHalt, systemResume, systemHealth, circuitStatus, circuitReset, providerHealth, providerFailover } from "./commands/failure-cmd.mjs";
+import { metricsHealth, metricsKpis, metricsSla, metricsRegression, metricsExport } from "./commands/metrics-cmd.mjs";
+import { graphHash, graphVerify } from "./commands/graph-hash-cmd.mjs";
+import { policyCompile, policyList, policyFreeze, policyUnfreeze, policyVerify, policyVersion } from "./commands/policy-cmd.mjs";
+import { consistencyCheck, txList, txShow, txOrphaned, idempotencyClean } from "./commands/consistency-cmd.mjs";
+import { sandboxPolicy, sandboxCheck } from "./commands/sandbox-cmd.mjs";
+import { agentIdentity, agentRevoke, agentSessions, agentVerify } from "./commands/agent-identity-cmd.mjs";
+import { knowledgeIndex, knowledgeQuery } from "./commands/knowledge-cmd.mjs";
 
 const command = process.argv[2];
 
@@ -82,6 +130,127 @@ const commands = {
   compile,
   "design:show": designShow,
   "design:pick": designPick,
+  "org:init": orgInit,
+  "org:show": orgShow,
+  "org:validate": orgValidate,
+  "feature:state": featureState,
+  "agent:run": agentRun,
+  "governance:check": governanceCheck,
+  approve,
+  deny,
+  escalate,
+  "kadima:start": kadimaStart,
+  "kadima:stop": kadimaStop,
+  "kadima:status": kadimaStatus,
+  "kadima:enqueue": kadimaEnqueue,
+  "dag:validate": dagValidate,
+  "build:dispatch": buildDispatch,
+  "build:status": buildStatus,
+  "route:select": routeSelectCmd,
+  "budget:status": budgetStatus,
+  "budget:check": budgetCheck,
+  "context:write": contextWrite,
+  "context:read": contextRead,
+  "context:list": contextList,
+  "session:list": sessionList,
+  "compile:run": compileRun,
+  "agent:list": agentList,
+  "agent:show": agentShow,
+  "agent:create": agentCreate,
+  "kadima:allocate": kadimaAllocate,
+  "agent:status": agentStatus,
+  "agent:stop": agentStop,
+  "agent:escalate": agentEscalate,
+  "audit:show": auditShow,
+  "audit:search": auditSearch,
+  "audit:export": auditExport,
+  "audit:replay": auditReplay,
+  "budget:record": budgetRecord,
+  "budget:report": budgetReport,
+  "task:allocate": taskAllocate,
+  "task:allocate-plan": taskAllocatePlan,
+  "artifact:list": artifactList,
+  "artifact:get": artifactGet,
+  "wave:run": waveRun,
+  "lock:acquire": lockAcquire,
+  "lock:release": lockRelease,
+  "lock:list": lockList,
+  "attest:create": attestCreate,
+  "attest:verify": attestVerify,
+  "recover:classify": recoverClassify,
+  "recover:strategy": recoverStrategy,
+  "recover:rewind": recoverRewind,
+  "isolation:resolve": isolationResolve,
+  "isolation:levels": isolationLevels,
+  "governance:diff-check": governanceDiffCheck,
+  "org:health": orgHealth,
+  "snapshot:create": snapshotCreate,
+  "snapshot:list": snapshotList,
+  "snapshot:show": snapshotShow,
+  "capability:resolve": capabilityResolve,
+  "capability:list": capabilityList,
+  "override:create": overrideCreate,
+  "override:list": overrideList,
+  "override:revoke": overrideRevoke,
+  "company:snapshot": companySnapshot,
+  "deterministic:enable": deterministicEnable,
+  "deterministic:disable": deterministicDisable,
+  "deterministic:status": deterministicStatus,
+  freeze: freezeCmd,
+  thaw: thawCmd,
+  "chaos:plan": chaosPlan,
+  "chaos:run": chaosRun,
+  "chaos:list": chaosList,
+  "chaos:inject": chaosInject,
+  "verify-ui": verifyUiCmd,
+  "performance:index": performanceIndex,
+  "kadima:standup": kadimaStandup,
+  "model:route": modelRoute,
+  "model:providers": modelProviders,
+  "model:status": modelStatus,
+  "budget:set": budgetSet,
+  "memory:search": memorySearch,
+  "memory:list": memoryList,
+  "memory:store": memoryStore,
+  "contract:generate": contractGenerate,
+  "contract:list": contractList,
+  "scheduler:status": schedulerStatus,
+  "scheduler:queue": schedulerQueue,
+  "scheduler:fairness": schedulerFairness,
+  "scheduler:simulate": schedulerSimulate,
+  "system:halt": systemHalt,
+  "system:resume": systemResume,
+  "system:health": systemHealth,
+  "circuit:status": circuitStatus,
+  "circuit:reset": circuitReset,
+  "provider:health": providerHealth,
+  "provider:failover": providerFailover,
+  "metrics:health": metricsHealth,
+  "metrics:kpis": metricsKpis,
+  "metrics:sla": metricsSla,
+  "metrics:regression": metricsRegression,
+  "metrics:export": metricsExport,
+  "graph:hash": graphHash,
+  "graph:verify": graphVerify,
+  "policy:compile": policyCompile,
+  "policy:list": policyList,
+  "policy:freeze": policyFreeze,
+  "policy:unfreeze": policyUnfreeze,
+  "policy:verify": policyVerify,
+  "policy:version": policyVersion,
+  "consistency:check": consistencyCheck,
+  "tx:list": txList,
+  "tx:show": txShow,
+  "tx:orphaned": txOrphaned,
+  "idempotency:clean": idempotencyClean,
+  "sandbox:policy": sandboxPolicy,
+  "sandbox:check": sandboxCheck,
+  "agent:identity": agentIdentity,
+  "agent:revoke": agentRevoke,
+  "agent:sessions": agentSessions,
+  "agent:verify": agentVerify,
+  "knowledge:index": knowledgeIndex,
+  "knowledge:query": knowledgeQuery,
 };
 
 if (!command || !commands[command]) {

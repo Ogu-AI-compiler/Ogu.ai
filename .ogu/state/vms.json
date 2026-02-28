@@ -1,0 +1,37 @@
+{
+  "vms": {
+    "vm-06d96092-24c": {
+      "vmId": "vm-06d96092-24c",
+      "agentId": "backend-dev",
+      "taskId": "T1",
+      "featureSlug": "auth",
+      "workDir": "/Users/nisavitan/Desktop/AI Compiler/.ogu/state/vm-workdirs/vm-06d96092-24c",
+      "worktree": false,
+      "limits": {
+        "memoryLimitMB": 2048,
+        "cpuLimitPercent": 50,
+        "timeoutMs": 300000,
+        "allowedPaths": [],
+        "blockedPaths": [
+          ".env",
+          ".env.*",
+          "*.pem",
+          "*.key",
+          ".ogu/secrets"
+        ],
+        "networkAccess": false
+      },
+      "status": "destroyed",
+      "pid": null,
+      "createdAt": "2026-02-28T21:33:08.470Z",
+      "lastActivity": "2026-02-28T21:33:08.471Z",
+      "resourceUsage": {
+        "peakMemoryMB": 0,
+        "cpuTimeMs": 0,
+        "wallTimeMs": 0
+      },
+      "executionHistory": [],
+      "destroyedAt": "2026-02-28T21:33:08.473Z"
+    }
+  }
+}

@@ -1,12 +1,29 @@
-import { styled, XStack, YStack, Text } from "tamagui";
+import { useState } from "react";
+import { styled, XStack, YStack, Text, Separator } from "tamagui";
 import { useStore } from "@/lib/store";
 import { useCommand } from "@/hooks/useCommand";
 import { Icon, icons } from "@/lib/icons";
+import { DAGView } from "@/components/dag/DAGView";
+import { ArtifactsView } from "@/components/artifacts/ArtifactsView";
 
 const Page = styled(YStack, {
   flex: 1,
   padding: "$7",
   gap: "$6",
+  overflow: "scroll",
+  position: "relative" as any,
+});
+const TabBtn = styled(XStack, {
+  paddingHorizontal: "$3",
+  paddingVertical: "$2",
+  borderRadius: "$2",
+  cursor: "pointer",
+  variants: {
+    active: {
+      true: { backgroundColor: "rgba(108,92,231,0.2)" },
+      false: { backgroundColor: "rgba(255,255,255,0.04)", hoverStyle: { backgroundColor: "rgba(255,255,255,0.08)" } },
+    },
+  } as const,
 });
 
 const stages = [
@@ -65,7 +82,9 @@ const Connector = styled(YStack, {
   } as const,
 });
 
-export function PipelineView() {
+type Tab = "phases" | "dag" | "artifacts";
+
+function PhaseTimeline() {
   const features = useStore((s) => s.features);
   const activeFeature = useStore((s) => s.activeFeature);
   const cmd = useCommand();
@@ -82,14 +101,7 @@ export function PipelineView() {
   }
 
   return (
-    <Page>
-      <YStack gap="$2">
-        <Text fontSize="$7" fontWeight="700" color="$color" letterSpacing={-0.5}>Pipeline</Text>
-        <Text fontSize="$4" color="#b3b3b3">
-          {activeFeature ? `Active: ${activeFeature} (${currentPhase})` : "No active feature — run \"switch <slug>\" in chat"}
-        </Text>
-      </YStack>
-
+    <>
       <XStack alignItems="center" justifyContent="center" gap="$1" flexWrap="wrap" paddingVertical="$6">
         {stages.map((stage, i) => (
           <XStack key={stage.key} alignItems="center" gap="$1">
@@ -139,6 +151,50 @@ export function PipelineView() {
           ))}
         </YStack>
       )}
+    </>
+  );
+}
+
+export function PipelineView() {
+  const [tab, setTab] = useState<Tab>("phases");
+  const activeFeature = useStore((s) => s.activeFeature);
+  const features = useStore((s) => s.features);
+  const active = features.find((f) => f.slug === activeFeature);
+  const currentPhase = active?.phase || "idea";
+
+  return (
+    <Page>
+      <YStack gap="$2">
+        <Text fontSize="$7" fontWeight="700" color="$color" letterSpacing={-0.5}>Pipeline</Text>
+        <Text fontSize="$4" color="#b3b3b3">
+          {activeFeature ? `Active: ${activeFeature} (${currentPhase})` : 'No active feature — run "switch <slug>" in chat'}
+        </Text>
+      </YStack>
+
+      {/* Tabs */}
+      <XStack gap="$2">
+        <TabBtn active={tab === "phases"} onPress={() => setTab("phases")}>
+          <Text fontSize="$2" fontWeight="600" color={tab === "phases" ? "#a78bfa" : "$colorPress"}>
+            Phase Pipeline
+          </Text>
+        </TabBtn>
+        <TabBtn active={tab === "dag"} onPress={() => setTab("dag")}>
+          <Text fontSize="$2" fontWeight="600" color={tab === "dag" ? "#a78bfa" : "$colorPress"}>
+            Task DAG
+          </Text>
+        </TabBtn>
+        <TabBtn active={tab === "artifacts"} onPress={() => setTab("artifacts")}>
+          <Text fontSize="$2" fontWeight="600" color={tab === "artifacts" ? "#a78bfa" : "$colorPress"}>
+            Artifacts
+          </Text>
+        </TabBtn>
+      </XStack>
+
+      <Separator borderColor="rgba(255,255,255,0.08)" />
+
+      {tab === "phases" && <PhaseTimeline />}
+      {tab === "dag" && <DAGView />}
+      {tab === "artifacts" && <ArtifactsView />}
     </Page>
   );
 }

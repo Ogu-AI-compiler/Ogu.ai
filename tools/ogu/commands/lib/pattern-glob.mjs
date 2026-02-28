@@ -1,0 +1,1 @@
+../lib-generic/pattern-glob.mjs

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "taskId": "critical-task-1",
+  "featureSlug": "critical-feature",
+  "status": "success",
+  "files": [],
+  "tokensUsed": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "cost": 0,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 34848,
+    "isolationLevel": "L0",
+    "durationMs": 1
+  },
+  "startedAt": "2026-02-28T15:53:02.815Z",
+  "completedAt": "2026-02-28T15:53:02.816Z",
+  "idempotencyKey": "critical-task-1-1772293982767"
+}

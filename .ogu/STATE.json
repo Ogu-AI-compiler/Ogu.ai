@@ -1,8 +1,166 @@
 {
   "version": 1,
-  "current_task": null,
-  "last_context_build": "2026-02-22T22:34:04.652Z",
-  "last_repo_map_update": "2026-02-22T22:34:04.650Z",
-  "recent_adrs": [],
-  "notes": ""
+  "current_task": "final-e2e-test",
+  "last_context_build": "2026-02-28T23:22:41.678Z",
+  "last_repo_map_update": "2026-02-28T23:22:41.676Z",
+  "recent_adrs": [
+    "ADR_0094_e2e-test-decision.md",
+    "ADR_0095_e2e-test-decision.md",
+    "ADR_0096_e2e-test-decision.md",
+    "ADR_0097_e2e-test-decision.md",
+    "ADR_0098_e2e-test-decision.md",
+    "ADR_0099_e2e-test-decision.md",
+    "ADR_0100_e2e-test-decision.md",
+    "ADR_0101_e2e-test-decision.md",
+    "ADR_0102_e2e-test-decision.md",
+    "ADR_0103_e2e-test-decision.md"
+  ],
+  "notes": "",
+  "recent_scrs": [
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "SCR_001",
+      "feature": "drift-e2e-test",
+      "description": "Added performance requirements",
+      "date": "2026-02-28"
+    }
+  ],
+  "feature_history": [],
+  "switched_at": "2026-02-28T23:22:47.185Z",
+  "halted": false,
+  "frozen": false,
+  "haltRecord": {
+    "reason": "Integration test",
+    "actor": "test-runner",
+    "domain": null,
+    "haltedAt": "2026-02-28T15:52:55.361Z",
+    "resumedAt": "2026-02-28T15:53:02.065Z",
+    "resumedBy": "cto",
+    "approvalRecord": null
+  },
+  "deterministicMode": false,
+  "deterministicEnabledAt": "2026-02-28T16:02:16.842Z",
+  "deterministicActivatedBy": "cto",
+  "deterministicEntrySnapshot": "deterministic-entry-1772294536842",
+  "deterministicDisabledAt": "2026-02-28T16:02:24.332Z",
+  "deterministicExitSnapshot": "deterministic-exit-1772294544332",
+  "frozenAt": "2026-02-28T16:02:29.255Z",
+  "frozenBy": "cto",
+  "freezeSnapshot": "freeze-1772294549255",
+  "thawedAt": "2026-02-28T16:02:38.891Z",
+  "thawedBy": "cto",
+  "unfreezeSnapshot": "unfreeze-1772294558891"
 }

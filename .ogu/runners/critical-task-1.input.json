@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "taskId": "critical-task-1",
+  "featureSlug": "critical-feature",
+  "taskName": "critical-task-1",
+  "agent": {
+    "roleId": "pm",
+    "sessionId": "9b7fb9a2-06c3-432a-bb5e-d464c067b89d",
+    "capabilities": [
+      "documentation",
+      "review"
+    ]
+  },
+  "prompt": "Execute task \"critical-task-1\" for feature \"critical-feature\".",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5-20251001",
+    "tier": "fast",
+    "reason": "Default routing from Kadima scheduler",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 50000,
+    "maxCost": 10,
+    "remainingDaily": 50,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "docs/**"
+    ],
+    "blockedPaths": [],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "none",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "docs/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T15:53:02.767Z",
+  "idempotencyKey": "critical-task-1-1772293982767",
+  "taskSpec": {
+    "name": "Critical task needs resources NOW"
+  }
+}

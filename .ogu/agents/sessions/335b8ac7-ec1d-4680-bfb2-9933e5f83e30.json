@@ -1,0 +1,11 @@
+{
+  "sessionId": "335b8ac7-ec1d-4680-bfb2-9933e5f83e30",
+  "roleId": "test-dev",
+  "featureSlug": "dag-test",
+  "taskId": "dag-1",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T23:15:36.611Z",
+  "lastActivityAt": "2026-02-28T23:15:36.611Z",
+  "endedAt": "2026-02-28T23:15:36.612Z"
+}

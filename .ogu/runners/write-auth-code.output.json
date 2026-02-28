@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "taskId": "write-auth-code",
+  "featureSlug": "slice7-multi-agent",
+  "status": "success",
+  "files": [],
+  "tokensUsed": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "cost": 0,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 97174,
+    "isolationLevel": "L0",
+    "durationMs": 22
+  },
+  "startedAt": "2026-02-28T23:23:26.800Z",
+  "completedAt": "2026-02-28T23:23:26.823Z",
+  "idempotencyKey": "write-auth-code-1772321006820"
+}

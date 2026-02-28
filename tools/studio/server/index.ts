@@ -5,6 +5,8 @@ import { createApiRouter } from "./api/router.js";
 import { createExecRouter } from "./api/exec.js";
 import { createChatRouter } from "./api/chat.js";
 import { createBrandRouter } from "./api/brand.js";
+import { createKadimaProxy } from "./api/kadima-proxy.js";
+import { createOguApi } from "./api/ogu-api.js";
 import { setupWebSocket } from "./ws/server.js";
 import { resolve, join } from "path";
 import { existsSync, readFileSync } from "fs";
@@ -25,6 +27,8 @@ app.route("/api", createApiRouter());
 app.route("/api", createExecRouter());
 app.route("/api", createChatRouter());
 app.route("/api", createBrandRouter());
+app.route("/api/kadima", createKadimaProxy());
+app.route("/api/ogu", createOguApi());
 
 if (isDev) {
   console.log(`  Ogu Studio API server on http://127.0.0.1:${port}`);

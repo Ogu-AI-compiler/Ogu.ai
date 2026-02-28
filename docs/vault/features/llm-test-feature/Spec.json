@@ -1,0 +1,14 @@
+{
+  "featureSlug": "llm-test-feature",
+  "expectations": [
+    {
+      "type": "file-exists",
+      "path": "src/llm-test/greet.mjs"
+    },
+    {
+      "type": "export-exists",
+      "path": "src/llm-test/greet.mjs",
+      "export": "greet"
+    }
+  ]
+}

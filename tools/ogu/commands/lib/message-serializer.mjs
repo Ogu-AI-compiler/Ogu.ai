@@ -1,0 +1,1 @@
+../lib-generic/message-serializer.mjs

@@ -1,0 +1,11 @@
+{
+  "sessionId": "79719dcb-d4de-4a69-b080-be52406a7bf2",
+  "roleId": "backend-dev",
+  "featureSlug": "test-wave",
+  "taskId": "setup-db",
+  "status": "success",
+  "state": "success",
+  "createdAt": "2026-02-28T23:10:24.923Z",
+  "lastActivityAt": "2026-02-28T23:10:24.923Z",
+  "endedAt": "2026-02-28T23:10:24.929Z"
+}

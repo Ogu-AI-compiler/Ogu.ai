@@ -1,0 +1,1 @@
+../lib-generic/commit-message-generator.mjs

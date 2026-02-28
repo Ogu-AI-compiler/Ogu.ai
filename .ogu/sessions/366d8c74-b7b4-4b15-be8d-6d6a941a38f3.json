@@ -1,0 +1,11 @@
+{
+  "sessionId": "366d8c74-b7b4-4b15-be8d-6d6a941a38f3",
+  "featureSlug": "slice1-test-feature",
+  "taskId": "write-hello-world",
+  "roleId": "default",
+  "model": "pending",
+  "provider": "pending",
+  "startedAt": "2026-02-28T22:23:09.296Z",
+  "status": "completed",
+  "completedAt": "2026-02-28T22:23:09.312Z"
+}

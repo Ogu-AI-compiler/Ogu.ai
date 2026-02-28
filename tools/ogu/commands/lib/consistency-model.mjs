@@ -1,0 +1,1 @@
+../lib-generic/consistency-model.mjs

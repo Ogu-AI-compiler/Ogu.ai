@@ -1,0 +1,11 @@
+{
+  "sessionId": "ad33f663-6002-4c04-820d-7bd4013cb4da",
+  "featureSlug": "slice2-security-feature",
+  "taskId": "simple-refactor",
+  "roleId": "default",
+  "model": "pending",
+  "provider": "pending",
+  "startedAt": "2026-02-28T23:16:46.434Z",
+  "status": "completed",
+  "completedAt": "2026-02-28T23:16:46.449Z"
+}

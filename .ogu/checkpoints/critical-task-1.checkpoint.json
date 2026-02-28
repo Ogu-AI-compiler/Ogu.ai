@@ -1,0 +1,8 @@
+{
+  "taskId": "critical-task-1",
+  "featureSlug": "critical-feature",
+  "checkpointedAt": "2026-02-28T15:52:55.362Z",
+  "reason": "system_halt",
+  "previousStatus": "scheduled",
+  "scheduledAt": "2026-02-28T15:44:53.571Z"
+}

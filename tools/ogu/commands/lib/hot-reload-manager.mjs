@@ -1,0 +1,1 @@
+../lib-generic/hot-reload-manager.mjs

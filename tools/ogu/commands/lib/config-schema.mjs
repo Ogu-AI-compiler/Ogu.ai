@@ -1,0 +1,1 @@
+../lib-generic/config-schema.mjs

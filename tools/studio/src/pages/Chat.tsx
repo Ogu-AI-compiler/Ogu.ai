@@ -774,7 +774,8 @@ export function Chat() {
     const optionRegex = /^(\d+\.\s+|- \*\*|- [^\s*]|\* \*\*|[•·]\s)/;
     const MAX_OPTION_LEN = 200;
     let optionBatch: string[] = [];
-    let lastLineWasQuestion = false;
+    let linesSinceQuestion = Infinity; // how many non-option lines since last question
+    const QUESTION_HORIZON = 3; // question within 3 non-option lines → still treat as choices
     const HEADING_REGEX = /^#{1,6}\s+/;
 
     const isOption = (trimmed: string) => {
@@ -784,7 +785,7 @@ export function Chat() {
     };
 
     const flushOptions = () => {
-      if (optionBatch.length >= 2 && lastLineWasQuestion) {
+      if (optionBatch.length >= 2 && linesSinceQuestion <= QUESTION_HORIZON) {
         appendLine(sid, { id: uid(), type: "choices", text: "", choices: optionBatch });
       } else {
         for (const o of optionBatch) {
@@ -805,21 +806,26 @@ export function Chat() {
       const trimmed = item.trim();
       if (isOption(trimmed)) {
         optionBatch.push(trimmed);
+        // don't advance linesSinceQuestion while collecting options
       } else if (PHASE_REGEX.test(trimmed)) {
         if (optionBatch.length > 0) flushOptions();
         appendLine(sid, { id: uid(), type: "phase", text: cleanMarkdown(trimmed), dir: messageDir });
+        linesSinceQuestion = Infinity;
       } else if (STEP_REGEX.test(trimmed)) {
         if (optionBatch.length > 0) flushOptions();
         appendLine(sid, { id: uid(), type: "step", text: cleanMarkdown(trimmed), dir: messageDir });
+        linesSinceQuestion = Infinity;
       } else if (HEADING_REGEX.test(trimmed)) {
         if (optionBatch.length > 0) flushOptions();
         const clean = trimmed.replace(HEADING_REGEX, "").replace(/\*\*/g, "");
         appendLine(sid, { id: uid(), type: "heading", text: clean, dir: messageDir });
+        linesSinceQuestion = Infinity;
       } else {
         if (optionBatch.length > 0) flushOptions();
         const clean = cleanMarkdown(item);
         appendLine(sid, { id: uid(), type: "reply", text: clean, dir: messageDir });
-        lastLineWasQuestion = trimmed.endsWith("?") || trimmed.endsWith("?**");
+        const isQuestion = trimmed.endsWith("?") || trimmed.endsWith("?**") || /\?["""»]?\s*$/.test(trimmed);
+        linesSinceQuestion = isQuestion ? 0 : linesSinceQuestion + 1;
       }
     }
     if (optionBatch.length > 0) flushOptions();
@@ -913,6 +919,10 @@ export function Chat() {
           text: "",
           involvementLevels: i18n.levels,
         });
+        break;
+      }
+      case "session_recover": {
+        appendLine(sid, { id: uid(), type: "status", text: "  ↻" });
         break;
       }
       case "phase_blocked": {

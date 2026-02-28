@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "taskId": "fail-all-tiers",
+  "featureSlug": "slice6-retry-test",
+  "taskName": "fail-all-tiers",
+  "agent": {
+    "roleId": "pm",
+    "sessionId": "605686a3-ed3d-459e-9807-dde1bfd20f66",
+    "capabilities": [
+      "documentation",
+      "review"
+    ]
+  },
+  "prompt": "Execute task \"fail-all-tiers\" for feature \"slice6-retry-test\".",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5-20251001",
+    "tier": "fast",
+    "reason": "Best match for role \"pm\"",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 50000,
+    "maxCost": 0.05,
+    "remainingDaily": 50,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "docs/**"
+    ],
+    "blockedPaths": [
+      "src/**",
+      ".env"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "none",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "docs/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:23:25.604Z",
+  "idempotencyKey": "fail-all-tiers-1772321005604"
+}

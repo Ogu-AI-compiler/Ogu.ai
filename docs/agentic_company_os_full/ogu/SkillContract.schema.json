@@ -1,0 +1,10 @@
+{
+  "skill": "string",
+  "inputSchema": "object",
+  "outputSchema": "object",
+  "riskTier": "low|medium|high|critical",
+  "defaultModel": "string",
+  "requiredGates": [
+    "string"
+  ]
+}

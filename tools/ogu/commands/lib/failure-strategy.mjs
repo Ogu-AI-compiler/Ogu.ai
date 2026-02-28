@@ -1,0 +1,1 @@
+../lib-generic/failure-strategy.mjs

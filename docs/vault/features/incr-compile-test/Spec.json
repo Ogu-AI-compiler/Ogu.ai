@@ -1,0 +1,37 @@
+{
+  "featureSlug": "incr-compile-test",
+  "expectations": [
+    {
+      "type": "file-exists",
+      "path": "src/incr-test/a.mjs"
+    },
+    {
+      "type": "file-exists",
+      "path": "src/incr-test/b.mjs"
+    },
+    {
+      "type": "file-exists",
+      "path": "src/incr-test/combined.mjs"
+    },
+    {
+      "type": "export-exists",
+      "path": "src/incr-test/a.mjs",
+      "export": "helperA"
+    },
+    {
+      "type": "export-exists",
+      "path": "src/incr-test/b.mjs",
+      "export": "helperB"
+    },
+    {
+      "type": "export-exists",
+      "path": "src/incr-test/combined.mjs",
+      "export": "combined"
+    },
+    {
+      "type": "no-pattern",
+      "path": "src/incr-test/**",
+      "pattern": "TODO"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+../lib-generic/hook-registry.mjs

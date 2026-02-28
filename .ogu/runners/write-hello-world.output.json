@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "taskId": "write-hello-world",
+  "featureSlug": "slice1-test-feature",
+  "status": "success",
+  "files": [],
+  "tokensUsed": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "cost": 0,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 90746,
+    "isolationLevel": "L0",
+    "durationMs": 12
+  },
+  "startedAt": "2026-02-28T23:21:48.132Z",
+  "completedAt": "2026-02-28T23:21:48.144Z",
+  "idempotencyKey": "write-hello-world-1772320908142"
+}

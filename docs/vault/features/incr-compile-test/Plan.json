@@ -1,0 +1,57 @@
+{
+  "featureSlug": "incr-compile-test",
+  "version": 1,
+  "tasks": [
+    {
+      "id": "ic-a",
+      "name": "Create helper A",
+      "description": "Create src/incr-test/a.mjs",
+      "requiredRole": "developer",
+      "output": {
+        "files": [
+          {
+            "path": "src/incr-test/a.mjs",
+            "action": "create",
+            "content": "export function helperA() {\n  return 'A';\n}\n"
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "id": "ic-b",
+      "name": "Create helper B",
+      "description": "Create src/incr-test/b.mjs",
+      "requiredRole": "developer",
+      "output": {
+        "files": [
+          {
+            "path": "src/incr-test/b.mjs",
+            "action": "create",
+            "content": "export function helperB() {\n  return 'B';\n}\n"
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "id": "ic-c",
+      "name": "Create combined",
+      "description": "Create src/incr-test/combined.mjs",
+      "requiredRole": "developer",
+      "output": {
+        "files": [
+          {
+            "path": "src/incr-test/combined.mjs",
+            "action": "create",
+            "content": "import { helperA } from './a.mjs';\nimport { helperB } from './b.mjs';\nexport function combined() {\n  return helperA() + helperB();\n}\n"
+          }
+        ]
+      },
+      "dependsOn": [
+        "ic-a",
+        "ic-b"
+      ]
+    }
+  ]
+}

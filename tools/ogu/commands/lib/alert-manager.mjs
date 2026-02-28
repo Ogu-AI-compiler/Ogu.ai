@@ -1,0 +1,1 @@
+../lib-generic/alert-manager.mjs

@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "taskId": "write-hello-world",
+  "featureSlug": "slice1-test-feature",
+  "taskName": "write-hello-world",
+  "agent": {
+    "roleId": "pm",
+    "sessionId": "f1e26ec9-44a7-40b2-a600-a16957849103",
+    "capabilities": [
+      "documentation",
+      "review"
+    ]
+  },
+  "prompt": "Execute task \"write-hello-world\" for feature \"slice1-test-feature\".",
+  "files": [],
+  "routingDecision": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6-20250514",
+    "tier": "standard",
+    "reason": "Best match for role \"pm\"",
+    "escalationChain": []
+  },
+  "budget": {
+    "maxTokens": 50000,
+    "maxCost": 0.15,
+    "remainingDaily": 37.499688500000005,
+    "currency": "USD"
+  },
+  "sandboxPolicy": {
+    "allowedPaths": [
+      "docs/**"
+    ],
+    "blockedPaths": [
+      "src/**",
+      ".env"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "blockedTools": [],
+    "envFilter": [],
+    "networkAccess": "none",
+    "networkAllowlist": []
+  },
+  "blastRadius": {
+    "allowed_write": [
+      "docs/**"
+    ],
+    "allowed_delete": [],
+    "max_files_changed": 50,
+    "max_lines_changed": 5000
+  },
+  "isolationLevel": "L0",
+  "mergeStrategy": "auto",
+  "relevantHistory": {
+    "entities": [],
+    "ragTokens": 0
+  },
+  "temperature": 0,
+  "validationRules": {
+    "maxFileSize": 1048576,
+    "bannedPatterns": [],
+    "requiredGates": []
+  },
+  "policyResults": [],
+  "createdAt": "2026-02-28T23:21:48.142Z",
+  "idempotencyKey": "write-hello-world-1772320908142"
+}

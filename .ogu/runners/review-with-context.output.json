@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "taskId": "review-with-context",
+  "featureSlug": "slice7-multi-agent",
+  "status": "success",
+  "files": [],
+  "tokensUsed": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "cost": 0,
+    "currency": "USD"
+  },
+  "gateResults": [],
+  "conflicts": [],
+  "runner": {
+    "pid": 97181,
+    "isolationLevel": "L0",
+    "durationMs": 17
+  },
+  "startedAt": "2026-02-28T23:23:27.325Z",
+  "completedAt": "2026-02-28T23:23:27.342Z",
+  "idempotencyKey": "review-with-context-1772321007340"
+}

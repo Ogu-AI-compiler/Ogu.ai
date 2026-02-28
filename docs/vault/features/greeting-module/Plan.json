@@ -1,0 +1,54 @@
+{
+  "featureSlug": "greeting-module",
+  "version": 1,
+  "tasks": [
+    {
+      "id": "greeting-task-1",
+      "name": "Create greeting index",
+      "description": "Create src/greeting/index.mjs that exports greet()",
+      "output": {
+        "files": [
+          {
+            "path": "src/greeting/index.mjs",
+            "action": "create",
+            "content": "export { greet } from './format.mjs';\nexport { main } from './main.mjs';\n"
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "id": "greeting-task-2",
+      "name": "Create greeting formatter",
+      "description": "Create src/greeting/format.mjs with greet() function",
+      "output": {
+        "files": [
+          {
+            "path": "src/greeting/format.mjs",
+            "action": "create",
+            "content": "export function greet(name) {\n  return `Hello, ${name}!`;\n}\n"
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "id": "greeting-task-3",
+      "name": "Create greeting main",
+      "description": "Create src/greeting/main.mjs that ties it together",
+      "output": {
+        "files": [
+          {
+            "path": "src/greeting/main.mjs",
+            "action": "create",
+            "content": "import { greet } from './format.mjs';\n\nexport function main() {\n  console.log(greet('World'));\n}\n"
+          }
+        ]
+      },
+      "dependsOn": [
+        "greeting-task-1",
+        "greeting-task-2"
+      ]
+    }
+  ]
+}

@@ -133,6 +133,118 @@ test("ogu recall runs without error", () => {
   assert(output.includes("pattern"), "recall should mention patterns");
 });
 
+// Test 11: scheduler:status runs
+test("ogu scheduler:status runs without error", () => {
+  const output = ogu(` scheduler:status`);
+  assert(output.includes("SCHEDULER STATUS"), "Should show scheduler status header");
+  assert(output.includes("QUEUE:"), "Should show queue summary");
+  assert(output.includes("P0-critical"), "Should show P0-critical class");
+  assert(output.includes("P4-background"), "Should show P4-background class");
+});
+
+// Test 12: scheduler:queue runs
+test("ogu scheduler:queue runs without error", () => {
+  const output = ogu(` scheduler:queue`);
+  assert(output.includes("SCHEDULER QUEUE"), "Should show queue header");
+});
+
+// Test 13: scheduler:fairness runs
+test("ogu scheduler:fairness runs without error", () => {
+  const output = ogu(` scheduler:fairness`);
+  assert(output.includes("FAIR"), "Should show fairness info");
+});
+
+// Test 14: scheduler:simulate runs with --tasks
+test("ogu scheduler:simulate produces simulation output", () => {
+  const output = ogu(` scheduler:simulate --tasks 5`);
+  assert(output.includes("SCHEDULER SIMULATION"), "Should show simulation header");
+  assert(output.includes("FINAL VIRTUAL CLOCKS"), "Should show final virtual clocks");
+  assert(output.includes("sim-task-"), "Should have simulated tasks");
+});
+
+// Test 15: system:health runs
+test("ogu system:health runs without error", () => {
+  const output = ogu(` system:health`);
+  assert(output.includes("SYSTEM HEALTH"), "Should show system health header");
+  assert(output.includes("FAILURE DOMAINS"), "Should show failure domains");
+  assert(output.includes("FD-PROVIDER"), "Should show FD-PROVIDER domain");
+  assert(output.includes("FD-AUDIT"), "Should show FD-AUDIT domain");
+});
+
+// Test 16: circuit:status runs
+test("ogu circuit:status runs without error", () => {
+  const output = ogu(` circuit:status`);
+  assert(output.includes("CIRCUIT BREAKER STATUS"), "Should show circuit breaker header");
+  assert(output.includes("FD-PROVIDER"), "Should list FD-PROVIDER");
+  assert(output.includes("FD-FILESYSTEM"), "Should list FD-FILESYSTEM");
+});
+
+// Test 17: provider:health runs
+test("ogu provider:health runs without error", () => {
+  const output = ogu(` provider:health`);
+  assert(output.includes("PROVIDER HEALTH"), "Should show provider health header");
+  assert(output.includes("anthropic"), "Should list anthropic provider");
+  assert(output.includes("openai"), "Should list openai provider");
+});
+
+// Test 18: provider:failover --test runs
+test("ogu provider:failover --test produces dry-run output", () => {
+  const output = ogu(` provider:failover --test`);
+  assert(output.includes("FAILOVER TEST"), "Should show failover test header");
+  assert(output.includes("anthropic"), "Should show anthropic in chain");
+  assert(output.includes("simulated_ok"), "Should show simulated results");
+});
+
+// Test 19: metrics:health runs
+test("ogu metrics:health shows org health score", () => {
+  const output = ogu(` metrics:health`);
+  assert(output.includes("ORG HEALTH SCORE"), "Should show org health header");
+  assert(output.includes("Feature Velocity"), "Should show feature velocity");
+  assert(output.includes("SLA COMPLIANCE"), "Should show SLA section");
+});
+
+// Test 20: metrics:kpis runs
+test("ogu metrics:kpis shows all KPIs", () => {
+  const output = ogu(` metrics:kpis`);
+  assert(output.includes("KPI DASHBOARD"), "Should show KPI header");
+  assert(output.includes("Feature Velocity"), "Should list feature velocity KPI");
+  assert(output.includes("Budget Efficiency"), "Should list budget efficiency KPI");
+  assert(output.includes("System Reliability"), "Should list system reliability KPI");
+});
+
+// Test 21: metrics:sla runs
+test("ogu metrics:sla shows SLA compliance", () => {
+  const output = ogu(` metrics:sla`);
+  assert(output.includes("SLA COMPLIANCE"), "Should show SLA header");
+  assert(output.includes("Scheduling"), "Should show scheduling SLA");
+});
+
+// Test 22: metrics:regression runs
+test("ogu metrics:regression runs without error", () => {
+  const output = ogu(` metrics:regression`);
+  assert(output.includes("REGRESSION DETECTION"), "Should show regression header");
+});
+
+// Test 23: graph:hash runs
+test("ogu graph:hash produces execution graph hash", () => {
+  const output = ogu(` graph:hash test-a`);
+  assert(output.includes("EXECUTION GRAPH HASH"), "Should show graph hash header");
+  assert(output.includes("Graph Hash:"), "Should show graph hash value");
+  assert(output.includes("Replay Guarantee"), "Should show replay guarantee");
+});
+
+// Test 24: deterministic:status runs
+test("ogu deterministic:status runs without error", () => {
+  const output = ogu(` deterministic:status`);
+  assert(output.includes("Deterministic mode"), "Should show deterministic mode status");
+});
+
+// Test 25: freeze --status runs
+test("ogu freeze --status runs without error", () => {
+  const output = ogu(` freeze --status`);
+  assert(output.includes("Organization"), "Should show organization status");
+});
+
 // ---------------------------------------------------------------------------
 
 console.log(`\n  Results: ${passed} passed, ${failed} failed\n`);
