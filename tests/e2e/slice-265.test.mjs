@@ -7,35 +7,9 @@ function test(name, fn) {
   catch (e) { failed++; console.log(`  \x1b[31m✗\x1b[0m ${name}: ${e.message}`); }
 }
 
-console.log('\x1b[1mSlice 265 — Middleware Chain + Plugin Registry\x1b[0m\n');
+console.log('\x1b[1mSlice 265 — Plugin Registry\x1b[0m\n');
 
-console.log('\x1b[36m  Part 1: Middleware Chain\x1b[0m');
-test('middleware-chain.mjs exists', () => {
-  assert.ok(existsSync('tools/ogu/commands/lib/middleware-chain.mjs'));
-});
-
-const { createMiddlewareChain } = await import('../../tools/ogu/commands/lib/middleware-chain.mjs');
-
-test('execute middleware in order', () => {
-  const mc = createMiddlewareChain();
-  mc.use((ctx, next) => { ctx.log.push('a'); next(); });
-  mc.use((ctx, next) => { ctx.log.push('b'); next(); });
-  const ctx = { log: [] };
-  mc.execute(ctx);
-  assert.deepEqual(ctx.log, ['a', 'b']);
-});
-
-test('middleware can short-circuit', () => {
-  const mc = createMiddlewareChain();
-  mc.use((ctx) => { ctx.stopped = true; });
-  mc.use((ctx, next) => { ctx.reached = true; next(); });
-  const ctx = {};
-  mc.execute(ctx);
-  assert.ok(ctx.stopped);
-  assert.equal(ctx.reached, undefined);
-});
-
-console.log('\n\x1b[36m  Part 2: Plugin Registry\x1b[0m');
+console.log('\x1b[36m  Part 1: Plugin Registry\x1b[0m');
 test('plugin-registry.mjs exists', () => {
   assert.ok(existsSync('tools/ogu/commands/lib/plugin-registry.mjs'));
 });

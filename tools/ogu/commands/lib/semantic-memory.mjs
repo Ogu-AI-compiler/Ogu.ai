@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { repoRoot } from '../../util.mjs';
+import { getMemoryDir } from './runtime-paths.mjs';
 
 /**
  * Semantic Memory Fabric — file-based memory with tags and search.
@@ -12,7 +13,7 @@ import { repoRoot } from '../../util.mjs';
  */
 
 function fabricPath(root) {
-  const dir = join(root, '.ogu/memory');
+  const dir = getMemoryDir(root);
   mkdirSync(dir, { recursive: true });
   return join(dir, 'fabric.json');
 }

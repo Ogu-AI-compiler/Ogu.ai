@@ -2,13 +2,23 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, basename } from "node:path";
 import { createHash } from "node:crypto";
 import { repoRoot, readJsonSafe } from "../util.mjs";
+import { createObservabilityPipeline } from "./lib/observability-pipeline.mjs";
+import { resolveRuntimePath } from "./lib/runtime-paths.mjs";
 
 export async function observe() {
   const args = process.argv.slice(3);
   const createTickets = args.includes("--create-tickets");
   const root = repoRoot();
 
-  const configPath = join(root, ".ogu/OBSERVE.json");
+  // Wire observability pipeline (Phase 3D)
+  const obsPipeline = createObservabilityPipeline();
+  obsPipeline.addSink('console', (event) => {
+    if (event.type === 'observe.error') {
+      process.stderr.write(`  [obs] ${event.source}: ${event.message}\n`);
+    }
+  });
+
+  const configPath = resolveRuntimePath(root, "OBSERVE.json");
   const config = readJsonSafe(configPath);
 
   if (!config || !config.sources || config.sources.length === 0) {
@@ -34,9 +44,11 @@ export async function observe() {
       sourceResults.push({ source: source.type, ...result });
       allEvents.push(...(result.events || []));
       console.log(`  ${source.type.padEnd(12)} ${result.status} (${result.events?.length || 0} events)`);
+      obsPipeline.emit({ type: 'observe.source', source: source.type, status: result.status, eventCount: result.events?.length || 0 });
     } catch (err) {
       sourceResults.push({ source: source.type, status: "ERROR", error: err.message });
       console.log(`  ${source.type.padEnd(12)} ERROR: ${err.message}`);
+      obsPipeline.emit({ type: 'observe.error', source: source.type, message: err.message });
     }
   }
 
@@ -61,7 +73,7 @@ export async function observe() {
 
   // Generate report
   const report = buildObservationReport(sourceResults, classified, config);
-  const reportPath = join(root, ".ogu/OBSERVATION_REPORT.md");
+  const reportPath = resolveRuntimePath(root, "OBSERVATION_REPORT.md");
   writeFileSync(reportPath, report, "utf-8");
 
   // Create tickets if requested
@@ -321,7 +333,7 @@ function correlateWithReleases(events, releases) {
 }
 
 function classifyOwnership(events, root) {
-  const graph = readJsonSafe(join(root, ".ogu/GRAPH.json"));
+  const graph = readJsonSafe(resolveRuntimePath(root, "GRAPH.json"));
   return events.map((e) => {
     // Try to extract file path from error title/stack
     const fileMatch = e.title?.match(/(?:at\s+|in\s+)([\w/.-]+\.[jt]sx?)/);

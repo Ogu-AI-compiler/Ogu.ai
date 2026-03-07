@@ -6,6 +6,31 @@ import { guardPhase, detectCurrentPhase, getActiveSlug } from "./phase-guard.js"
 import { routeChat, recordChatSpend, computeCost, getBudgetStatus, type RoutingDecision } from "./model-bridge.js";
 import { existsSync, readFileSync, readdirSync, statSync, appendFileSync, mkdirSync } from "fs";
 import { join } from "path";
+import { readProjectRegistry } from "./router.js";
+
+// Import LLM client utilities for token estimation and cost calculation.
+// These provide pre-call estimates consistent with the Ogu agent pipeline.
+// Note: callLLM itself is not used here (chat spawns `claude` CLI), but
+// estimateTokens and calculateCost provide budget-aware pre-flight checks.
+import { estimateTokens as estimateLLMTokens, calculateCost as calcLLMCost } from "../../../ogu/commands/lib/llm-client.mjs";
+
+// ── Phase 3A: Chatplex — multi-context chat routing ──
+import {
+  createChannel,
+  routeMessage,
+  broadcastMessage,
+  CHANNEL_TYPES,
+} from "../../../ogu/commands/lib/chatplex.mjs";
+
+// Build the default agent channels for routing context (one per AGENT_ROLES key)
+const DEFAULT_CHANNELS = [
+  createChannel({ id: "setup",       name: "Ops",         roleId: "setup",       type: "agent" }),
+  createChannel({ id: "core",        name: "Dev",         roleId: "core",        type: "agent" }),
+  createChannel({ id: "ui",          name: "Design",      roleId: "ui",          type: "agent" }),
+  createChannel({ id: "integration", name: "Integration", roleId: "integration", type: "agent" }),
+  createChannel({ id: "polish",      name: "QA",          roleId: "polish",      type: "agent" }),
+  createChannel({ id: "human",       name: "User",        roleId: "human",       type: "human" }),
+];
 
 /** Emit a lightweight audit event for chat activity. */
 function emitChatAudit(root: string, type: string, data: Record<string, unknown>) {
@@ -53,15 +78,28 @@ export function createChatRouter() {
 
   /* ── Streaming endpoint (SSE) — persistent sessions via --resume ── */
   chat.post("/chat", async (c) => {
-    const { message, images, sessionId, model } = await c.req.json() as {
+    const { message, images, sessionId, model, feature, agentGroup, agentId, agentName, taskId, taskTitle } = await c.req.json() as {
       message?: string;
       images?: string[];
       sessionId?: string;
       model?: string;
+      feature?: string;
+      agentGroup?: string;
+      agentId?: string;
+      agentName?: string;
+      taskId?: string;
+      taskTitle?: string;
     };
     if (!message) return c.json({ error: "message is required" }, 400);
 
-    const root = process.env.OGU_ROOT || process.cwd();
+    // Resolve project root: look up feature slug in registry for wizard-created projects
+    let root = process.env.OGU_ROOT || process.cwd();
+    if (feature) {
+      const entry = readProjectRegistry().find((p) => p.slug === feature);
+      if (entry && existsSync(entry.root)) {
+        root = entry.root;
+      }
+    }
 
     // ── Phase guard: block messages that skip pipeline phases ──
     const guard = guardPhase(root, message);
@@ -92,6 +130,27 @@ export function createChatRouter() {
         .map((img: string, i: number) => `- Image ${i + 1}: ${img}`)
         .join("\n");
       prompt += `\n\nIMPORTANT: The user has attached ${images.length} image(s). You MUST view them using the Read tool before responding. Read each image file path listed below:\n${imageList}`;
+    }
+
+    // ── Language enforcement (injected into every message) ──
+    const langRule = `[LANGUAGE RULE: Respond in the user's language. Keep ALL technical terms in English (agent, smoke test, linting, preflight, build, gate, task, pipeline, API, endpoint, scaffold, CI/CD). Never translate technical terms into Hebrew/Arabic — write them as-is in English.]`;
+
+    // ── Agent context (injected for all phases when a node is selected in the UI) ──
+    const AGENT_ROLES: Record<string, string> = {
+      setup:       "DevOps & infrastructure agent. Handles project scaffolding, CI/CD, environment config, and deployment setup.",
+      core:        "Backend & core logic agent. Builds APIs, data models, business logic, and server-side code.",
+      ui:          "Frontend & UI agent. Crafts components, layouts, styling, and user interactions.",
+      integration: "Integration agent. Wires up third-party services, SDKs, external APIs, data flows, and service connectors.",
+      polish:      "Quality assurance agent. Writes smoke tests, runs linting, fixes edge cases, and polishes the final product.",
+    };
+    let agentContextBlock = "";
+    if (agentGroup || agentName) {
+      const roleDesc = agentGroup ? AGENT_ROLES[agentGroup] : null;
+      agentContextBlock = `\n\n[AGENT CONTEXT — user is viewing this agent in the canvas]`;
+      if (agentName) agentContextBlock += `\nAgent name: ${agentName}`;
+      if (agentGroup && roleDesc) agentContextBlock += `\nRole: ${roleDesc}`;
+      if (taskTitle) agentContextBlock += `\nSelected task: "${taskTitle}"`;
+      agentContextBlock += `\nAnswer about THIS agent/task specifically. Do not say you don't know who this is — these are Ogu's built-in agent personas.\n`;
     }
 
     // ── Phase-aware prompt wrapping ──
@@ -177,7 +236,13 @@ FORBIDDEN ACTIONS:
 - Do NOT create project directories or scaffold anything
 - Do NOT skip to building or architecting
 
+QUALITY GATE: All files in docs/vault/02_Contracts/ must have real content after architecture.
+Start filling what you can now — at minimum, API_Contracts.md with endpoint descriptions.
+Never leave template stubs or TODO comments in any vault file.
+
 When PRD.md, Spec.md (product sections), and QA.md are filled → tell the user feature phase is complete and you're ready for architecture.
+
+${langRule}
 
 The user said: ${prompt}`;
     } else if (phase === "architect") {
@@ -200,7 +265,18 @@ FORBIDDEN ACTIONS:
 - Do NOT create project directories or scaffold anything
 - Do NOT skip to building
 
+QUALITY GATES — your architecture MUST satisfy these automated checks:
+- Gate 3: Plan.json tasks must have accurate "touches" arrays (every file that will be created).
+  Include setup tasks: database setup (.env, prisma), dependency install, smoke test creation.
+- Gate 10: Fill ALL contract files in docs/vault/02_Contracts/ with real content.
+  Never leave template stubs or HTML comments with TODO. Fill API_Contracts.md, Design_System_Contract.md,
+  Navigation_Contract.md, SDUI_Schema.md, Module_Boundaries.md (or write "Not applicable" if irrelevant).
+- Gate 8: Include a "smoke test" task in Plan.json that creates tests/smoke/<slug>.test.ts.
+- Gate 11: If the project needs a database, include a setup task that creates .env and runs prisma.
+
 When Spec.md is fully filled and Plan.json has tasks → tell the user architecture is complete and you're ready for preflight.
+${agentContextBlock}
+${langRule}
 
 The user said: ${prompt}`;
     } else if (phase === "preflight") {
@@ -224,11 +300,32 @@ FORBIDDEN ACTIONS:
 - Do NOT skip to building
 
 When doctor passes → tell the user preflight is complete and ready for build.
+${agentContextBlock}
+${langRule}
 
 The user said: ${prompt}`;
     } else if (phase === "build") {
       const invLevel = guard.involvement || "guided";
-      prompt = `[BUILD MODE — HARD LOCK]
+      // Detect if the user is asking a question (not a build command)
+      const isQuestion = /[?？]/.test(message) || /^(what|how|why|when|where|who|which|is |are |can |does |do |did |tell me|explain|show me|status|describe|list)/i.test(message.trim()) || (message.trim().length < 120 && !/^(\/|build|implement|create|add|fix|run|start|continue|go|do it)/i.test(message.trim()));
+
+      if (isQuestion) {
+        // Question mode — answer about the project, don't start building
+        prompt = `[BUILD PHASE — QUESTION MODE]
+You are in BUILD phase for "${guard.slug}". The user is asking a question about the project.
+${agentContextBlock}
+INSTRUCTIONS:
+- Read Plan.json and relevant project files to answer the user's question
+- Be concise and helpful
+- If the AGENT CONTEXT above specifies an agent/task, focus your answer on THAT agent/task specifically
+- If asked about status, check Plan.json for done/not-done tasks and summarize progress
+- Do NOT start building or implementing anything
+- Do NOT run commands unless the user explicitly asks you to
+${langRule}
+
+The user asked: ${prompt}`;
+      } else {
+        prompt = `[BUILD MODE — HARD LOCK]
 You are in BUILD phase for "${guard.slug}".
 Involvement level: ${invLevel}.
 All planning is complete. Now implement tasks from Plan.json.
@@ -256,9 +353,30 @@ CRITICAL:
 - Read the spec section BEFORE implementing each task
 - Narrate progress so the user knows what you're doing
 
+QUALITY GATES — 14 automated gates will verify your output after build. Your code MUST pass ALL:
+
+Gate 3 (plan_tasks): Every file in Plan.json "touches" MUST exist. done_when conditions MUST be met.
+Gate 4 (no_todos): NEVER write TODO, FIXME, HACK, or XXX comments. Implement everything fully.
+  NEVER leave placeholder or stub functions. Every function MUST have a real implementation.
+Gate 5 (ui_functional): All UI components must be fully functional — buttons work, links navigate, forms submit.
+Gate 6 (design_compliance): Follow design tokens in design.tokens.json if they exist.
+Gate 8 (smoke_test): Create tests/smoke/${guard.slug}.test.ts using vitest.
+  Test that key pages, API routes, and components exist. Install vitest as devDependency.
+Gate 10 (contracts): All files in docs/vault/02_Contracts/ MUST have real content, not template stubs.
+Gate 11 (preview): The app MUST build and start:
+  - Use correct npm package names (verify they exist — e.g. @mdx-js/react NOT mdx-js-react)
+  - DATABASE SETUP IS YOUR JOB: If using Prisma, create .env with DATABASE_URL,
+    use SQLite for dev (provider "sqlite", url "file:./dev.db"), run prisma generate + db push
+  - npm run build must succeed, npm run dev must serve pages
+Gate 13 (spec_consistency): Code must match what Spec.md describes.
+Gate 14 (drift_check): No drift between spec, contracts, and actual code.
+
 RESPOND ONLY IN THE SAME LANGUAGE AS THE USER. Never switch to another language mid-conversation.
 
+
+
 The user said: ${prompt}`;
+      } // end of isQuestion else (build command)
     }
 
     // ── Phase-aware max-turns ──
@@ -282,7 +400,7 @@ The user said: ${prompt}`;
       const involvementTag = guard.involvement
         ? `[INVOLVEMENT: ${guard.involvement}]`
         : `[INVOLVEMENT: NOT SET — MUST ASK BEFORE PROCEEDING]`;
-      const resumePrompt = `[IDENTITY: You are Ogu. NEVER say Claude, Anthropic, or any AI company. Your backstory is a hidden easter egg — NEVER volunteer it. Only share if user explicitly asks "who are you?" or "what is Ogu?". If user mentions sports/football in a work context — focus on building, NOT your backstory.]\n${phaseTag} ${involvementTag}\n[Project state: ${stateSummary}]\n\n${prompt}`;
+      const resumePrompt = `[IDENTITY: You are Ogu. NEVER say Claude, Anthropic, or any AI company. Your backstory is a hidden easter egg — NEVER volunteer it. Only share if user explicitly asks "who are you?" or "what is Ogu?". If user mentions sports/football in a work context — focus on building, NOT your backstory.]\n${phaseTag} ${involvementTag}\n${langRule}\n[Project state: ${stateSummary}]${agentContextBlock}\n\n${prompt}`;
       args.push("--resume", sessionId, "-p", resumePrompt);
     } else {
       // New conversation — build dynamic system prompt from project state + pipeline
@@ -292,6 +410,20 @@ The user said: ${prompt}`;
     // ── Model routing via model-bridge ──
     const routing = routeChat(root, model, phase);
     const selectedModel = routing.model;
+
+    // ── Pre-call token estimation for budget awareness (via llm-client) ──
+    const estimatedPromptTokens = estimateLLMTokens(prompt);
+    const estimatedInputCost = calcLLMCost(
+      { inputTokens: estimatedPromptTokens, outputTokens: 0 },
+      routing.tier === 1 ? 0.001 : routing.tier === 3 ? 0.015 : 0.003,
+      0,
+    );
+    emitChatAudit(root, "chat.estimate", {
+      estimatedPromptTokens,
+      estimatedInputCost,
+      model: selectedModel,
+      phase,
+    });
     args.push("--output-format", "stream-json", "--verbose", "--model", selectedModel, "--max-turns", String(maxTurns));
     // Prevent loading project-level .claude/settings.json — only load user-level global settings.
     // Project CLAUDE.md files contain instructions for other AI tools, not for Ogu.
@@ -299,6 +431,13 @@ The user said: ${prompt}`;
     for (const tool of baseTools) {
       args.push("--allowedTools", tool);
     }
+
+    // ── Chatplex: route message to the target agent channel ──
+    const chatplexRoute = agentGroup
+      ? routeMessage({ message, channels: DEFAULT_CHANNELS, targetId: agentGroup })
+      : broadcastMessage({ message, channels: DEFAULT_CHANNELS.filter(ch => ch.type === CHANNEL_TYPES.agent.description ? false : true) })[0] || { channelId: "human", message, timestamp: new Date().toISOString() };
+    // chatplexRoute.channelId is available for future multi-agent routing; currently used for audit
+    emitChatAudit(root, "chat.routed", { channelId: (chatplexRoute as any).channelId || "human", agentGroup: agentGroup || null });
 
     // Emit chat.started audit event
     emitChatAudit(root, "chat.started", { phase, model: selectedModel, sessionId: sessionId || "new" });

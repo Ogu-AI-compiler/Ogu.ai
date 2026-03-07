@@ -16,7 +16,7 @@ import { emitAudit } from './audit-emitter.mjs';
 // ── Legacy Provider Adapter (backwards compat) ─────────────────────────
 
 export const PROVIDER_DEFAULTS = {
-  anthropic: { model: 'claude-sonnet-4-20250514', maxTokens: 4096, format: 'anthropic' },
+  anthropic: { model: 'claude-sonnet-4-6', maxTokens: 4096, format: 'anthropic' },
   openai: { model: 'gpt-4o', maxTokens: 4096, format: 'openai' },
   local: { model: 'local', maxTokens: 2048, format: 'openai' },
 };

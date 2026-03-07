@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { execSync } from 'node:child_process';
 
 /**
  * Runner Worker — forked process that executes tasks.
@@ -161,7 +162,6 @@ export function createWorker({ workDir, env = {}, sandbox = null, name } = {}) {
     switch (command) {
       case 'exec': {
         // Execute a shell command
-        const { execSync } = require('node:child_process');
         const cmd = payload.cmd || payload.command;
         if (!cmd) throw new Error('No command specified in payload');
 

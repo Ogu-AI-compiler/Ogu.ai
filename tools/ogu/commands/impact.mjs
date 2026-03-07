@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { repoRoot, readJsonSafe } from "../util.mjs";
+import { createImpactAnalyzer } from "./lib/impact-analyzer.mjs";
 
 export async function impact() {
   const targetFile = process.argv[3];
@@ -25,6 +26,13 @@ export async function impact() {
   if (!graphData || !graphData.reverse) {
     console.error("  ERROR  Invalid GRAPH.json. Run `ogu graph` to rebuild.");
     return 1;
+  }
+
+  // Wire impact analyzer (Phase 3D) — build from graph edges
+  const impactAnalyzer = createImpactAnalyzer();
+  for (const edge of (graphData.edges || [])) {
+    // edge.from imports edge.to — so edge.to's changes affect edge.from
+    impactAnalyzer.addDependency(edge.to, edge.from);
   }
 
   // Normalize target path to relative
@@ -124,8 +132,13 @@ export async function impact() {
     }
   }
 
+  // Impact analyzer score
+  const analyzerResult = impactAnalyzer.analyzeImpact(relTarget);
+  const impactScore = impactAnalyzer.getImpactScore(relTarget);
+
   console.log("");
   console.log(`  Total impact: ${transitiveDeps.size + 1} files (1 changed + ${transitiveDeps.size} dependents)`);
+  console.log(`  Impact score: ${impactScore} (via impact-analyzer)`);
 
   return 0;
 }

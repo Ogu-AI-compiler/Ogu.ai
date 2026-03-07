@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { repoRoot, readJsonSafe } from "../util.mjs";
 import { loadIR, scanPreExisting } from "./lib/ir-registry.mjs";
 import { normalizeIR } from "./lib/normalize-ir.mjs";
+import { render as renderTemplate } from "./lib/template-engine.mjs";
+import { resolveRuntimePath } from "./lib/runtime-paths.mjs";
 
 // Phase 1 files: created by /feature
 const FEATURE_FILES = ["PRD.md", "Spec.md", "QA.md"];
@@ -121,7 +123,10 @@ export async function featureCreate() {
       console.log(`  skipped  ${file} (already exists)`);
       skipped++;
     } else {
-      writeFileSync(fullPath, TEMPLATES[file](slug), "utf-8");
+      // Use template engine for variable substitution (slug is the primary context var)
+      const rawTemplate = TEMPLATES[file](slug);
+      const rendered = renderTemplate(rawTemplate, { slug, date: new Date().toISOString().split("T")[0] });
+      writeFileSync(fullPath, rendered, "utf-8");
       console.log(`  created  ${file}`);
       created++;
     }
@@ -131,7 +136,7 @@ export async function featureCreate() {
   updateIndex(root, slug);
 
   // Set as active feature in STATE.json
-  const statePath = join(root, ".ogu/STATE.json");
+  const statePath = resolveRuntimePath(root, "STATE.json");
   try {
     const state = existsSync(statePath)
       ? JSON.parse(readFileSync(statePath, "utf-8"))

@@ -19,9 +19,10 @@ import { repoRoot } from '../../util.mjs';
 import { emitAudit } from './audit-emitter.mjs';
 import { resourceStatus, releaseResource } from './resource-governor.mjs';
 import { checkEnvelope } from './feature-isolation.mjs';
+import { getCheckpointsDir, getLocksDir, getStateDir, resolveOguPath } from './runtime-paths.mjs';
 
-const STATE_PATH = (root) => join(root, '.ogu/state/scheduler-state.json');
-const POLICY_PATH = (root) => join(root, '.ogu/scheduler-policy.json');
+const STATE_PATH = (root) => join(getStateDir(root), 'scheduler-state.json');
+const POLICY_PATH = (root) => resolveOguPath(root, 'scheduler-policy.json');
 
 function ensureDir(dir) {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -108,7 +109,7 @@ export function loadSchedulerState(root) {
 export function saveSchedulerState(root, state) {
   root = root || repoRoot();
   state.updatedAt = new Date().toISOString();
-  ensureDir(join(root, '.ogu/state'));
+  ensureDir(getStateDir(root));
   writeFileSync(STATE_PATH(root), JSON.stringify(state, null, 2), 'utf8');
 }
 
@@ -373,7 +374,7 @@ function attemptPreemption(root, incomingTask, policy, state) {
 function preemptVictim(root, victim, incomingTask, state) {
   // Checkpoint: save victim's progress to a checkpoint file
   try {
-    const checkpointDir = join(root, '.ogu/checkpoints');
+    const checkpointDir = getCheckpointsDir(root);
     ensureDir(checkpointDir);
     writeFileSync(
       join(checkpointDir, `${victim.taskId}.checkpoint.json`),
@@ -391,7 +392,7 @@ function preemptVictim(root, victim, incomingTask, state) {
 
   // Release resource slot if the victim holds one
   try {
-    const activePath = join(root, '.ogu/locks/active.json');
+    const activePath = join(getLocksDir(root), 'active.json');
     if (existsSync(activePath)) {
       const active = JSON.parse(readFileSync(activePath, 'utf8'));
       const slot = (active.slots || []).find(s => s.taskId === victim.taskId);
@@ -464,7 +465,7 @@ function getFeatureWeight(root, featureSlug, policy) {
 
   // Check feature state for weight overrides
   try {
-    const statePath = join(root, `.ogu/state/features/${featureSlug}.state.json`);
+    const statePath = join(getStateDir(root), 'features', `${featureSlug}.state.json`);
     if (existsSync(statePath)) {
       const featureState = JSON.parse(readFileSync(statePath, 'utf8'));
       for (const override of (policy.fairness.overrides || [])) {

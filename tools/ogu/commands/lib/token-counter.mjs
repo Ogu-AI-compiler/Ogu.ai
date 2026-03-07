@@ -19,6 +19,7 @@ export function estimateTokens(text) {
  * Estimate total tokens for a messages array.
  */
 export function countMessages(messages) {
+  if (!messages || !Array.isArray(messages)) return 0;
   let total = 0;
   for (const msg of messages) {
     total += OVERHEAD_PER_MESSAGE;

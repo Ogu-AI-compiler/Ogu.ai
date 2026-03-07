@@ -1,8 +1,14 @@
 const BASE = "/api";
 
+function getAuthHeaders(): Record<string, string> {
+  if (typeof localStorage === "undefined") return {};
+  const token = localStorage.getItem("ogu-access-token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     ...opts,
   });
   if (!res.ok) {
@@ -18,6 +24,10 @@ export const api = {
   getGates: () => request<any>("/state/gates"),
   getFeatures: () => request<{ features: any[]; active: string | null }>("/features"),
   getFeature: (slug: string) => request<any>(`/features/${slug}`),
+  deleteFeature: (slug: string) =>
+    request<{ ok: boolean; deleted: string }>(`/features/${slug}`, { method: "DELETE" }),
+  activateProject: (slug: string) =>
+    request<{ ok: boolean; root: string }>(`/features/${slug}/activate`, { method: "POST" }),
   getLogs: () => request<any[]>("/logs/recent"),
   getPresets: () => request<any>("/theme/presets"),
   openProject: (path: string) =>
@@ -118,6 +128,188 @@ export const api = {
   getKadimaRunners: () => request<any>("/kadima/runners"),
   getKadimaStandup: () => request<any>("/ogu/kadima/standup", { method: "POST" }),
 
+  // ── Kadima Server API ──
+  getKadimaStatus: () => request<any>("/kadima/status"),
+  startKadima: () => request<any>("/kadima/start", { method: "POST" }),
+  stopKadima: () => request<any>("/kadima/stop", { method: "POST" }),
+  getKadimaStandups: () => request<any>("/kadima/standups"),
+  getKadimaAllocations: () => request<any>("/kadima/allocations"),
+
+  // ── Execution Feed (Slice 437) ──
+  getExecutionFeed: (filters?: { type?: string; taskId?: string; feature?: string; since?: string; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (filters?.type) params.set("type", filters.type);
+    if (filters?.taskId) params.set("taskId", filters.taskId);
+    if (filters?.feature) params.set("feature", filters.feature);
+    if (filters?.since) params.set("since", filters.since);
+    if (filters?.limit) params.set("limit", String(filters.limit));
+    return request<{ events: any[]; total: number }>(`/execution/feed?${params}`);
+  },
+  getExecutionStats: () => request<{ total: number; byType: Record<string, number> }>("/execution/stats"),
+  getExecutionEventTypes: () => request<{ events: Record<string, string> }>("/execution/events"),
+
+  // ── Audit Events API ──
+  getAuditEvents: (filters?: { type?: string; from?: string; to?: string; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (filters?.type) params.set("type", filters.type);
+    if (filters?.from) params.set("from", filters.from);
+    if (filters?.to) params.set("to", filters.to);
+    if (filters?.limit) params.set("limit", String(filters.limit));
+    return request<any>(`/audit/events?${params}`);
+  },
+
+  // ── Wizard (Archetype) ──
+  classifyArchetype: (mode: string, description: string) =>
+    request<{ archetypes: any[]; suggested_mode: string | null; disambiguation: any; detail_level: string; model: string; cost: number }>("/wizard/classify", {
+      method: "POST",
+      body: JSON.stringify({ mode, description }),
+    }),
+  personalizeStep: (data: { archetypeId: string; stepId: string; step: any; userDescription: string; previousAnswers: Record<string, any>; detailLevel?: string }) =>
+    request<{ questions: any[]; model: string; cost: number; fallback?: boolean }>("/wizard/personalize", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  clarifyWizard: (data: { description: string; archetypeId: string; detailLevel?: string; previousAnswers?: Record<string, any> }) =>
+    request<{ questions: any[]; model: string; cost: number }>("/wizard/clarify", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  expandPrompt: (description: string, mode: string) =>
+    request<{ expanded: string; brief: { overview: string; audience: string[]; features: string[]; goal: string } | null; cost: number }>("/wizard/expand", {
+      method: "POST",
+      body: JSON.stringify({ description, mode }),
+    }),
+
+  // ── Allocation Kanban ──
+  getAllocations: (slug: string) => request<any>(`/project/${slug}/allocations`),
+
+  // ── Governance Approvals (inline panel) ──
+  getApprovals: (slug: string) => request<any>(`/project/${slug}/approvals`),
+  resolveApproval: (slug: string, id: string, decision: "approve" | "deny", reason?: string) =>
+    request<any>(`/project/${slug}/approvals/${id}/resolve`, {
+      method: "POST",
+      body: JSON.stringify({ decision, reason }),
+    }),
+
+  // ── Agent Execution Monitor ──
+  getAgentStatuses: (slug: string) => request<any>(`/project/${slug}/agents/status`),
+
+  // ── Project State ──
+  getActiveProject: () => request<{ project: { slug: string; root: string } | null }>("/project/active"),
+  getProjectState: (slug: string) => request<any>(`/project/${slug}/state`),
+  transitionProject: (slug: string, targetPhase: string, reason?: string) =>
+    request<any>(`/project/${slug}/transition`, {
+      method: "POST",
+      body: JSON.stringify({ targetPhase, reason }),
+    }),
+  continueProject: (slug: string) =>
+    request<any>(`/project/${slug}/continue`, { method: "POST" }),
+  runVerification: (slug: string) =>
+    request<any>(`/project/${slug}/verify`, { method: "POST" }),
+  runGate: (slug: string, gate: string) =>
+    request<any>(`/exec/gates/run`, { method: "POST", body: JSON.stringify({ slug, gate }) }),
+  fixGate: (slug: string) =>
+    request<{ ok: boolean; reason?: string }>(`/project/${slug}/fix-gate`, { method: "POST" }),
+  abortProject: (slug: string) =>
+    request<{ ok: boolean }>(`/project/${slug}/abort`, { method: "POST" }),
+  pauseProject: (slug: string) =>
+    request<{ ok: boolean }>(`/project/${slug}/pause`, { method: "POST" }),
+  resumeProject: (slug: string) =>
+    request<{ ok: boolean }>(`/project/${slug}/resume`, { method: "POST" }),
+
+  // ── Manifest Evolution ──
+  applyManifest: (slug: string, proposalId: string) =>
+    request<{ ok: boolean; revision: number }>(`/project/${slug}/manifest/apply`, {
+      method: "POST",
+      body: JSON.stringify({ proposalId }),
+    }),
+  dismissManifest: (slug: string, proposalId: string) =>
+    request<{ ok: boolean }>(`/project/${slug}/manifest/dismiss`, {
+      method: "POST",
+      body: JSON.stringify({ proposalId }),
+    }),
+
+  // ── Auth ──
+  register: (data: { email: string; password: string; name: string; orgName?: string }) =>
+    request<{ user: any; accessToken: string }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  login: (data: { email: string; password: string }) =>
+    request<{ user: any; accessToken: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  refreshToken: (refreshToken?: string) =>
+    request<{ accessToken: string }>("/auth/refresh", {
+      method: "POST",
+      body: JSON.stringify({ refreshToken }),
+    }),
+  getMe: () => request<{ user: any; org: any; subscription: any }>("/auth/me"),
+  logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
+
+  // ── Billing ──
+  getBillingSubscription: () => request<any>("/billing/subscription"),
+  createCheckoutSession: (plan: string) =>
+    request<{ url: string; sessionId: string }>("/billing/checkout", {
+      method: "POST",
+      body: JSON.stringify({ plan }),
+    }),
+  createPortalSession: () => request<{ url: string }>("/billing/portal", { method: "POST" }),
+  getCreditBalance: () => request<{ balance: number; transactions: any[] }>("/billing/credits"),
+  deductCredits: (amount: number, reason?: string) =>
+    request<{ success: boolean; remaining: number }>("/billing/credits/deduct", {
+      method: "POST",
+      body: JSON.stringify({ amount, reason }),
+    }),
+
+  // ── Admin ──
+  getAdminStats: () => request<any>("/admin/stats"),
+  getAdminUsers: () => request<any>("/admin/users"),
+  banUser: (userId: string) => request<any>(`/admin/users/${userId}/ban`, { method: "POST" }),
+
+  // ── Orgs ──
+  inviteMember: (email: string, role?: string) =>
+    request<{ token: string }>("/orgs/invite", {
+      method: "POST",
+      body: JSON.stringify({ email, role }),
+    }),
+  getOrgMembers: () => request<{ members: any[] }>("/orgs/members"),
+  removeOrgMember: (userId: string) =>
+    request<{ ok: boolean }>(`/orgs/members/${userId}`, { method: "DELETE" }),
+
+  // ── Brief (post-wizard launch) ──
+  launchBrief: (data: { mode: string; archetypeId: string; archetypeTitle: string; description: string; answers: Record<string, any> }) =>
+    fetch(`${BASE}/brief/launch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  approveTeam: (slug: string) =>
+    request<{ ok: boolean }>(`/brief/project/${slug}/approve-team`, { method: "POST" }),
+  dispatchProject: (slug: string) =>
+    request<{ ok: boolean }>(`/dispatch/project/${slug}`, { method: "POST" }),
+
+  getMarketplaceAgents: (filters?: { role?: string; tier?: number; available?: boolean }) => {
+    const params = new URLSearchParams();
+    if (filters?.role) params.set("role", filters.role);
+    if (filters?.tier) params.set("tier", String(filters.tier));
+    if (filters?.available !== undefined) params.set("available", String(filters.available));
+    return request<{ agents: any[] }>(`/marketplace/agents?${params}`);
+  },
+  hireMarketplaceAgent: (agentId: string, projectId: string, allocationUnits: number, roleSlot: string) =>
+    request<{ ok: boolean; allocationId: string }>("/marketplace/hire", {
+      method: "POST",
+      body: JSON.stringify({ agentId, projectId, allocationUnits, roleSlot }),
+    }),
+  listDirs: (path?: string) =>
+    request<{ path: string; dirs: string[]; hasOgu: boolean }>(`/dirs${path ? `?path=${encodeURIComponent(path)}` : ""}`),
+  runCommandSync: (command: string, args?: string[]) =>
+    request<{ stdout: string; stderr: string; exitCode: number }>("/command/sync", {
+      method: "POST",
+      body: JSON.stringify({ command, args }),
+    }),
   getBrandLogos: (domain: string) =>
     request<{ name: string; url: string }[]>(`/brand/logos/${domain}`),
   uploadBrandImage: async (file: File): Promise<{ name: string; path: string }> => {

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { repoRoot } from '../../util.mjs';
 import { loadOrgSpec } from './agent-registry.mjs';
 import { loadBudget } from './budget-tracker.mjs';
+import { resolveOguPath, resolveRuntimePath, getAuditDir } from './runtime-paths.mjs';
 
 /**
  * Org Health Score — computes a 0-100 score from multiple organizational signals.
@@ -99,7 +100,7 @@ function computeGovernanceHealth(root) {
   let score = 0;
 
   // Policy rules file exists (40 points)
-  const rulesPath = join(root, '.ogu/policies/rules.json');
+  const rulesPath = resolveOguPath(root, 'policies', 'rules.json');
   if (existsSync(rulesPath)) {
     try {
       const rules = JSON.parse(readFileSync(rulesPath, 'utf8'));
@@ -116,7 +117,7 @@ function computeGovernanceHealth(root) {
   }
 
   // Audit trail exists (15 points)
-  const auditPath = join(root, '.ogu/audit/current.jsonl');
+  const auditPath = join(getAuditDir(root), 'current.jsonl');
   if (existsSync(auditPath)) score += 15;
 
   return Math.min(100, score);
@@ -126,17 +127,17 @@ function computePipelineHealth(root) {
   let score = 30; // Default for initialized project
 
   // OrgSpec exists (20 points)
-  if (existsSync(join(root, '.ogu/OrgSpec.json'))) score += 20;
+  if (existsSync(resolveOguPath(root, 'OrgSpec.json'))) score += 20;
 
   // STATE.json exists (15 points)
-  if (existsSync(join(root, '.ogu/STATE.json'))) score += 15;
+  if (existsSync(resolveRuntimePath(root, 'STATE.json'))) score += 15;
 
   // Has features in progress (20 points)
-  const stateDir = join(root, '.ogu/state/features');
+  const stateDir = resolveRuntimePath(root, 'state', 'features');
   if (existsSync(stateDir)) score += 20;
 
   // CONTEXT.md exists (15 points)
-  if (existsSync(join(root, '.ogu/CONTEXT.md'))) score += 15;
+  if (existsSync(resolveRuntimePath(root, 'CONTEXT.md'))) score += 15;
 
   return Math.min(100, score);
 }

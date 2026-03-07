@@ -12,11 +12,12 @@ import { join } from 'node:path';
 import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { repoRoot } from '../../util.mjs';
 import { emitAudit } from './audit-emitter.mjs';
+import { resolveOguPath, resolveRuntimePath } from './runtime-paths.mjs';
 
-const SESSIONS_DIR = (root) => join(root, '.ogu/agents/sessions');
-const CREDENTIALS_DIR = (root) => join(root, '.ogu/agents/credentials');
-const REVOKED_DIR = (root) => join(root, '.ogu/agents/revoked');
-const QUARANTINE_DIR = (root) => join(root, '.ogu/quarantine');
+const SESSIONS_DIR = (root) => resolveRuntimePath(root, 'agents', 'sessions');
+const CREDENTIALS_DIR = (root) => resolveRuntimePath(root, 'agents', 'credentials');
+const REVOKED_DIR = (root) => resolveRuntimePath(root, 'agents', 'revoked');
+const QUARANTINE_DIR = (root) => resolveRuntimePath(root, 'quarantine');
 
 function ensureDir(dir) {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -34,7 +35,7 @@ function hashFull(input) {
 }
 
 function loadOrgSpec(root) {
-  const path = join(root, '.ogu/OrgSpec.json');
+  const path = resolveOguPath(root, 'OrgSpec.json');
   if (!existsSync(path)) return null;
   return JSON.parse(readFileSync(path, 'utf8'));
 }

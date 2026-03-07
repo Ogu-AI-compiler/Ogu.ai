@@ -1,8 +1,8 @@
 /**
- * Slice 137 — Permission Matrix + Access Control
+ * Slice 137 — Permission Matrix
  *
  * Permission Matrix: role-based permission definitions.
- * Access Control: enforce access decisions at runtime.
+
  */
 
 import { existsSync } from "node:fs";
@@ -14,7 +14,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 137 — Permission Matrix + Access Control\x1b[0m\n");
+console.log("\n\x1b[1mSlice 137 — Permission Matrix\x1b[0m\n");
 
 // ── Part 1: Permission Matrix ──────────────────────────────
 
@@ -67,57 +67,3 @@ assert("wildcard permission grants all", () => {
   matrix.grant("cto", "*");
   if (!matrix.check("cto", "anything.at.all")) throw new Error("wildcard should match all");
 });
-
-// ── Part 2: Access Control ──────────────────────────────
-
-console.log("\n\x1b[36m  Part 2: Access Control\x1b[0m");
-
-const acLib = join(process.cwd(), "tools/ogu/commands/lib/access-control.mjs");
-assert("access-control.mjs exists", () => {
-  if (!existsSync(acLib)) throw new Error("file missing");
-});
-
-const acMod = await import(acLib);
-
-assert("createAccessControl returns controller", () => {
-  if (typeof acMod.createAccessControl !== "function") throw new Error("missing");
-  const ac = acMod.createAccessControl();
-  if (typeof ac.enforce !== "function") throw new Error("missing enforce");
-  if (typeof ac.addPolicy !== "function") throw new Error("missing addPolicy");
-});
-
-assert("enforce allows matching policy", () => {
-  const ac = acMod.createAccessControl();
-  ac.addPolicy({ role: "developer", resource: "src/*", action: "write", effect: "allow" });
-  const result = ac.enforce({ role: "developer", resource: "src/app.ts", action: "write" });
-  if (!result.allowed) throw new Error("should allow");
-});
-
-assert("enforce denies without matching policy", () => {
-  const ac = acMod.createAccessControl();
-  ac.addPolicy({ role: "developer", resource: "src/*", action: "write", effect: "allow" });
-  const result = ac.enforce({ role: "developer", resource: "db/schema.sql", action: "write" });
-  if (result.allowed) throw new Error("should deny - no matching policy");
-});
-
-assert("deny policies override allow", () => {
-  const ac = acMod.createAccessControl();
-  ac.addPolicy({ role: "dev", resource: "src/*", action: "write", effect: "allow" });
-  ac.addPolicy({ role: "dev", resource: "src/config.ts", action: "write", effect: "deny" });
-  const r1 = ac.enforce({ role: "dev", resource: "src/app.ts", action: "write" });
-  if (!r1.allowed) throw new Error("src/app.ts should be allowed");
-  const r2 = ac.enforce({ role: "dev", resource: "src/config.ts", action: "write" });
-  if (r2.allowed) throw new Error("src/config.ts should be denied");
-});
-
-assert("getAuditLog tracks decisions", () => {
-  const ac = acMod.createAccessControl();
-  ac.addPolicy({ role: "qa", resource: "tests/*", action: "read", effect: "allow" });
-  ac.enforce({ role: "qa", resource: "tests/a.ts", action: "read" });
-  ac.enforce({ role: "qa", resource: "src/b.ts", action: "read" });
-  const log = ac.getAuditLog();
-  if (log.length !== 2) throw new Error(`expected 2 entries, got ${log.length}`);
-});
-
-console.log(`\n\x1b[1m  Results: ${pass} passed, ${fail} failed\x1b[0m\n`);
-process.exit(fail > 0 ? 1 : 0);

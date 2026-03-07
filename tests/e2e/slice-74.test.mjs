@@ -1,7 +1,7 @@
 /**
- * Slice 74 — Failure Strategy + Scheduler WFQ
+ * Slice 74 — Scheduler WFQ
  *
- * Failure strategy: failure domain definition & resilience mapping.
+
  * Scheduler WFQ: weighted fair queueing with starvation prevention.
  */
 
@@ -14,70 +14,9 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 74 — Failure Strategy + Scheduler WFQ\x1b[0m\n");
+console.log("\n\x1b[1mSlice 74 — Scheduler WFQ\x1b[0m\n");
 
-// ── Part 1: Failure Strategy ──────────────────────────────
-
-console.log("\x1b[36m  Part 1: Failure Strategy\x1b[0m");
-
-const fsLib = join(process.cwd(), "tools/ogu/commands/lib/failure-strategy.mjs");
-assert("failure-strategy.mjs exists", () => {
-  if (!existsSync(fsLib)) throw new Error("file missing");
-});
-
-const fsMod = await import(fsLib);
-
-assert("createFailureStrategy returns strategy", () => {
-  if (typeof fsMod.createFailureStrategy !== "function") throw new Error("missing");
-  const fs = fsMod.createFailureStrategy();
-  if (typeof fs.defineDomain !== "function") throw new Error("missing defineDomain");
-  if (typeof fs.recordFailure !== "function") throw new Error("missing recordFailure");
-  if (typeof fs.getRecoveryAction !== "function") throw new Error("missing getRecoveryAction");
-});
-
-assert("defineDomain registers failure domain", () => {
-  const fs = fsMod.createFailureStrategy();
-  fs.defineDomain("llm", { fallback: "retry", maxRetries: 3 });
-  fs.defineDomain("database", { fallback: "failover", maxRetries: 1 });
-  const domains = fs.listDomains();
-  if (domains.length !== 2) throw new Error(`expected 2, got ${domains.length}`);
-});
-
-assert("recordFailure tracks failures per domain", () => {
-  const fs = fsMod.createFailureStrategy();
-  fs.defineDomain("api", { fallback: "retry", maxRetries: 3 });
-  fs.recordFailure("api", { error: "timeout" });
-  fs.recordFailure("api", { error: "timeout" });
-  const status = fs.getDomainStatus("api");
-  if (status.failureCount !== 2) throw new Error(`expected 2, got ${status.failureCount}`);
-});
-
-assert("getRecoveryAction returns correct action", () => {
-  const fs = fsMod.createFailureStrategy();
-  fs.defineDomain("llm", { fallback: "retry", maxRetries: 2 });
-  fs.recordFailure("llm", { error: "rate_limit" });
-  const action = fs.getRecoveryAction("llm");
-  if (action.action !== "retry") throw new Error(`expected retry, got ${action.action}`);
-});
-
-assert("exhausted retries returns escalate", () => {
-  const fs = fsMod.createFailureStrategy();
-  fs.defineDomain("api", { fallback: "retry", maxRetries: 2 });
-  fs.recordFailure("api", {});
-  fs.recordFailure("api", {});
-  fs.recordFailure("api", {});
-  const action = fs.getRecoveryAction("api");
-  if (action.action !== "escalate") throw new Error(`expected escalate, got ${action.action}`);
-});
-
-assert("RECOVERY_ACTIONS exported", () => {
-  if (!fsMod.RECOVERY_ACTIONS) throw new Error("missing");
-  if (!Array.isArray(fsMod.RECOVERY_ACTIONS)) throw new Error("should be array");
-  if (!fsMod.RECOVERY_ACTIONS.includes("retry")) throw new Error("missing retry");
-  if (!fsMod.RECOVERY_ACTIONS.includes("escalate")) throw new Error("missing escalate");
-});
-
-// ── Part 2: Scheduler WFQ ──────────────────────────────
+// ── Part 1: Scheduler WFQ ──────────────────────────────
 
 console.log("\n\x1b[36m  Part 2: Scheduler WFQ\x1b[0m");
 

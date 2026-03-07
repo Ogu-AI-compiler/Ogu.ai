@@ -2,6 +2,12 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } fr
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { repoRoot } from '../../util.mjs';
+import { calculateCost as calcModelCost, estimateTaskCost } from './cost-calculator.mjs';
+import { createBudgetRoleTracker } from './budget-role-tracker.mjs';
+import { getAgentsDir, getBudgetDir, resolveOguPath } from './runtime-paths.mjs';
+
+// Shared per-role budget tracker for the current process lifetime
+const _roleTracker = createBudgetRoleTracker();
 
 /**
  * Budget tracker — tracks token spending per feature/agent/model.
@@ -9,7 +15,7 @@ import { repoRoot } from '../../util.mjs';
  * Transactions: .ogu/budget/transactions.jsonl
  */
 
-const BUDGET_DIR = () => join(repoRoot(), '.ogu/budget');
+const BUDGET_DIR = () => getBudgetDir(repoRoot());
 const STATE_FILE = () => join(BUDGET_DIR(), 'budget-state.json');
 const TX_FILE = () => join(BUDGET_DIR(), 'transactions.jsonl');
 
@@ -28,7 +34,7 @@ export function loadBudget(budgetConfig) {
 
   // Load OrgSpec for limits
   const root = repoRoot();
-  const orgSpecPath = join(root, '.ogu/OrgSpec.json');
+  const orgSpecPath = resolveOguPath(root, 'OrgSpec.json');
   let orgBudget = budgetConfig;
   if (!orgBudget && existsSync(orgSpecPath)) {
     const orgSpec = JSON.parse(readFileSync(orgSpecPath, 'utf8'));
@@ -104,6 +110,31 @@ export function loadBudget(budgetConfig) {
 export function deductBudget(params) {
   const state = loadBudget();
   const total = params.inputTokens + params.outputTokens;
+
+  // Use cost-calculator for precise cost computation when model is known
+  let computedCost = params.cost;
+  if (!computedCost && params.model) {
+    try {
+      computedCost = calcModelCost({
+        model: params.model,
+        tokensIn: params.inputTokens,
+        tokensOut: params.outputTokens,
+      });
+    } catch {
+      // Model not in pricing table — fall back to provided cost or 0
+      computedCost = params.cost || 0;
+    }
+  }
+  params.cost = computedCost || params.cost || 0;
+
+  // Record per-role spending via budget-role-tracker
+  if (params.agentRoleId && params.agentRoleId !== 'manual') {
+    _roleTracker.record(params.agentRoleId, {
+      tokensIn: params.inputTokens,
+      tokensOut: params.outputTokens,
+      cost: params.cost,
+    });
+  }
 
   // Reset daily counters if date changed
   const today = new Date().toISOString().split('T')[0];
@@ -197,7 +228,7 @@ export function checkBudget(estimatedTokens, estimatedCost) {
 }
 
 function updateAgentBudget(roleId, tokens, cost) {
-  const agentDir = join(repoRoot(), '.ogu/agents');
+  const agentDir = getAgentsDir(repoRoot());
   mkdirSync(agentDir, { recursive: true });
   const statePath = join(agentDir, `${roleId}.state.json`);
   let agentState = { roleId, tokensUsed: 0, tokensUsedToday: 0, costUsed: 0, costToday: 0, tasksCompleted: 0, tasksFailed: 0, escalations: 0, lastActiveAt: null, currentTask: null, history: [] };
@@ -295,6 +326,32 @@ export function generateReport({ days, featureSlug } = {}) {
     byRole,
   };
 }
+
+/**
+ * Get per-role budget breakdown from the in-memory role tracker.
+ */
+export function getRoleBudgetBreakdown() {
+  return _roleTracker.getAll();
+}
+
+/**
+ * Check budget alerts for a specific role.
+ */
+export function checkRoleBudgetAlerts(roleId) {
+  return _roleTracker.checkAlerts(roleId);
+}
+
+/**
+ * Set a daily token quota for a role (enables alerts at 50%/75%/90%).
+ */
+export function setRoleQuota(roleId, dailyTokens) {
+  _roleTracker.setQuota(roleId, dailyTokens);
+}
+
+/**
+ * Estimate cost for a planned task using cost-calculator.
+ */
+export { estimateTaskCost };
 
 /**
  * In-memory budget tracker (no file I/O).

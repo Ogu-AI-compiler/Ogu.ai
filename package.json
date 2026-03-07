@@ -1,0 +1,13 @@
+{
+  "name": "ai-compiler",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:smoke": "vitest run tests/smoke/neil-fine-jewelry.test.js --reporter=verbose"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0"
+  }
+}

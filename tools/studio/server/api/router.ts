@@ -1,9 +1,37 @@
 import { Hono } from "hono";
-import { readFileSync, readdirSync, existsSync, statSync } from "fs";
+import { readFileSync, readdirSync, existsSync, statSync, writeFileSync, mkdirSync, rmSync } from "fs";
 import { join, resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { homedir } from "os";
 import { spawnSync } from "child_process";
+import { abortPipeline, pausePipeline, resumePipeline } from "./dispatch.js";
+
+// ── Phase 3A: Studio Data Layer ──
+import {
+  getOrgData,
+  getBudgetData,
+  getAuditData,
+  getGovernanceData,
+  getAgentData,
+  getDashboardSnapshot,
+} from "../../../ogu/commands/lib/studio-data-provider.mjs";
+import {
+  searchAudit as searchAuditLayer,
+  getBudgetSummary,
+} from "../../../ogu/commands/lib/studio-data-layer.mjs";
+import { search as globalSearch } from "../../../ogu/commands/lib/global-search.mjs";
+import { createWidget, createDashboardLayout, WIDGET_TYPES, serializeWidgets } from "../../../ogu/commands/lib/genui-widgets.mjs";
+import { createSSEEmitter } from "../../../ogu/commands/lib/sse-emitter.mjs";
+import { createExecutionStream, EXECUTION_EVENTS, formatEventForLog } from "../../../ogu/commands/lib/execution-event-stream.mjs";
+import { getRunnersDir, resolveRuntimePath } from "../../../ogu/commands/lib/runtime-paths.mjs";
+
+// ── Phase 4F: Cache Manager + TTL Store ──
+import { createLRUCache } from "../../../ogu/commands/lib/cache-manager.mjs";
+import { createTTLStore } from "../../../ogu/commands/lib/ttl-store.mjs";
+
+// Progress Tracker + ETA Calculator (Phase 4F)
+import { createProgressTracker } from "../../../ogu/commands/lib/progress-tracker.mjs";
+import { createETACalculator } from "../../../ogu/commands/lib/eta-calculator.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,6 +52,15 @@ function runOguInit(projectRoot: string) {
 }
 
 function getRoot() { return process.env.OGU_ROOT || process.cwd(); }
+
+/** Resolve project root from registry or current root */
+function resolveProjectRoot(slug: string): string {
+  const defaultRoot = getRoot();
+  if (existsSync(join(defaultRoot, "docs/vault/04_Features", slug))) return defaultRoot;
+  const entry = readProjectRegistry().find((p) => p.slug === slug);
+  if (entry && existsSync(entry.root)) return entry.root;
+  return defaultRoot;
+}
 
 function readJson(path: string) {
   try {
@@ -75,30 +112,96 @@ function detectPhase(featureDir: string): string {
     if (specFilled && planHasTasks) return "ready";
   }
   if (hasFilled("PRD.md")) return "architect";
-  if (hasFilled("IDEA.md")) return "feature";
+  if (hasFilled("ProjectBrief.md") || hasFilled("IDEA.md")) return "feature";
   return "idea";
 }
 
+// ── Persistent project registry ──
+// Projects created by the wizard live in ~/Projects/{slug}, not in the Studio root.
+// This registry tracks all known project roots so they survive server restarts.
+
+const REGISTRY_PATH = join(homedir(), ".ogu", "studio-projects.json");
+
+export interface ProjectEntry {
+  slug: string;
+  root: string;
+  createdAt: string;
+}
+
+export function readProjectRegistry(): ProjectEntry[] {
+  try {
+    const data = JSON.parse(readFileSync(REGISTRY_PATH, "utf-8"));
+    return Array.isArray(data.projects) ? data.projects : [];
+  } catch {
+    return [];
+  }
+}
+
+export function registerProject(slug: string, root: string): void {
+  const dir = join(homedir(), ".ogu");
+  mkdirSync(dir, { recursive: true });
+
+  const projects = readProjectRegistry().filter((p) => p.slug !== slug);
+  projects.push({ slug, root, createdAt: new Date().toISOString() });
+  writeFileSync(REGISTRY_PATH, JSON.stringify({ projects }, null, 2) + "\n", "utf-8");
+}
+
 function scanFeatures() {
-  const featuresDir = join(getRoot(), "docs/vault/04_Features");
-  if (!existsSync(featuresDir)) return [];
-  return readdirSync(featuresDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && d.name !== "Index.md")
-    .map((d) => {
+  const results: Array<{ slug: string; phase: string; tasks: number; root?: string }> = [];
+  const seen = new Set<string>();
+
+  // 1. Scan current OGU_ROOT features (if any)
+  const currentRoot = getRoot();
+  const featuresDir = join(currentRoot, "docs/vault/04_Features");
+  if (existsSync(featuresDir)) {
+    for (const d of readdirSync(featuresDir, { withFileTypes: true })) {
+      if (!d.isDirectory() || d.name === "Index.md") continue;
       const dir = join(featuresDir, d.name);
       const phase = detectPhase(dir);
       const plan = readJson(join(dir, "Plan.json"));
       const tasks = plan?.tasks?.length || 0;
-      return { slug: d.name, phase, tasks };
-    })
-    .sort((a, b) => {
-      const order: Record<string, number> = { done: 0, ready: 1, architect: 2, feature: 3, idea: 4 };
-      return (order[a.phase] ?? 5) - (order[b.phase] ?? 5);
-    });
+      results.push({ slug: d.name, phase, tasks, root: currentRoot });
+      seen.add(d.name);
+    }
+  }
+
+  // 2. Scan registered projects (from wizard-created projects)
+  for (const entry of readProjectRegistry()) {
+    if (seen.has(entry.slug)) continue;
+    if (!existsSync(entry.root)) continue;
+
+    const projFeaturesDir = join(entry.root, "docs/vault/04_Features");
+    if (!existsSync(projFeaturesDir)) continue;
+
+    for (const d of readdirSync(projFeaturesDir, { withFileTypes: true })) {
+      if (!d.isDirectory()) continue;
+      if (seen.has(d.name)) continue;
+      const dir = join(projFeaturesDir, d.name);
+      const phase = detectPhase(dir);
+      const plan = readJson(join(dir, "Plan.json"));
+      const tasks = plan?.tasks?.length || 0;
+      results.push({ slug: d.name, phase, tasks, root: entry.root });
+      seen.add(d.name);
+    }
+  }
+
+  return results.sort((a, b) => {
+    const order: Record<string, number> = { done: 0, ready: 1, architect: 2, feature: 3, idea: 4 };
+    return (order[a.phase] ?? 5) - (order[b.phase] ?? 5);
+  });
 }
 
 export function createApiRouter() {
   const api = new Hono();
+
+  // ── Phase 4F: LRU cache for expensive API responses (max 50 entries) ──
+  const apiCache = createLRUCache({ maxSize: 50 });
+  // TTL store for time-bounded cache entries (30s TTL for org/budget data)
+  const ttlStore = createTTLStore();
+
+  // ── Phase 4F: Progress tracker for pipeline task tracking ──
+  const pipelineProgressTracker = createProgressTracker({ total: 100 });
+  const pipelineEtaCalculator = createETACalculator({ total: 100 });
 
   api.get("/state", (c) => {
     const root = getRoot();
@@ -126,7 +229,7 @@ export function createApiRouter() {
     }
 
     const root = getRoot();
-    const statePath = join(root, ".ogu/STATE.json");
+    const statePath = resolveRuntimePath(root, "STATE.json");
     const state = readJson(statePath) || {};
     state.involvement_level = level;
     writeFileSync(statePath, JSON.stringify(state, null, 2) + "\n", "utf-8");
@@ -148,6 +251,101 @@ export function createApiRouter() {
     const oguDir = join(getRoot(), ".ogu");
     const state = readJson(join(oguDir, "STATE.json"));
     return c.json({ features, active: state?.current_task || null });
+  });
+
+  // Switch OGU_ROOT to a project (needed for projects created by wizard in ~/Projects/)
+  api.post("/features/:slug/activate", (c) => {
+    const slug = c.req.param("slug");
+    const features = scanFeatures();
+    const match = features.find((f) => f.slug === slug);
+    if (!match || !match.root) return c.json({ error: "Project not found" }, 404);
+    process.env.OGU_ROOT = match.root;
+    return c.json({ ok: true, root: match.root });
+  });
+
+  api.delete("/features/:slug", async (c) => {
+    const slug = c.req.param("slug");
+    if (!slug || slug.includes("..") || slug.includes("/")) return c.json({ error: "Invalid slug" }, 400);
+
+    // Find the feature across all registered projects
+    const features = scanFeatures();
+    const match = features.find((f) => f.slug === slug);
+    if (!match || !match.root) return c.json({ error: "Feature not found" }, 404);
+
+    // Abort any running pipeline for this project (best-effort kill before deletion)
+    abortPipeline(slug, match.root);
+    // Clear active pointer if this was the current task
+    try {
+      const statePath = resolveRuntimePath(match.root, "STATE.json");
+      const state = readJson(statePath) || {};
+      if (state.current_task === slug) {
+        delete state.current_task;
+        writeFileSync(statePath, JSON.stringify(state, null, 2) + "\n", "utf-8");
+      }
+    } catch { /* best-effort */ }
+
+    // 1. Feature vault directory
+    const dir = join(match.root, "docs/vault/04_Features", slug);
+    if (existsSync(dir)) rmSync(dir, { recursive: true, force: true });
+
+    // 2. Project data (.ogu/projects/{slug}/)
+    const projectDir = resolveRuntimePath(match.root, "projects", slug);
+    if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
+
+    // 3. FSM state file
+    const fsmState = resolveRuntimePath(match.root, "state", "features", `${slug}.state.json`);
+    if (existsSync(fsmState)) rmSync(fsmState, { force: true });
+    const abortedMarker = resolveRuntimePath(match.root, "state", "features", `${slug}.aborted`);
+    if (existsSync(abortedMarker)) rmSync(abortedMarker, { force: true });
+    const dispatchState = resolveRuntimePath(match.root, "state", "dispatch", `${slug}.json`);
+    if (existsSync(dispatchState)) rmSync(dispatchState, { force: true });
+
+    // 4. Runner files (task-*.input.json / task-*.output.json for this slug)
+    const runnersDir = getRunnersDir(match.root);
+    if (existsSync(runnersDir)) {
+      try {
+        for (const f of readdirSync(runnersDir)) {
+          if (!f.endsWith(".json")) continue;
+          try {
+            const data = JSON.parse(readFileSync(join(runnersDir, f), "utf-8"));
+            if (data?.featureSlug === slug || data?.slug === slug) {
+              rmSync(join(runnersDir, f), { force: true });
+            }
+          } catch { /* skip unparseable files */ }
+        }
+      } catch { /* ignore */ }
+    }
+
+    // 5. Remove from GLOBAL project registry AND delete standalone project directory
+    try {
+      const allEntries = readProjectRegistry();
+      const entry = allEntries.find((p) => p.slug === slug);
+      const globalRegistry = allEntries.filter((p) => p.slug !== slug);
+      mkdirSync(join(homedir(), ".ogu"), { recursive: true });
+      writeFileSync(REGISTRY_PATH, JSON.stringify({ projects: globalRegistry }, null, 2) + "\n", "utf-8");
+
+      // Delete the actual project directory if it was a wizard-created standalone project
+      // Safety: only delete if the entry root ends with the slug (standalone project)
+      if (entry?.root && existsSync(entry.root)) {
+        const entryRootBase = entry.root.replace(/\/$/, "").split("/").pop() || "";
+        // It's a standalone project if the folder name starts with the slug (may have timestamp suffix)
+        if (entryRootBase === slug || entryRootBase.startsWith(slug + "-")) {
+          rmSync(entry.root, { recursive: true, force: true });
+          if (process.env.OGU_ROOT === entry.root) delete process.env.OGU_ROOT;
+        }
+      }
+    } catch { /* ignore */ }
+
+    // 6. Release marketplace allocations for this project
+    try {
+      const { listProjectAllocations, releaseAgent } = await import("../../../ogu/commands/lib/marketplace-allocator.mjs") as any;
+      const allocs = listProjectAllocations(match.root, slug);
+      for (const alloc of allocs) {
+        try { releaseAgent(match.root, alloc.allocation_id); } catch { /* best-effort */ }
+      }
+    } catch { /* lib not available */ }
+
+    return c.json({ ok: true, deleted: slug });
   });
 
   api.get("/features/:slug", (c) => {
@@ -342,6 +540,64 @@ export function createApiRouter() {
     return c.json({ ok: true, deleted: resolved });
   });
 
+  // ── Project lifecycle controls ──
+
+  /** Release all active marketplace allocations for a project */
+  async function releaseProjectAllocations(root: string, slug: string) {
+    try {
+      const { listProjectAllocations, releaseAgent } = await import("../../../ogu/commands/lib/marketplace-allocator.mjs") as any;
+      const allocs = listProjectAllocations(root, slug);
+      for (const alloc of allocs) {
+        try { releaseAgent(root, alloc.allocation_id); } catch { /* best-effort */ }
+      }
+    } catch { /* lib not available */ }
+  }
+
+  api.post("/project/:slug/abort", async (c) => {
+    const slug = c.req.param("slug");
+    const root = resolveProjectRoot(slug);
+    abortPipeline(slug, root);
+    await releaseProjectAllocations(root, slug);
+    try {
+      const { broadcast } = await import("../ws/server.js");
+      broadcast({ type: "dispatch:aborted", slug } as any);
+    } catch { /* best-effort */ }
+    return c.json({ ok: true, aborted: slug });
+  });
+
+  api.post("/project/:slug/pause", (c) => {
+    const slug = c.req.param("slug");
+    const root = resolveProjectRoot(slug);
+    pausePipeline(slug, root);
+    import("../ws/server.js").then(({ broadcast }) => {
+      broadcast({ type: "dispatch:paused", slug } as any);
+    }).catch(() => {});
+    return c.json({ ok: true, paused: slug });
+  });
+
+  api.post("/project/:slug/resume", (c) => {
+    const slug = c.req.param("slug");
+    const root = resolveProjectRoot(slug);
+    resumePipeline(slug, root);
+    import("../ws/server.js").then(({ broadcast }) => {
+      broadcast({ type: "dispatch:resumed", slug } as any);
+    }).catch(() => {});
+    return c.json({ ok: true, resumed: slug });
+  });
+
+  // ── Active project (most recent valid from registry) ──
+  api.get("/project/active", (c) => {
+    // Sort registry by createdAt descending, return first whose root exists on disk
+    const registry = readProjectRegistry()
+      .filter((p) => existsSync(p.root))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    if (registry.length === 0) return c.json({ project: null });
+
+    const latest = registry[0];
+    return c.json({ project: { slug: latest.slug, root: latest.root } });
+  });
+
   // ── Session persistence (server-side backup) ──
 
   api.get("/sessions", (c) => {
@@ -370,6 +626,218 @@ export function createApiRouter() {
       return c.json({ error: err.message }, 500);
     }
   });
+
+  // ── Phase 3A: Studio Data Provider endpoints ──
+
+  // Global Cmd-K search
+  api.get("/search", (c) => {
+    const root = getRoot();
+    const query = c.req.query("q") || "";
+    const types = c.req.query("types")?.split(",").filter(Boolean);
+    const limit = parseInt(c.req.query("limit") || "20", 10);
+    if (!query) return c.json({ results: [] });
+    const results = globalSearch({ root, query, types, limit });
+    return c.json({ results });
+  });
+
+  // Dashboard snapshot — all data in one call
+  api.get("/dashboard/snapshot", (c) => {
+    const root = getRoot();
+    const snapshot = getDashboardSnapshot({ root });
+    return c.json(snapshot);
+  });
+
+  // Org data (cached with 30s TTL)
+  api.get("/org/data", (c) => {
+    const root = getRoot();
+    const cacheKey = `org:${root}`;
+    const cached = ttlStore.get(cacheKey);
+    if (cached !== undefined) return c.json(cached);
+    const data = getOrgData({ root });
+    ttlStore.set(cacheKey, data, { ttlMs: 30000 });
+    apiCache.set(cacheKey, data);
+    return c.json(data);
+  });
+
+  // Budget summary (augmented with alert level)
+  api.get("/budget/summary", (c) => {
+    const root = getRoot();
+    return c.json(getBudgetSummary({ root }));
+  });
+
+  // Budget raw data (cached with 30s TTL)
+  api.get("/budget/data", (c) => {
+    const root = getRoot();
+    const cacheKey = `budget:${root}`;
+    const cached = ttlStore.get(cacheKey);
+    if (cached !== undefined) return c.json(cached);
+    const data = getBudgetData({ root });
+    ttlStore.set(cacheKey, data, { ttlMs: 30000 });
+    apiCache.set(cacheKey, data);
+    return c.json(data);
+  });
+
+  // Audit search with filters
+  api.get("/audit/search", (c) => {
+    const root = getRoot();
+    const feature = c.req.query("feature");
+    const type = c.req.query("type");
+    const severity = c.req.query("severity");
+    const since = c.req.query("since");
+    const limit = parseInt(c.req.query("limit") || "50", 10);
+    const results = searchAuditLayer({ root, feature, type, severity, since, limit });
+    return c.json({ results });
+  });
+
+  // Audit data (raw recent events)
+  api.get("/audit/data", (c) => {
+    const root = getRoot();
+    const limit = parseInt(c.req.query("limit") || "50", 10);
+    return c.json(getAuditData({ root, limit }));
+  });
+
+  // Governance data
+  api.get("/governance/data", (c) => {
+    const root = getRoot();
+    return c.json(getGovernanceData({ root }));
+  });
+
+  // Agent data
+  api.get("/agents/data", (c) => {
+    const root = getRoot();
+    return c.json(getAgentData({ root }));
+  });
+
+  // GenUI widgets — create a widget descriptor
+  api.post("/widgets/create", async (c) => {
+    const body = await c.req.json() as { type?: string; title?: string; data?: any; style?: any };
+    const { type, title, data, style } = body;
+    if (!type) return c.json({ error: "type is required" }, 400);
+    if (!WIDGET_TYPES[type as keyof typeof WIDGET_TYPES]) {
+      return c.json({ error: `Invalid widget type: ${type}. Valid: ${Object.keys(WIDGET_TYPES).join(", ")}` }, 400);
+    }
+    const widget = (createWidget as any)({ type: type as string, title: title || "", data: data || {}, style: style || {} });
+    return c.json({ widget });
+  });
+
+  // GenUI widgets — list available widget types
+  api.get("/widgets/types", (c) => {
+    return c.json({ types: WIDGET_TYPES });
+  });
+
+  // GenUI dashboard layout — build a grid layout from widgets
+  api.post("/widgets/layout", async (c) => {
+    const body = await c.req.json() as { widgets?: any[]; columns?: number };
+    const { widgets = [], columns } = body;
+    const layout = createDashboardLayout({ widgets, columns });
+    return c.json({ layout, serialized: serializeWidgets(widgets) });
+  });
+
+  // ── Phase 4F: Pipeline progress tracking endpoint ──
+  api.get("/pipeline/progress", (c) => {
+    const progress = pipelineProgressTracker.getProgress();
+    const eta = pipelineEtaCalculator.getETA();
+    return c.json({ progress, eta });
+  });
+
+  api.post("/pipeline/progress", async (c) => {
+    const body = await c.req.json() as { completed?: number; total?: number };
+    const completed = body.completed ?? 0;
+    pipelineProgressTracker.increment(completed);
+    pipelineEtaCalculator.recordProgress(completed, Date.now());
+    return c.json({ ok: true, progress: pipelineProgressTracker.getProgress() });
+  });
+
+  // SSE endpoint for real-time events (Cmd-K and live dashboard updates)
+  const sseEmitter = createSSEEmitter();
+
+  api.get("/events/stream", (c) => {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        const clientId = sseEmitter.addClient((msg: { id: number; event: string; data: any }) => {
+          const formatted = sseEmitter.format(msg);
+          controller.enqueue(encoder.encode(formatted));
+        });
+        // Send initial connection event
+        const initMsg = sseEmitter.format({ id: 0, event: "connected", data: { clientCount: sseEmitter.clientCount() } });
+        controller.enqueue(encoder.encode(initMsg));
+        // Cleanup on close
+        const cleanup = () => sseEmitter.removeClient(clientId);
+        c.req.raw.signal?.addEventListener("abort", cleanup);
+      },
+    });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+      },
+    });
+  });
+
+  // ── Execution Feed (Slice 435) ────────────────────────────────────────────
+
+  const executionStream = createExecutionStream({ persistToAudit: true });
+
+  // Forward execution events to SSE clients
+  executionStream.on("*", (event: any) => {
+    sseEmitter.broadcast({ event: event.type, data: event });
+  });
+
+  // GET /api/execution/feed — recent execution events (with optional filters)
+  api.get("/execution/feed", (c) => {
+    const type = c.req.query("type") || undefined;
+    const taskId = c.req.query("taskId") || undefined;
+    const featureSlug = c.req.query("feature") || undefined;
+    const since = c.req.query("since") || undefined;
+    const limit = parseInt(c.req.query("limit") || "50", 10);
+    const events = executionStream.getHistory({ type, taskId, featureSlug, since, limit });
+    return c.json({ events, total: events.length });
+  });
+
+  // GET /api/execution/stats — execution stream statistics
+  api.get("/execution/stats", (c) => {
+    return c.json(executionStream.getStats());
+  });
+
+  // GET /api/execution/events — list all event type constants
+  api.get("/execution/events", (c) => {
+    return c.json({ events: EXECUTION_EVENTS });
+  });
+
+  // POST /api/execution/emit — manually emit an execution event (for testing/integration)
+  api.post("/execution/emit", async (c) => {
+    const body = await c.req.json() as { type?: string; payload?: any };
+    if (!body.type) return c.json({ error: "type is required" }, 400);
+    const event = executionStream.emit(body.type, body.payload || {});
+    return c.json({ event });
+  });
+
+  // Marketplace API routes are handled by dedicated createMarketplaceApi() router in index.ts.
+
+  // ── Billing (stub — returns free-plan defaults when no auth) ──────────────
+  if (!process.env.AOAS_MODE || process.env.AOAS_MODE === "false") {
+    api.get("/billing/subscription", (c) => {
+      return c.json({
+        plan: { id: "free", name: "Free", compilationsPerMonth: 3, storageGb: 1, agentsMax: 5 },
+        balance: 0,
+        usage: { compilations: 0, agentHires: 0 },
+      });
+    });
+
+    api.post("/billing/checkout", async (c) => {
+      return c.json({ error: "Billing not configured — enable AOAS mode for payments" }, 400 as any);
+    });
+
+    api.post("/billing/portal", async (c) => {
+      return c.json({ error: "Billing not configured — enable AOAS mode for payments" }, 400 as any);
+    });
+
+    api.get("/billing/credits", (c) => {
+      return c.json({ balance: 0, transactions: [] });
+    });
+  }
 
   return api;
 }

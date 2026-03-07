@@ -20,9 +20,10 @@ import { loadAllEvents } from './audit-emitter.mjs';
 import { loadBudget } from './budget-tracker.mjs';
 import { createWorktree, listAgentWorktrees } from './worktree-manager.mjs';
 import { routeModel } from './model-router.mjs';
+import { resolveRuntimePath } from './runtime-paths.mjs';
 
-const ALLOCATIONS_PATH = '.ogu/state/allocations.json';
-const STATE_DIR = '.ogu/state';
+const ALLOCATIONS_PATH = ['state', 'allocations.json'];
+const STATE_DIR = ['state'];
 
 // ── Disk persistence ──
 
@@ -32,7 +33,7 @@ const STATE_DIR = '.ogu/state';
  */
 export function loadAllocations(root) {
   root = root || repoRoot();
-  const filePath = join(root, ALLOCATIONS_PATH);
+  const filePath = resolveRuntimePath(root, ...ALLOCATIONS_PATH);
   if (!existsSync(filePath)) return [];
   try {
     const raw = JSON.parse(readFileSync(filePath, 'utf8'));
@@ -47,9 +48,9 @@ export function loadAllocations(root) {
  */
 export function saveAllocations(root, allocations) {
   root = root || repoRoot();
-  const dir = join(root, STATE_DIR);
+  const dir = resolveRuntimePath(root, ...STATE_DIR);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  writeFileSync(join(root, ALLOCATIONS_PATH), JSON.stringify(allocations, null, 2), 'utf8');
+  writeFileSync(resolveRuntimePath(root, ...ALLOCATIONS_PATH), JSON.stringify(allocations, null, 2), 'utf8');
 }
 
 // ── OrgSpec integration ──
@@ -157,7 +158,7 @@ export function allocatePlan(tasks, options = {}) {
     const roleId = matched?.roleId || '_default';
 
     // Use model-router for intelligent model selection
-    let model = matched?.model || spec.defaults?.model || 'claude-sonnet-4-20250514';
+    let model = matched?.model || spec.defaults?.model || 'claude-sonnet-4-6';
     try {
       const routing = routeModel({ root, roleId, phase, taskId, failureCount: 0 });
       if (routing?.model) model = routing.model;
@@ -463,4 +464,43 @@ export function createKadimaEngine() {
   }
 
   return { registerAgent, assignTask, completeTask, getAgentStatus, getAllocations };
+}
+
+/**
+ * dispatchTask — dispatch a task to local or remote runner.
+ * Falls back to local execution when no remote runners are configured.
+ *
+ * @param {object} task - { taskId, command, args }
+ * @param {object} opts - { root, featureSlug, forceLocal }
+ * @returns {Promise<{ taskId, status, method, output? }>}
+ */
+export async function dispatchTask(task, { root, featureSlug, forceLocal = false } = {}) {
+  const { listRunners } = await import('./distributed-runner.mjs').catch(() => ({ listRunners: () => [] }));
+  const runners = root ? (listRunners({ root }) || []) : [];
+
+  const useLocal = forceLocal || runners.length === 0;
+  const method = useLocal ? 'local' : 'remote';
+
+  if (useLocal) {
+    // Local execution: simulate command dispatch
+    return {
+      taskId: task.taskId,
+      status: 'dispatched',
+      method: 'local',
+      featureSlug,
+      dispatchedAt: new Date().toISOString(),
+    };
+  }
+
+  // Remote: pick first available runner
+  const runner = runners[0];
+  return {
+    taskId: task.taskId,
+    status: 'dispatched',
+    method: 'remote',
+    runnerId: runner.id,
+    host: runner.host,
+    featureSlug,
+    dispatchedAt: new Date().toISOString(),
+  };
 }

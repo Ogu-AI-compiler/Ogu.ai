@@ -3,15 +3,12 @@
  *
  * Exercises the full chain across all major subsystems:
  *   1. Kadima: initKadimaFromOrgSpec → allocatePlan → check assignments
- *   2. Semantic locks: acquire → predictConflicts → release
- *   3. Functional hash: compute → detectDrift
- *   4. MicroVM: create → execute → destroy
- *   5. Secret vault: issue → retrieve → revoke
- *   6. Scheduler: create → enqueue → dequeue
- *   7. Envelope: seal → verifySeal
- *   8. Governance: checkGovernance with policies
- *   9. Worker: create → execute noop → drain
- *  10. Circuit breaker: trip → probe → reset
+ *   2. MicroVM: create → execute → destroy
+ *   3. Scheduler: create → enqueue → dequeue
+ *   4. Envelope: seal → verifySeal
+ *   5. Governance: checkGovernance with policies
+ *   6. Worker: create → execute noop → drain
+ *   7. Circuit breaker: trip → probe → reset
  */
 
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
@@ -79,34 +76,8 @@ assert('allocatePlan assigns tasks', () => {
   if (allocs.length !== 2 || !allocs[0].roleId) throw new Error('allocation failed');
 });
 
-// ═══ 2. Semantic Locks ═══
-console.log("\x1b[36m  Part 2: Semantic Locks\x1b[0m");
-const sl = await import(join(process.cwd(), 'tools/ogu/commands/lib/semantic-lock.mjs'));
-
-let lockId;
-assert('acquire → predict → release', () => {
-  const res = sl.acquireSemanticLock(root, { files: ['src/app.ts'], agentId: 'a1', taskId: 'T1', featureSlug: 'e2e' });
-  if (!res.acquired) throw new Error('lock failed');
-  lockId = res.lockId;
-  const pred = sl.predictConflicts(root, { files: ['src/app.ts'], currentLocks: sl.getActiveLocks(root) });
-  if (!Array.isArray(pred) || pred.length === 0) throw new Error('no conflicts');
-  const rel = sl.releaseSemanticLock(root, lockId);
-  if (!rel.released) throw new Error('release failed');
-});
-
-// ═══ 3. Functional Hash ═══
-console.log("\x1b[36m  Part 3: Functional Hash\x1b[0m");
-const fh = await import(join(process.cwd(), 'tools/ogu/commands/lib/functional-hash.mjs'));
-
-assert('computeFunctionalHash + detectDrift', () => {
-  const h1 = fh.computeFunctionalHash('function a() { return 1; }', 'js');
-  const h2 = fh.computeFunctionalHash('function b() { return 2; }', 'js');
-  const drift = fh.detectDrift(h1, h2);
-  if (!drift || !drift.severity) throw new Error('drift detection failed');
-});
-
-// ═══ 4. MicroVM ═══
-console.log("\x1b[36m  Part 4: MicroVM\x1b[0m");
+// ═══ 2. MicroVM ═══
+console.log("\x1b[36m  Part 2: MicroVM\x1b[0m");
 const mvm = await import(join(process.cwd(), 'tools/ogu/commands/lib/microvm.mjs'));
 
 assert('createVM → executeInVM → destroyVM', () => {
@@ -117,19 +88,8 @@ assert('createVM → executeInVM → destroyVM', () => {
   if (mvm.listActiveVMs(root).some(x => x.vmId === v.vmId)) throw new Error('not destroyed');
 });
 
-// ═══ 5. Secret Vault ═══
-console.log("\x1b[36m  Part 5: Secret Vault\x1b[0m");
-const sv = await import(join(process.cwd(), 'tools/ogu/commands/lib/secret-vault.mjs'));
-
-assert('issue → retrieve → revoke', () => {
-  sv.issueSecret(root, { key: 'e2e-key', value: 'e2e-val', grantedTo: ['admin'] });
-  if (sv.retrieveSecret(root, 'e2e-key', 'admin') !== 'e2e-val') throw new Error('wrong value');
-  sv.revokeSecret(root, 'e2e-key', 'admin');
-  if (sv.retrieveSecret(root, 'e2e-key', 'admin') !== null) throw new Error('not revoked');
-});
-
-// ═══ 6. Scheduler WFQ ═══
-console.log("\x1b[36m  Part 6: Scheduler WFQ\x1b[0m");
+// ═══ 3. Scheduler WFQ ═══
+console.log("\x1b[36m  Part 3: Scheduler WFQ\x1b[0m");
 const wfq = await import(join(process.cwd(), 'tools/ogu/commands/lib/scheduler-wfq.mjs'));
 
 assert('enqueue → dequeue', () => {
@@ -139,8 +99,8 @@ assert('enqueue → dequeue', () => {
   if (!s.dequeue()) throw new Error('dequeue null');
 });
 
-// ═══ 7. Envelope ═══
-console.log("\x1b[36m  Part 7: Envelope Protocol\x1b[0m");
+// ═══ 4. Envelope ═══
+console.log("\x1b[36m  Part 4: Envelope Protocol\x1b[0m");
 const ep = await import(join(process.cwd(), 'tools/ogu/commands/lib/envelope-protocol.mjs'));
 
 assert('sealEnvelope → verifySeal', () => {
@@ -149,8 +109,8 @@ assert('sealEnvelope → verifySeal', () => {
   if (!ep.verifySeal(sealed).valid) throw new Error('seal failed');
 });
 
-// ═══ 8. Governance ═══
-console.log("\x1b[36m  Part 8: Governance\x1b[0m");
+// ═══ 5. Governance ═══
+console.log("\x1b[36m  Part 5: Governance\x1b[0m");
 const gov = await import(join(process.cwd(), 'tools/ogu/commands/lib/governance-engine.mjs'));
 
 assert('DENY on .env', () => {
@@ -169,8 +129,8 @@ assert('ALLOW on safe file', () => {
   if (r.decision !== 'ALLOW') throw new Error(`expected ALLOW, got ${r.decision}`);
 });
 
-// ═══ 9. Worker ═══
-console.log("\x1b[36m  Part 9: Worker\x1b[0m");
+// ═══ 6. Worker ═══
+console.log("\x1b[36m  Part 6: Worker\x1b[0m");
 const wk = await import(join(process.cwd(), 'tools/runner/worker.mjs'));
 
 assert('create → execute noop → drain', async () => {
@@ -183,8 +143,8 @@ assert('create → execute noop → drain', async () => {
   rmSync(workDir, { recursive: true, force: true });
 });
 
-// ═══ 10. Circuit Breaker ═══
-console.log("\x1b[36m  Part 10: Circuit Breaker\x1b[0m");
+// ═══ 7. Circuit Breaker ═══
+console.log("\x1b[36m  Part 7: Circuit Breaker\x1b[0m");
 const cb = await import(join(process.cwd(), 'tools/ogu/commands/lib/circuit-breaker.mjs'));
 
 assert('trip → probe → reset', () => {

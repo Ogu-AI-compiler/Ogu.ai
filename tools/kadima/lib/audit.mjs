@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync, appendFileSync, readdirSync, unlinkSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { getAuditDir } from '../../ogu/commands/lib/runtime-paths.mjs';
 
 /**
  * Kadima Audit Utilities — Query, analyze, and archive audit trail.
@@ -11,7 +12,7 @@ import { join } from 'node:path';
  * Index:       .ogu/audit/index.json
  */
 
-const AUDIT_DIR = (root) => join(root, '.ogu/audit');
+const AUDIT_DIR = (root) => getAuditDir(root);
 
 // ── Loading ──
 

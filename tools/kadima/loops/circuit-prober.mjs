@@ -13,8 +13,9 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
+import { getAuditDir, getBudgetDir, getStateDir, resolveOguPath } from '../../ogu/commands/lib/runtime-paths.mjs';
 
-const BREAKER_PATH = (root) => join(root, '.ogu/state/circuit-breakers.json');
+const BREAKER_PATH = (root) => join(getStateDir(root), 'circuit-breakers.json');
 
 const DEFAULT_COOLDOWN_MS = 60000; // 1 minute
 
@@ -29,7 +30,7 @@ const probes = {
 
 function probeProvider(root) {
   // Check if provider config exists and is readable
-  const orgPath = join(root, '.ogu/OrgSpec.json');
+  const orgPath = resolveOguPath(root, 'OrgSpec.json');
   if (!existsSync(orgPath)) return { ok: true, reason: 'no orgspec (ok)' };
   try {
     const org = JSON.parse(readFileSync(orgPath, 'utf8'));
@@ -41,14 +42,14 @@ function probeProvider(root) {
 
 function probeFilesystem(root) {
   // Check critical paths are readable
-  const paths = ['.ogu/state', '.ogu/audit', '.ogu/budget'];
+  const paths = [getStateDir(root), getAuditDir(root), getBudgetDir(root)];
   for (const p of paths) {
-    if (!existsSync(join(root, p))) {
-      return { ok: false, reason: `Missing: ${p}` };
+    if (!existsSync(p)) {
+      return { ok: false, reason: `Missing: ${p.replace(`${root}/`, '')}` };
     }
   }
   // Try a write test
-  const testPath = join(root, '.ogu/state/.probe-test');
+  const testPath = join(getStateDir(root), '.probe-test');
   try {
     writeFileSync(testPath, 'probe', 'utf8');
     unlinkSync(testPath);
@@ -59,7 +60,7 @@ function probeFilesystem(root) {
 }
 
 function probeBudget(root) {
-  const budgetPath = join(root, '.ogu/budget/budget-state.json');
+  const budgetPath = join(getBudgetDir(root), 'budget-state.json');
   if (!existsSync(budgetPath)) return { ok: true, reason: 'no budget file (ok)' };
   try {
     JSON.parse(readFileSync(budgetPath, 'utf8'));
@@ -70,7 +71,7 @@ function probeBudget(root) {
 }
 
 function probeScheduler(root) {
-  const schedulerPath = join(root, '.ogu/state/scheduler-state.json');
+  const schedulerPath = join(getStateDir(root), 'scheduler-state.json');
   if (!existsSync(schedulerPath)) return { ok: true, reason: 'no scheduler state (ok)' };
   try {
     const state = JSON.parse(readFileSync(schedulerPath, 'utf8'));

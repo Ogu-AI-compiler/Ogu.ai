@@ -1,0 +1,12 @@
+{
+  "services": [
+    {
+      "id": "kadima",
+      "name": "Kadima Daemon",
+      "port": 4210,
+      "protocol": "http",
+      "healthEndpoint": "/health",
+      "registeredAt": "2026-03-07T15:55:32.236Z"
+    }
+  ]
+}

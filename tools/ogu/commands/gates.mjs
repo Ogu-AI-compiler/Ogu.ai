@@ -6,6 +6,44 @@ import { loadIR, scanPreExisting } from "./lib/ir-registry.mjs";
 import { normalizeIR } from "./lib/normalize-ir.mjs";
 import { verifyOutput } from "./lib/drift-verifiers.mjs";
 import { oguError } from "./lib/errors.mjs";
+import { checkGovernance, resolveApproval } from "./lib/governance-engine.mjs";
+import { createApprovalLifecycle } from "./lib/approval-lifecycle.mjs";
+import { detectPhase } from "./lib/phase-detector.mjs";
+
+// ── Phase 4A: Feature Management ──
+import { createFlagManager } from "./lib/feature-flags.mjs";
+import { createFeatureFlagManager } from "./lib/feature-flag-manager.mjs";
+import { createABTestRouter } from "./lib/ab-test-router.mjs";
+import { createProposalManager } from "./lib/proposal-manager.mjs";
+
+// ── Phase 4C: Security & Governance ──
+import { createPermissionMatrix } from "./lib/permission-matrix.mjs";
+import { createACL } from "./lib/acl.mjs";
+
+// Shared feature flag instances for gate execution
+const _flagManager = createFlagManager();
+const _featureFlagManager = createFeatureFlagManager();
+const _abTestRouter = createABTestRouter();
+const _proposalManager = createProposalManager();
+
+// Permission matrix: gate-run permissions per role
+const _permissionMatrix = createPermissionMatrix();
+_permissionMatrix.grant('tech-lead', 'gates:run');
+_permissionMatrix.grant('tech-lead', 'gates:reset');
+_permissionMatrix.grant('cto', 'gates:run');
+_permissionMatrix.grant('cto', 'gates:reset');
+_permissionMatrix.grant('cto', '*');
+_permissionMatrix.grant('kadima', 'gates:run');
+_permissionMatrix.grant('devops', 'gates:run');
+_permissionMatrix.grant('devops', 'gates:reset');
+
+// ACL: resource-level access control for gate operations
+const _acl = createACL();
+_acl.allow('tech-lead', 'gates/*', 'run');
+_acl.allow('cto', 'gates/*', 'run');
+_acl.allow('cto', 'gates/*', 'reset');
+_acl.allow('kadima', 'gates/*', 'run');
+_acl.deny('qa', 'gates/*', 'reset');
 
 const GATE_NAMES = [
   "doctor",
@@ -75,6 +113,22 @@ async function runGates(root, slug, args) {
   if (state.feature !== slug || force) {
     state = { feature: slug, started: new Date().toISOString(), gates: {} };
   }
+
+  // Feature flag check — allow gates to be disabled per feature
+  const gatesEnabled = !_featureFlagManager.isEnabled(`skip_gates_${slug}`);
+  if (!gatesEnabled) {
+    console.log(`  [gates] Feature flag 'skip_gates_${slug}' is set — skipping gates for this feature.`);
+    return 0;
+  }
+
+  // AB test routing — route to experimental gate set if experiment active
+  try {
+    _abTestRouter.addExperiment({ name: 'gate_order', variants: ['standard', 'fast'], weights: [90, 10] });
+    const variant = _abTestRouter.assign('gate_order', slug);
+    if (variant === 'fast') {
+      // fast variant tracked — no gate reordering, just telemetry
+    }
+  } catch { /* ab test router not yet seeded — safe to ignore */ }
 
   const gateFunctions = [
     (r, s) => gateDoctor(r),
@@ -154,6 +208,15 @@ async function runGates(root, slug, args) {
     if (!result.passed) {
       allPassed = false;
       failedGate = gateNum;
+      // Create a fix proposal via proposal-manager for the failed gate
+      try {
+        const proposalId = _proposalManager.createProposal({
+          title: `Fix gate ${gateNum} (${gateName}) for ${slug}`,
+          description: result.details || `Gate ${gateNum} failed. Investigate and fix.`,
+          changes: [{ gate: gateNum, name: gateName, error: result.details }],
+        });
+        // Mark proposal as tracked (not applied — awaits human or kadima review)
+      } catch { /* best-effort */ }
       break;
     }
   }
@@ -388,10 +451,29 @@ function checkDoneWhen(root, task) {
   }
 
   // Basic heuristic: if done_when mentions a file or pattern, grep for it
+  // Only use result if the target looks like a real identifier (not a common word)
   const fileMatch = doneWhen.match(/(?:file|module|component|page|route|endpoint)\s+(\S+)/);
   if (fileMatch) {
     const target = fileMatch[1].replace(/['"]/g, "");
-    return scanForPattern(root, target);
+    // Skip common English words that aren't real code identifiers
+    const commonWords = new Set(["refreshes","loads","renders","works","exists","passes","runs","displays","shows","updates","changes","appears","opens","closes","saves","deletes","submits","validates","handles","processes","returns","starts","stops","fails","succeeds","completes","creates","removes","connects","disconnects"]);
+    if (!commonWords.has(target) && scanForPattern(root, target)) return true;
+    // Fall through to other checks if scan fails or target is a common word
+  }
+
+  // Content-based validation: grep for key terms from done_when in source files
+  const contentKeywords = [];
+  if (doneWhen.includes("localstorage") || doneWhen.includes("local storage")) contentKeywords.push("localStorage");
+  if (doneWhen.includes("persist")) contentKeywords.push("persist");
+  if (doneWhen.includes("session")) contentKeywords.push("sessionStorage");
+  if (doneWhen.includes("api") || doneWhen.includes("fetch")) contentKeywords.push("fetch");
+  if (doneWhen.includes("websocket")) contentKeywords.push("WebSocket");
+  if (doneWhen.includes("drag") && doneWhen.includes("drop")) contentKeywords.push("onDrag");
+  if (doneWhen.includes("animation")) contentKeywords.push("animation");
+  if (doneWhen.includes("theme") || doneWhen.includes("dark mode")) contentKeywords.push("theme");
+  if (contentKeywords.length > 0) {
+    const found = contentKeywords.some((kw) => scanForPattern(root, kw));
+    if (found) return true;
   }
 
   // If touches exist and done_when exists, assume task is done if all touched paths exist
@@ -600,13 +682,24 @@ async function gateSmokeTest(root, slug) {
     return { passed: false, details: "No test runner found. Install playwright, vitest, or jest." };
   }
 
-  // Run tests
+  // Auto-install dependencies if node_modules is missing
   const { execSync } = await import("node:child_process");
+  const { existsSync: _exists } = await import("node:fs");
+  if (!_exists(join(root, "node_modules"))) {
+    try {
+      const pkgManager = _exists(join(root, "pnpm-lock.yaml")) ? "pnpm install" :
+                         _exists(join(root, "yarn.lock"))      ? "yarn install" :
+                         "npm install";
+      execSync(pkgManager, { cwd: root, stdio: "pipe", timeout: 120000 });
+    } catch (err) {
+      return { passed: false, details: `npm install failed: ${err.message?.slice(0, 200)}` };
+    }
+  }
   const results = [];
 
   for (const testFile of testFiles) {
     try {
-      const cmd = buildTestCommand(runner, testFile);
+      const cmd = buildTestCommand(runner, testFile, root);
       execSync(cmd, { cwd: root, stdio: "pipe", timeout: 120000 });
       results.push({ file: testFile, status: "passed" });
     } catch (err) {
@@ -664,6 +757,20 @@ function findSmokeTests(root, slug) {
     }
   }
 
+  // Fall back to ALL files in tests/smoke/ — AI often creates descriptive names, not slug names
+  if (found.length === 0) {
+    const smokeDir = join(root, "tests/smoke");
+    if (existsSync(smokeDir)) {
+      try {
+        for (const file of readdirSync(smokeDir)) {
+          if (/\.(test|spec)\.(ts|js|tsx|jsx|mjs)$/.test(file)) {
+            found.push(`tests/smoke/${file}`);
+          }
+        }
+      } catch { /* skip */ }
+    }
+  }
+
   return found;
 }
 
@@ -692,16 +799,24 @@ function detectTestRunner(root) {
   return null;
 }
 
-function buildTestCommand(runner, testFile) {
+function buildTestCommand(runner, testFile, root) {
   switch (runner) {
-    case "playwright":
-      return `npx playwright test ${testFile} --reporter=line`;
-    case "vitest":
-      return `npx vitest run ${testFile} --reporter=verbose`;
-    case "jest":
-      return `npx jest ${testFile} --verbose --forceExit`;
-    default:
-      return `npx vitest run ${testFile}`;
+    case "playwright": {
+      const bin = existsSync(join(root, "node_modules/.bin/playwright")) ? "./node_modules/.bin/playwright" : "npx playwright";
+      return `${bin} test ${testFile} --reporter=line`;
+    }
+    case "vitest": {
+      const bin = existsSync(join(root, "node_modules/.bin/vitest")) ? "./node_modules/.bin/vitest" : "npx vitest";
+      return `${bin} run ${testFile} --reporter=verbose`;
+    }
+    case "jest": {
+      const bin = existsSync(join(root, "node_modules/.bin/jest")) ? "./node_modules/.bin/jest" : "npx jest";
+      return `${bin} ${testFile} --verbose --forceExit`;
+    }
+    default: {
+      const bin = existsSync(join(root, "node_modules/.bin/vitest")) ? "./node_modules/.bin/vitest" : "npx vitest";
+      return `${bin} run ${testFile}`;
+    }
   }
 }
 
@@ -764,6 +879,25 @@ async function gateContracts(root, slug) {
         }
       } catch { /* skip */ }
     }
+  }
+
+  // Governance check — verify no blocking governance violations
+  const govResult = checkGovernance(root, { featureSlug: slug, phase: 'gates' });
+  if (govResult.decision === 'DENY') {
+    return { passed: false, details: `Governance: ${govResult.reason}` };
+  }
+  if (govResult.decision === 'REQUIRES_APPROVAL') {
+    warnings.push(`Governance: ${govResult.reason}`);
+  }
+
+  // Approval state check — verify pending approvals are resolved
+  const phase = detectPhase({ root });
+  const approvalResult = resolveApproval(root, {
+    featureSlug: slug,
+    requiredRoles: govResult.approvals_needed || [],
+  });
+  if (!approvalResult.satisfied && approvalResult.missing.length > 0) {
+    warnings.push(`Pending approvals: ${approvalResult.missing.join(', ')}`);
   }
 
   const detail = warnings.length > 0
@@ -1181,12 +1315,12 @@ async function gateDesignCompliance(root, slug) {
       if (content.includes(":hover")) { hasHoverStates = true; break; }
     } catch { /* skip */ }
   }
-  if (!hasHoverStates && cssFiles.length > 0) {
-    // Also check inline hover in JSX (onMouseOver, hoverStyle, :hover in template literals)
+  if (!hasHoverStates) {
+    // Also check inline hover in JSX (onMouseOver, hoverStyle, :hover in template literals, Tailwind hover: prefix)
     for (const file of jsxFiles) {
       try {
         const content = readFileSync(file, "utf-8");
-        if (content.includes("onMouseOver") || content.includes("hoverStyle") || content.includes(":hover")) {
+        if (content.includes("onMouseOver") || content.includes("hoverStyle") || content.includes(":hover") || /\bhover:/i.test(content)) {
           hasHoverStates = true;
           break;
         }

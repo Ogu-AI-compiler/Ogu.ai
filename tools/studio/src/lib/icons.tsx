@@ -4,6 +4,7 @@ export function Icon({ d, size = 18, stroke = "currentColor", fill = "none", sty
   d: string; size?: number; stroke?: string; fill?: string; style?: React.CSSProperties;
 }) {
   // Support multi-path icons (paths separated by |)
+  if (!d) return <svg width={size} height={size} viewBox="0 0 24 24" />;
   const paths = d.split("|");
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke}
@@ -51,20 +52,29 @@ export const icons = {
   json: "M4 16.5V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5|M4 7.5V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3.5|M8 12h8",
 
   // Brand page
+  wand: "M15 4l5 5L8 21H3v-5L15 4z|M12 7l5 5",
   sparkles: "M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z|M19 13l.75 2.25L22 16l-2.25.75L19 19l-.75-2.25L16 16l2.25-.75L19 13z",
   fingerprint: "M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4|M14 13.12c0 2.38-.16 4.63-.38 6.32|M8.65 22.5c.24-1.74.4-3.72.4-5.73 0-.73-.11-1.38-.32-2|M18 12a6 6 0 0 0-12 0c0 4.31-.67 8.6-1.41 11.25|M12 6a6 6 0 0 1 6 6c0 3.19-.42 6.53-1.09 9.25|M6.74 2.74A10 10 0 0 1 22 12c0 3.24-.38 6.2-.95 8.6|M2 12A10 10 0 0 1 4.36 5.65",
   search: "M11 17.25a6.25 6.25 0 1 1 0-12.5 6.25 6.25 0 0 1 0 12.5z|M16 16l4.5 4.5",
+  nodes: "M12 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z|M4.5 15a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z|M19.5 15a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z|M12 7v3.5M9.2 15.5L12 10.5M14.8 15.5L12 10.5",
+
+  // Edit
+  pencil: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7|M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
 
   // Actions & status
   check: "M20 6L9 17l-5-5",
   x: "M18 6L6 18M6 6l12 12",
   plus: "M12 5v14M5 12h14",
+  refresh: "M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15",
   stop: "M6 6h12v12H6z",
   play: "M5 3l14 9-14 9V3z",
+  pause: "M6 4h4v16H6zm8 0h4v16h-4z",
   circle: "M12 12m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0",
   cornerDown: "M7 7v6h6",
   quote: "M3 21c3-3 4.5-7 4.5-12H3|M15 21c3-3 4.5-7 4.5-12H15",
   terminal: "M4 17l6-6-6-6|M12 19h8",
   loader: "M12 2v4|M12 18v4|M4.93 4.93l2.83 2.83|M16.24 16.24l2.83 2.83|M2 12h4|M18 12h4|M4.93 19.07l2.83-2.83|M16.24 7.76l2.83-2.83",
   trash: "M3 6h18|M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2|M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6|M10 11v6|M14 11v6",
+  marketplace: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",
+  budget: "M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",
 };

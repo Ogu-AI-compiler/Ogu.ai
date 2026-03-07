@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { repoRoot } from '../../util.mjs';
+import { getAuditDir } from './runtime-paths.mjs';
 
 /**
  * Audit Rotation — move events to daily YYYY-MM-DD.jsonl files.
@@ -17,7 +18,7 @@ import { repoRoot } from '../../util.mjs';
  */
 export function rotateAuditLog({ root } = {}) {
   root = root || repoRoot();
-  const currentPath = join(root, '.ogu/audit/current.jsonl');
+  const currentPath = join(getAuditDir(root), 'current.jsonl');
 
   if (!existsSync(currentPath)) {
     return { rotatedCount: 0, datesCreated: 0 };
@@ -43,7 +44,7 @@ export function rotateAuditLog({ root } = {}) {
   const datesCreated = Object.keys(byDate).length;
 
   for (const [date, dateLines] of Object.entries(byDate)) {
-    const datePath = join(root, `.ogu/audit/${date}.jsonl`);
+    const datePath = join(getAuditDir(root), `${date}.jsonl`);
     appendFileSync(datePath, dateLines.join('\n') + '\n');
   }
 

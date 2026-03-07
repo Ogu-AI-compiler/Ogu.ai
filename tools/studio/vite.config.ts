@@ -1,16 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { tamaguiPlugin } from "@tamagui/vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
 import { resolve } from "path";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tamaguiPlugin({
-      config: "./src/theme/config.ts",
-      components: ["tamagui"],
-    }),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),

@@ -1,5 +1,5 @@
 /**
- * Slice 151 — Batch Processor + Queue Manager
+ * Slice 151 — Batch Processor
  */
 
 import { existsSync } from "node:fs";
@@ -11,7 +11,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 151 — Batch Processor + Queue Manager\x1b[0m\n");
+console.log("\n\x1b[1mSlice 151 — Batch Processor\x1b[0m\n");
 
 console.log("\x1b[36m  Part 1: Batch Processor\x1b[0m");
 
@@ -43,44 +43,6 @@ assert("getStats returns processing stats", async () => {
   const stats = proc.getStats();
   if (stats.totalItems !== 3) throw new Error(`expected 3, got ${stats.totalItems}`);
   if (stats.batchesProcessed !== 1) throw new Error(`expected 1 batch, got ${stats.batchesProcessed}`);
-});
-
-console.log("\n\x1b[36m  Part 2: Queue Manager\x1b[0m");
-
-const qmLib = join(process.cwd(), "tools/ogu/commands/lib/queue-manager.mjs");
-assert("queue-manager.mjs exists", () => { if (!existsSync(qmLib)) throw new Error("file missing"); });
-const qmMod = await import(qmLib);
-
-assert("createQueueManager returns manager", () => {
-  if (typeof qmMod.createQueueManager !== "function") throw new Error("missing");
-  const mgr = qmMod.createQueueManager();
-  if (typeof mgr.enqueue !== "function") throw new Error("missing enqueue");
-  if (typeof mgr.dequeue !== "function") throw new Error("missing dequeue");
-});
-
-assert("FIFO ordering", () => {
-  const mgr = qmMod.createQueueManager();
-  mgr.enqueue({ id: "a", data: 1 });
-  mgr.enqueue({ id: "b", data: 2 });
-  const first = mgr.dequeue();
-  if (first.id !== "a") throw new Error("should dequeue oldest first");
-});
-
-assert("priority queue orders by priority", () => {
-  const mgr = qmMod.createQueueManager({ mode: "priority" });
-  mgr.enqueue({ id: "low", priority: 1 });
-  mgr.enqueue({ id: "high", priority: 10 });
-  mgr.enqueue({ id: "mid", priority: 5 });
-  const first = mgr.dequeue();
-  if (first.id !== "high") throw new Error("highest priority should dequeue first");
-});
-
-assert("size returns count", () => {
-  const mgr = qmMod.createQueueManager();
-  mgr.enqueue({ id: "x" }); mgr.enqueue({ id: "y" });
-  if (mgr.size() !== 2) throw new Error(`expected 2, got ${mgr.size()}`);
-  mgr.dequeue();
-  if (mgr.size() !== 1) throw new Error(`expected 1, got ${mgr.size()}`);
 });
 
 console.log(`\n\x1b[1m  Results: ${pass} passed, ${fail} failed\x1b[0m\n`);

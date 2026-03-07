@@ -25,11 +25,12 @@
 import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fork } from 'node:child_process';
+import { getAuditDir, getBudgetDir, getReportsDir, getStateDir, resolveOguPath } from '../../ogu/commands/lib/runtime-paths.mjs';
 
 // Track running CLI commands
 const activeCommands = new Map();
 
-export function createApiRouter({ root, runnerPool, loops, emitAudit, config, broadcaster }) {
+export function createApiRouter({ root, runnerPool, loops, emitAudit, config, broadcaster, healthAggregator, healthProbe, healthDashboard }) {
   return async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const method = req.method;
@@ -101,11 +102,38 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
         });
       }
 
+      // GET /api/health/probe — deep health probe (file-based checks)
+      if (url.pathname === '/api/health/probe' && method === 'GET') {
+        if (healthProbe) {
+          const probe = healthProbe({ root });
+          return json(res, probe.healthy ? 200 : 503, probe);
+        }
+        return json(res, 501, { error: 'Health probe not wired' });
+      }
+
+      // GET /api/health/dashboard — aggregated health dashboard
+      if (url.pathname === '/api/health/dashboard' && method === 'GET') {
+        if (healthDashboard) {
+          const dashboard = healthDashboard({ root });
+          return json(res, 200, dashboard);
+        }
+        return json(res, 501, { error: 'Health dashboard not wired' });
+      }
+
+      // GET /api/health/aggregated — health aggregator (subsystem checks)
+      if (url.pathname === '/api/health/aggregated' && method === 'GET') {
+        if (healthAggregator) {
+          const result = await healthAggregator.runAll();
+          return json(res, result.overall === 'healthy' ? 200 : 503, result);
+        }
+        return json(res, 501, { error: 'Health aggregator not wired' });
+      }
+
       // ── Features API ──
 
       // GET /api/features — list all features with current state
       if (url.pathname === '/api/features' && method === 'GET') {
-        const featuresDir = join(root, '.ogu/state/features');
+        const featuresDir = join(getStateDir(root), 'features');
         const features = [];
         if (existsSync(featuresDir)) {
           for (const file of readdirSync(featuresDir)) {
@@ -132,7 +160,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
         const events = [];
 
         // State transitions from audit trail
-        const auditPathForTransitions = join(root, '.ogu/audit/current.jsonl');
+        const auditPathForTransitions = join(getAuditDir(root), 'current.jsonl');
         if (existsSync(auditPathForTransitions)) {
           const lines = readFileSync(auditPathForTransitions, 'utf8').split('\n').filter(l => l.trim());
           for (const line of lines) {
@@ -152,7 +180,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
         }
 
         // Audit events for this feature (match by payload.slug, payload.featureSlug, or feature.slug)
-        const auditPath = join(root, '.ogu/audit/current.jsonl');
+        const auditPath = join(getAuditDir(root), 'current.jsonl');
         if (existsSync(auditPath)) {
           const lines = readFileSync(auditPath, 'utf8').split('\n').filter(l => l.trim());
           for (const line of lines) {
@@ -182,13 +210,13 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
       // ── Compile Report API ──
 
       // GET /api/compile/:slug/report — compile report
-      const reportMatch = url.pathname.match(/^\/api\/compile\/([^/]+)\/report$/);
-      if (reportMatch && method === 'GET') {
-        const slug = reportMatch[1];
-        const reportPath = join(root, `.ogu/reports/${slug}.compile.json`);
-        if (!existsSync(reportPath)) {
-          return json(res, 404, { error: 'Report not found', slug });
-        }
+        const reportMatch = url.pathname.match(/^\/api\/compile\/([^/]+)\/report$/);
+        if (reportMatch && method === 'GET') {
+          const slug = reportMatch[1];
+          const reportPath = join(getReportsDir(root), `${slug}.compile.json`);
+          if (!existsSync(reportPath)) {
+            return json(res, 404, { error: 'Report not found', slug });
+          }
         const report = JSON.parse(readFileSync(reportPath, 'utf8'));
         return json(res, 200, report);
       }
@@ -198,7 +226,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
       // GET /api/metrics — system-wide metrics
       if (url.pathname === '/api/metrics' && method === 'GET') {
         // Features metrics
-        const featuresDir = join(root, '.ogu/state/features');
+        const featuresDir = join(getStateDir(root), 'features');
         const byState = {};
         let totalFeatures = 0;
         if (existsSync(featuresDir)) {
@@ -215,7 +243,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
 
         // Budget metrics
         const today = new Date().toISOString().slice(0, 10);
-        const budgetPath = join(root, '.ogu/budget/budget-state.json');
+        const budgetPath = join(getBudgetDir(root), 'budget-state.json');
         let dailySpent = 0;
         let monthlySpent = 0;
         if (existsSync(budgetPath)) {
@@ -232,7 +260,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
         // Load limits from OrgSpec
         let dailyLimit = 100;
         let monthlyLimit = 2000;
-        const orgSpecPath = join(root, '.ogu/org-spec.json');
+        const orgSpecPath = resolveOguPath(root, 'org-spec.json');
         if (existsSync(orgSpecPath)) {
           try {
             const org = JSON.parse(readFileSync(orgSpecPath, 'utf8'));
@@ -242,7 +270,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
         }
 
         // Scheduler metrics
-        const schedulerPath = join(root, '.ogu/state/scheduler-state.json');
+        const schedulerPath = join(getStateDir(root), 'scheduler-state.json');
         let totalTasks = 0;
         let completedTasks = 0;
         let pendingTasks = 0;
@@ -267,7 +295,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
       // GET /api/budget — budget summary
       if (url.pathname === '/api/budget' && method === 'GET') {
         const today = new Date().toISOString().slice(0, 10);
-        const budgetPath = join(root, '.ogu/budget/budget-state.json');
+        const budgetPath = join(getBudgetDir(root), 'budget-state.json');
         let dailySpent = 0;
         let monthlySpent = 0;
         let byModel = {};
@@ -420,7 +448,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
       const taskGetMatch = url.pathname.match(/^\/api\/task\/([^/]+)$/);
       if (taskGetMatch && method === 'GET') {
         const taskId = decodeURIComponent(taskGetMatch[1]);
-        const statePath = join(root, '.ogu/state/scheduler-state.json');
+        const statePath = join(getStateDir(root), 'scheduler-state.json');
         if (!existsSync(statePath)) {
           return json(res, 404, { error: 'Task not found', taskId });
         }
@@ -443,7 +471,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
       const taskCancelMatch = url.pathname.match(/^\/api\/task\/([^/]+)\/cancel$/);
       if (taskCancelMatch && method === 'POST') {
         const taskId = decodeURIComponent(taskCancelMatch[1]);
-        const statePath = join(root, '.ogu/state/scheduler-state.json');
+        const statePath = join(getStateDir(root), 'scheduler-state.json');
         if (!existsSync(statePath)) {
           return json(res, 404, { error: 'Task not found', taskId });
         }
@@ -479,7 +507,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
 
       // GET /api/scheduler/status
       if (url.pathname === '/api/scheduler/status' && method === 'GET') {
-        const statePath = join(root, '.ogu/state/scheduler-state.json');
+        const statePath = join(getStateDir(root), 'scheduler-state.json');
         if (!existsSync(statePath)) {
           return json(res, 200, { queue: [], total: 0 });
         }
@@ -584,7 +612,7 @@ async function readBody(req) {
  * Imports the scheduler lazily to avoid circular deps.
  */
 function enqueueTaskToScheduler(root, taskDef) {
-  const statePath = join(root, '.ogu/state/scheduler-state.json');
+  const statePath = join(getStateDir(root), 'scheduler-state.json');
   let state;
   if (existsSync(statePath)) {
     state = JSON.parse(readFileSync(statePath, 'utf8'));
@@ -612,7 +640,7 @@ function enqueueTaskToScheduler(root, taskDef) {
   });
 
   state.updatedAt = new Date().toISOString();
-  const dir = join(root, '.ogu/state');
+  const dir = getStateDir(root);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
 
@@ -628,7 +656,7 @@ function enqueueTaskToScheduler(root, taskDef) {
  */
 function checkSystemGuards(root, operation) {
   // Check halt
-  const haltPath = join(root, '.ogu/state/system-halt.json');
+  const haltPath = join(getStateDir(root), 'system-halt.json');
   if (existsSync(haltPath)) {
     try {
       const halt = JSON.parse(readFileSync(haltPath, 'utf8'));
@@ -639,7 +667,7 @@ function checkSystemGuards(root, operation) {
   }
 
   // Check freeze
-  const freezePath = join(root, '.ogu/state/company-freeze.json');
+  const freezePath = join(getStateDir(root), 'company-freeze.json');
   if (existsSync(freezePath)) {
     try {
       const freeze = JSON.parse(readFileSync(freezePath, 'utf8'));
@@ -656,7 +684,7 @@ function checkSystemGuards(root, operation) {
  * Load circuit breaker status summary.
  */
 function loadCircuitBreakerStatus(root) {
-  const path = join(root, '.ogu/state/circuit-breakers.json');
+  const path = join(getStateDir(root), 'circuit-breakers.json');
   if (!existsSync(path)) return { domains: {}, openCount: 0 };
   try {
     const breakers = JSON.parse(readFileSync(path, 'utf8'));
@@ -675,7 +703,7 @@ function loadCircuitBreakerStatus(root) {
  * Load freeze status.
  */
 function loadFreezeStatus(root) {
-  const path = join(root, '.ogu/state/company-freeze.json');
+  const path = join(getStateDir(root), 'company-freeze.json');
   if (!existsSync(path)) return { frozen: false };
   try {
     const freeze = JSON.parse(readFileSync(path, 'utf8'));
@@ -687,7 +715,7 @@ function loadFreezeStatus(root) {
  * Load latest metrics snapshot.
  */
 function loadMetricsSnapshot(root) {
-  const path = join(root, '.ogu/state/metrics-snapshot.json');
+  const path = join(getStateDir(root), 'metrics-snapshot.json');
   if (!existsSync(path)) return null;
   try { return JSON.parse(readFileSync(path, 'utf8')); }
   catch { return null; }
@@ -716,7 +744,7 @@ function buildDashboard(root, runnerPool, loops) {
   };
 
   // Features
-  const featuresDir = join(root, '.ogu/state/features');
+  const featuresDir = join(getStateDir(root), 'features');
   const featureList = [];
   const byState = {};
   if (existsSync(featuresDir)) {
@@ -733,7 +761,7 @@ function buildDashboard(root, runnerPool, loops) {
   }
 
   // Scheduler
-  const schedulerPath = join(root, '.ogu/state/scheduler-state.json');
+  const schedulerPath = join(getStateDir(root), 'scheduler-state.json');
   let totalTasks = 0, completedTasks = 0, pendingTasks = 0, dispatchedTasks = 0;
   if (existsSync(schedulerPath)) {
     const state = JSON.parse(readFileSync(schedulerPath, 'utf8'));
@@ -745,7 +773,7 @@ function buildDashboard(root, runnerPool, loops) {
 
   // Budget
   const today = new Date().toISOString().slice(0, 10);
-  const budgetPath = join(root, '.ogu/budget/budget-state.json');
+  const budgetPath = join(getBudgetDir(root), 'budget-state.json');
   let dailySpent = 0, monthlySpent = 0, dailyLimit = 100, monthlyLimit = 2000;
   let byModel = {}, byFeature = {};
   if (existsSync(budgetPath)) {
@@ -756,7 +784,7 @@ function buildDashboard(root, runnerPool, loops) {
     byModel = budget.byModel || {};
     byFeature = budget.byFeature || {};
   }
-  const orgSpecPath = join(root, '.ogu/org-spec.json');
+  const orgSpecPath = resolveOguPath(root, 'org-spec.json');
   if (existsSync(orgSpecPath)) {
     try {
       const org = JSON.parse(readFileSync(orgSpecPath, 'utf8'));
@@ -767,7 +795,7 @@ function buildDashboard(root, runnerPool, loops) {
 
   // Recent events (last 20 from audit)
   const recentEvents = [];
-  const auditPath = join(root, '.ogu/audit/current.jsonl');
+  const auditPath = join(getAuditDir(root), 'current.jsonl');
   if (existsSync(auditPath)) {
     const lines = readFileSync(auditPath, 'utf8').split('\n').filter(l => l.trim());
     const last20 = lines.slice(-20);

@@ -240,7 +240,7 @@ function createAuditEvents(root, events) {
 {
   const root = makeTmpRoot();
   createFeatureState(root, 'done-feat', {
-    currentState: 'production',
+    currentState: 'deployed',
     updatedAt: new Date().toISOString(), // within last 7 days
   });
 

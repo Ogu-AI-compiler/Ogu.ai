@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { mkdirSync, writeFileSync, readFileSync } from "fs";
 import { Hono } from "hono";
 import { broadcast } from "../ws/server.js";
+import { getUploadsDir } from "../../../ogu/commands/lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -184,7 +185,7 @@ export function createExecRouter() {
     }
 
     const root = process.env.OGU_ROOT || process.cwd();
-    const uploadDir = join(root, ".ogu", "uploads");
+    const uploadDir = getUploadsDir(root);
     mkdirSync(uploadDir, { recursive: true });
 
     const arrayBuffer = await (file as File).arrayBuffer();

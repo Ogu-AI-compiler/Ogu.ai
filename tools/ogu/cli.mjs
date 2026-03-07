@@ -89,6 +89,25 @@ import { consistencyCheck, txList, txShow, txOrphaned, idempotencyClean } from "
 import { sandboxPolicy, sandboxCheck } from "./commands/sandbox-cmd.mjs";
 import { agentIdentity, agentRevoke, agentSessions, agentVerify } from "./commands/agent-identity-cmd.mjs";
 import { knowledgeIndex, knowledgeQuery } from "./commands/knowledge-cmd.mjs";
+import { agents } from "./commands/agents.mjs";
+
+// ── Phase 4E: Plugin System, Plugin Registry, Hook Registry ──
+import { createPluginSystem } from "./commands/lib/plugin-system.mjs";
+import { createPluginRegistry } from "./commands/lib/plugin-registry.mjs";
+import { createHookRegistry } from "./commands/lib/hook-registry.mjs";
+
+// Initialize plugin infrastructure at CLI startup
+const pluginSystem = createPluginSystem();
+const pluginRegistry = createPluginRegistry();
+const hookRegistry = createHookRegistry();
+
+// Initialize any registered plugins
+pluginSystem.initialize();
+
+// Expose globally for commands that need to register hooks or check plugins
+globalThis.__oguPluginSystem = pluginSystem;
+globalThis.__oguPluginRegistry = pluginRegistry;
+globalThis.__oguHookRegistry = hookRegistry;
 
 const command = process.argv[2];
 
@@ -251,6 +270,7 @@ const commands = {
   "agent:verify": agentVerify,
   "knowledge:index": knowledgeIndex,
   "knowledge:query": knowledgeQuery,
+  agents,
 };
 
 if (!command || !commands[command]) {

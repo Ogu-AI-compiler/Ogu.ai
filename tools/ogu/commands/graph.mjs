@@ -3,6 +3,8 @@ import { join, resolve, dirname, extname, relative } from "node:path";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { repoRoot, readJsonSafe } from "../util.mjs";
+import { createDepGraph } from "./lib/dep-graph-analyzer.mjs";
+import { detectCycles } from "./lib/circular-dep-detector.mjs";
 
 const require = createRequire(import.meta.url);
 
@@ -31,6 +33,20 @@ export async function graph() {
     reverse[edge.to].push(edge.from);
   }
 
+  // Wire dep-graph-analyzer (Phase 3D)
+  const depGraph = createDepGraph();
+  for (const edge of edges) {
+    depGraph.addEdge(edge.from, edge.to);
+  }
+
+  // Wire circular-dep-detector (Phase 3D)
+  const adjList = {};
+  for (const edge of edges) {
+    if (!adjList[edge.from]) adjList[edge.from] = [];
+    adjList[edge.from].push(edge.to);
+  }
+  const cycles = detectCycles(adjList);
+
   // Count unique files
   const allFiles = new Set();
   for (const edge of edges) {
@@ -51,6 +67,8 @@ export async function graph() {
     method,
     edges,
     reverse,
+    cycles: cycles.length,
+    cycleDetails: cycles.slice(0, 10),
   };
 
   const graphPath = join(root, ".ogu/GRAPH.json");
@@ -60,6 +78,14 @@ export async function graph() {
   console.log(`  edges    ${edges.length}`);
   for (const [type, count] of Object.entries(typeCounts)) {
     console.log(`    ${type.padEnd(10)} ${count}`);
+  }
+  if (cycles.length > 0) {
+    console.log(`  cycles   ${cycles.length} circular dep(s) detected`);
+    for (const cycle of cycles.slice(0, 3)) {
+      console.log(`    ${cycle.join(' → ')}`);
+    }
+  } else {
+    console.log(`  cycles   none detected`);
   }
   console.log(`  graph    .ogu/GRAPH.json`);
 

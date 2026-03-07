@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { execSync } from 'node:child_process';
 import { repoRoot } from '../../util.mjs';
+import { resolveOguPath, resolveRuntimePath, getAuditDir } from './runtime-paths.mjs';
 
 /**
  * Execution Snapshot — capture and restore full execution state.
@@ -29,21 +30,21 @@ export function captureSnapshot({ root, label } = {}) {
 
   // Capture STATE.json
   let state = {};
-  const statePath = join(root, '.ogu/STATE.json');
+  const statePath = resolveRuntimePath(root, 'STATE.json');
   if (existsSync(statePath)) {
     try { state = JSON.parse(readFileSync(statePath, 'utf8')); } catch { /* empty */ }
   }
 
   // Capture budget
   let budget = {};
-  const budgetPath = join(root, '.ogu/budget/budget-state.json');
+  const budgetPath = resolveRuntimePath(root, 'budget', 'budget-state.json');
   if (existsSync(budgetPath)) {
     try { budget = JSON.parse(readFileSync(budgetPath, 'utf8')); } catch { /* empty */ }
   }
 
   // Capture feature states
   const features = [];
-  const featDir = join(root, '.ogu/state/features');
+  const featDir = resolveRuntimePath(root, 'state', 'features');
   if (existsSync(featDir)) {
     for (const f of readdirSync(featDir).filter(f => f.endsWith('.json'))) {
       try {
@@ -54,14 +55,14 @@ export function captureSnapshot({ root, label } = {}) {
 
   // Audit event count
   let auditCount = 0;
-  const auditPath = join(root, '.ogu/audit/current.jsonl');
+  const auditPath = join(getAuditDir(root), 'current.jsonl');
   if (existsSync(auditPath)) {
     auditCount = readFileSync(auditPath, 'utf8').trim().split('\n').filter(Boolean).length;
   }
 
   // Context hash
   let contextHash = '';
-  const ctxPath = join(root, '.ogu/CONTEXT.md');
+  const ctxPath = resolveRuntimePath(root, 'CONTEXT.md');
   if (existsSync(ctxPath)) {
     contextHash = createHash('sha256').update(readFileSync(ctxPath, 'utf8')).digest('hex').slice(0, 16);
   }
@@ -83,7 +84,7 @@ export function captureSnapshot({ root, label } = {}) {
     .digest('hex');
 
   // Save
-  const snapDir = join(root, '.ogu/snapshots');
+  const snapDir = resolveRuntimePath(root, 'snapshots');
   mkdirSync(snapDir, { recursive: true });
   writeFileSync(join(snapDir, `${id}.json`), JSON.stringify(snapshot, null, 2));
 
@@ -100,7 +101,7 @@ export function captureSnapshot({ root, label } = {}) {
  */
 export function loadSnapshot({ snapshotId, root } = {}) {
   root = root || repoRoot();
-  const snapPath = join(root, '.ogu/snapshots', `${snapshotId}.json`);
+  const snapPath = resolveRuntimePath(root, 'snapshots', `${snapshotId}.json`);
   if (!existsSync(snapPath)) return null;
   return JSON.parse(readFileSync(snapPath, 'utf8'));
 }
@@ -114,7 +115,7 @@ export function loadSnapshot({ snapshotId, root } = {}) {
  */
 export function listSnapshots({ root } = {}) {
   root = root || repoRoot();
-  const snapDir = join(root, '.ogu/snapshots');
+  const snapDir = resolveRuntimePath(root, 'snapshots');
   if (!existsSync(snapDir)) return [];
 
   const snapshots = [];
@@ -188,10 +189,10 @@ export function beginTaskSnapshot(root, { featureSlug, taskId, modelConfig = {},
       specHash: hashFile(join(root, `docs/vault/04_Features/${featureSlug}/Spec.md`)),
       planHash: hashFile(join(root, `docs/vault/04_Features/${featureSlug}/Plan.json`)),
       planTaskHash: hashObject(planTask),
-      contextLockHash: hashFile(join(root, '.ogu/CONTEXT_LOCK.json')),
-      orgSpecHash: hashFile(join(root, '.ogu/OrgSpec.json')),
-      modelConfigHash: hashFile(join(root, '.ogu/model-config.json')),
-      policiesHash: hashFile(join(root, '.ogu/policies/rules.json')),
+      contextLockHash: hashFile(resolveRuntimePath(root, 'CONTEXT_LOCK.json')),
+      orgSpecHash: hashFile(resolveOguPath(root, 'OrgSpec.json')),
+      modelConfigHash: hashFile(resolveOguPath(root, 'model-config.json')),
+      policiesHash: hashFile(resolveOguPath(root, 'policies', 'rules.json')),
       repoCommitBefore: getGitHead(root),
       inputArtifactHashes: {},
     },
@@ -245,7 +246,7 @@ export function beginTaskSnapshot(root, { featureSlug, taskId, modelConfig = {},
       snapshot.outputs.gateResults = gateResults || {};
       snapshot.outputs.success = success;
 
-      const dir = join(root, '.ogu/snapshots', featureSlug);
+      const dir = resolveRuntimePath(root, 'snapshots', featureSlug);
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, `${taskId}.json`), JSON.stringify(snapshot, null, 2));
       return snapshot;

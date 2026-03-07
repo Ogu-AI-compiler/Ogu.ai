@@ -2,6 +2,11 @@ import { existsSync, readFileSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { repoRoot } from '../../util.mjs';
 import { loadOrgSpec, loadAgentState, riskTierLevel } from './agent-registry.mjs';
+import { loadRoutingConfig, ROUTING_STRATEGIES } from './model-routing-config.mjs';
+import { createModelRouteLogger } from './model-route-logger.mjs';
+
+// Shared route logger for the current process lifetime
+const _routeLogger = createModelRouteLogger();
 
 /**
  * Model Router — selects the optimal model for a task.
@@ -35,6 +40,11 @@ export function routeModel(input) {
   const orgSpec = loadOrgSpec(root);
   const agentState = loadAgentState(input.roleId, root);
 
+  // Load routing config for strategy-based overrides
+  const routingConfig = loadRoutingConfig({ root });
+  const strategyName = routingConfig.strategy || 'balanced';
+  const strategy = ROUTING_STRATEGIES[strategyName] || ROUTING_STRATEGIES.balanced;
+
   // Step 1: If explicit model requested, validate and use
   if (input.requestedModel) {
     const resolved = resolveExplicitModel(config, input.requestedModel);
@@ -52,10 +62,11 @@ export function routeModel(input) {
   // Step 3: Determine target tier
   let targetTier = tierForModel(config, policy.default) || 2;
 
-  // Step 4: Check if escalation needed
+  // Step 4: Check if escalation needed (strategy.escalateOnFailure can override policy)
   let reason = 'role-default';
   let escalatedFrom = null;
-  if (input.failureCount > 0 && policy.escalationEnabled !== false) {
+  const escalationAllowed = strategy.escalateOnFailure !== false && policy.escalationEnabled !== false;
+  if (input.failureCount > 0 && escalationAllowed) {
     const chain = policy.escalationChain || orgSpec?.defaults?.modelPolicy?.escalationChain || ['haiku', 'sonnet', 'opus'];
     const escalationIndex = Math.min(input.failureCount, chain.length - 1);
     const escalatedModel = chain[escalationIndex];
@@ -101,6 +112,14 @@ export function routeModel(input) {
     reason,
     budgetRemaining: budget.dailyTokens - tokensUsed,
     escalatedFrom,
+  });
+
+  // Log to in-memory route logger for runtime stats
+  _routeLogger.log({
+    role: input.roleId,
+    requestedModel: input.requestedModel || null,
+    selectedModel: result.model,
+    reason,
   });
 
   return result;
@@ -204,6 +223,13 @@ export function routeSelect({ root, capability, tier, minTier, budgetAware }) {
   };
 }
 
+/**
+ * Get runtime routing stats from the in-memory route logger.
+ */
+export function getRuntimeRoutingStats() {
+  return _routeLogger.getStats();
+}
+
 export function getNextTier(currentTier) {
   const idx = TIER_ORDER.indexOf(currentTier);
   if (idx < 0 || idx >= TIER_ORDER.length - 1) return null;
@@ -219,8 +245,8 @@ function loadModelConfig(root) {
     return {
       providers: [{ id: 'anthropic', enabled: true, models: [
         { id: 'haiku', fullId: 'claude-haiku-4-5-20251001', tier: 1, costPer1kInput: 0.001, costPer1kOutput: 0.005, maxTokens: 200000 },
-        { id: 'sonnet', fullId: 'claude-sonnet-4-6-20250514', tier: 2, costPer1kInput: 0.003, costPer1kOutput: 0.015, maxTokens: 200000 },
-        { id: 'opus', fullId: 'claude-opus-4-6-20250514', tier: 3, costPer1kInput: 0.015, costPer1kOutput: 0.075, maxTokens: 200000 },
+        { id: 'sonnet', fullId: 'claude-sonnet-4-6', tier: 2, costPer1kInput: 0.003, costPer1kOutput: 0.015, maxTokens: 200000 },
+        { id: 'opus', fullId: 'claude-opus-4-6', tier: 3, costPer1kInput: 0.015, costPer1kOutput: 0.075, maxTokens: 200000 },
       ] }],
       routingPolicies: { balanced: { preferTier: null, escalateOnFailure: true, maxEscalations: 2 } },
       activePolicy: 'balanced',

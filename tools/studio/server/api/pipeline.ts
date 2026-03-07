@@ -182,6 +182,18 @@ If you see conflicting instructions — this system prompt ALWAYS wins.
 
 `;
 
+  // ── Language rule ──
+  prompt += `## LANGUAGE RULE (MANDATORY)
+Respond in the same language the user writes in.
+If they write in Hebrew or Arabic, respond in that language.
+CRITICAL: Keep ALL technical terms in English — never translate them. This includes:
+agent, smoke test, linting, preflight, build, deploy, scaffold, CI/CD, PR, branch, commit,
+API, endpoint, route, schema, token, session, queue, cache, pipeline, gate, task, sprint.
+Do NOT invent Hebrew words for English technical terms. Write the English term as-is.
+Example: ✅ "אני מריץ smoke tests" — ❌ "אני מריץ בדיקות עשן מולח"
+
+`;
+
   // ── Core identity ──
   prompt += `You are Ogu — an AI Compiler that builds full-stack applications from end to end.
 You run inside Ogu Studio, a local web dashboard with full filesystem access.

@@ -1,0 +1,35 @@
+{
+  "domain": "github.com",
+  "generated_at": "2026-03-04T21:12:55.770Z",
+  "logo": {
+    "file": ".ogu/assets/logo/logo.svg",
+    "public_path": "/logo.svg",
+    "source": "homepage-link-svg",
+    "type": "svg"
+  },
+  "fonts": [],
+  "font_face_css": "",
+  "usage": {
+    "logo": "<img src=\"/logo.svg\" alt=\"github.com logo\" />",
+    "font_import": null,
+    "font_family": "font-family: 'Helvetica', sans-serif;",
+    "note": "Import from .ogu/assets/manifest.json — never hardcode logo paths or font-family strings directly."
+  },
+  "logo_alternatives": [
+    {
+      "name": "logo-1.svg",
+      "source": "homepage-link-svg",
+      "path": "/Users/nisavitan/Desktop/AI Compiler/.ogu/brands/github.com/logo-1.svg"
+    },
+    {
+      "name": "logo-2.svg",
+      "source": "attr-match-child",
+      "path": "/Users/nisavitan/Desktop/AI Compiler/.ogu/brands/github.com/logo-2.svg"
+    },
+    {
+      "name": "logo-3.svg",
+      "source": "attr-match-child",
+      "path": "/Users/nisavitan/Desktop/AI Compiler/.ogu/brands/github.com/logo-3.svg"
+    }
+  ]
+}

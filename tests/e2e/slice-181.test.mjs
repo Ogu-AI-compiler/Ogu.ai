@@ -1,7 +1,6 @@
 /**
- * Slice 181 — Cost Estimator + Budget Tracker
+ * Slice 181 — Budget Tracker
  *
- * Cost Estimator: estimate costs for operations.
  * Budget Tracker: track spending against budgets.
  */
 
@@ -14,41 +13,9 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 181 — Cost Estimator + Budget Tracker\x1b[0m\n");
+console.log("\n\x1b[1mSlice 181 — Budget Tracker\x1b[0m\n");
 
-console.log("\x1b[36m  Part 1: Cost Estimator\x1b[0m");
-const ceLib = join(process.cwd(), "tools/ogu/commands/lib/cost-estimator.mjs");
-assert("cost-estimator.mjs exists", () => { if (!existsSync(ceLib)) throw new Error("file missing"); });
-const ceMod = await import(ceLib);
-
-assert("createCostEstimator returns estimator", () => {
-  if (typeof ceMod.createCostEstimator !== "function") throw new Error("missing");
-  const ce = ceMod.createCostEstimator();
-  if (typeof ce.addRate !== "function") throw new Error("missing addRate");
-  if (typeof ce.estimate !== "function") throw new Error("missing estimate");
-});
-
-assert("estimate uses registered rates", () => {
-  const ce = ceMod.createCostEstimator();
-  ce.addRate("llm-call", 0.03);
-  ce.addRate("storage-gb", 0.10);
-  const cost = ce.estimate([{ type: "llm-call", quantity: 10 }, { type: "storage-gb", quantity: 5 }]);
-  if (Math.abs(cost - 0.80) > 0.001) throw new Error(`expected 0.80, got ${cost}`);
-});
-
-assert("estimate returns 0 for empty", () => {
-  const ce = ceMod.createCostEstimator();
-  if (ce.estimate([]) !== 0) throw new Error("should be 0");
-});
-
-assert("estimate throws for unknown type", () => {
-  const ce = ceMod.createCostEstimator();
-  let threw = false;
-  try { ce.estimate([{ type: "unknown", quantity: 1 }]); } catch { threw = true; }
-  if (!threw) throw new Error("should throw");
-});
-
-console.log("\n\x1b[36m  Part 2: Budget Tracker\x1b[0m");
+console.log("\x1b[36m  Part 1: Budget Tracker\x1b[0m");
 const btLib = join(process.cwd(), "tools/ogu/commands/lib/budget-tracker.mjs");
 assert("budget-tracker.mjs exists", () => { if (!existsSync(btLib)) throw new Error("file missing"); });
 const btMod = await import(btLib);

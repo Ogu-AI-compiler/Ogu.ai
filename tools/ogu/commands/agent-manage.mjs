@@ -11,6 +11,7 @@ import { repoRoot } from '../util.mjs';
 import { loadOrgSpec, loadAgentState, saveAgentState } from './lib/agent-registry.mjs';
 import { listAgentWorktrees } from './lib/worktree-manager.mjs';
 import { emitAudit } from './lib/audit-emitter.mjs';
+import { getRunnersDir } from './lib/runtime-paths.mjs';
 
 function parseArgs(offset = 3) {
   const args = process.argv.slice(offset);
@@ -57,7 +58,7 @@ export async function agentStatus() {
   }
 
   // 3. Load active runner envelopes
-  const runnersDir = join(root, '.ogu/runners');
+  const runnersDir = getRunnersDir(root);
   let activeRunners = [];
   if (existsSync(runnersDir)) {
     const files = readdirSync(runnersDir).filter(f => f.endsWith('.input.json'));
@@ -187,7 +188,7 @@ export async function agentStop() {
   }
 
   // 2. Try to find and kill the runner process
-  const inputPath = join(root, '.ogu/runners', `${taskId}.input.json`);
+  const inputPath = join(getRunnersDir(root), `${taskId}.input.json`);
   if (existsSync(inputPath)) {
     try {
       const input = JSON.parse(readFileSync(inputPath, 'utf8'));
@@ -204,7 +205,7 @@ export async function agentStop() {
     } catch { /* ignore */ }
 
     // Write a cancellation output envelope
-    const outputPath = join(root, '.ogu/runners', `${taskId}.output.json`);
+    const outputPath = join(getRunnersDir(root), `${taskId}.output.json`);
     if (!existsSync(outputPath)) {
       writeFileSync(outputPath, JSON.stringify({
         taskId,
@@ -271,7 +272,7 @@ export async function agentEscalate() {
 
   if (!targetTier) {
     // Find current tier from runner input and escalate one step
-    const inputPath = join(root, '.ogu/runners', `${taskId}.input.json`);
+    const inputPath = join(getRunnersDir(root), `${taskId}.input.json`);
     if (existsSync(inputPath)) {
       try {
         const input = JSON.parse(readFileSync(inputPath, 'utf8'));
@@ -334,7 +335,7 @@ export async function agentEscalate() {
   }
 
   // Update input envelope for the next run
-  const inputPath = join(root, '.ogu/runners', `${taskId}.input.json`);
+  const inputPath = join(getRunnersDir(root), `${taskId}.input.json`);
   if (existsSync(inputPath)) {
     try {
       const input = JSON.parse(readFileSync(inputPath, 'utf8'));

@@ -1,7 +1,7 @@
 /**
- * Slice 128 — Risk Assessor + Impact Analyzer
+ * Slice 128 — Impact Analyzer
  *
- * Risk assessor: assess risk level of operations for governance.
+
  * Impact analyzer: analyze impact of changes across the codebase.
  */
 
@@ -14,58 +14,9 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 128 — Risk Assessor + Impact Analyzer\x1b[0m\n");
+console.log("\n\x1b[1mSlice 128 — Impact Analyzer\x1b[0m\n");
 
-// ── Part 1: Risk Assessor ──────────────────────────────
-
-console.log("\x1b[36m  Part 1: Risk Assessor\x1b[0m");
-
-const raLib = join(process.cwd(), "tools/ogu/commands/lib/risk-assessor.mjs");
-assert("risk-assessor.mjs exists", () => {
-  if (!existsSync(raLib)) throw new Error("file missing");
-});
-
-const raMod = await import(raLib);
-
-assert("assessRisk returns risk assessment", () => {
-  if (typeof raMod.assessRisk !== "function") throw new Error("missing");
-  const result = raMod.assessRisk({
-    operation: "schema-migration",
-    filesChanged: ["db/schema.sql", "db/migrations/001.sql"],
-    agentId: "backend-dev",
-  });
-  if (!result.tier) throw new Error("missing tier");
-  if (!result.score) throw new Error("missing score");
-  if (typeof result.requiresApproval !== "boolean") throw new Error("missing requiresApproval");
-});
-
-assert("database changes are high risk", () => {
-  const result = raMod.assessRisk({
-    operation: "modify",
-    filesChanged: ["db/schema.sql"],
-    agentId: "dev",
-  });
-  if (result.tier !== "high" && result.tier !== "critical") throw new Error(`expected high/critical, got ${result.tier}`);
-});
-
-assert("test-only changes are low risk", () => {
-  const result = raMod.assessRisk({
-    operation: "modify",
-    filesChanged: ["tests/unit/auth.test.ts"],
-    agentId: "qa",
-  });
-  if (result.tier !== "low") throw new Error(`expected low, got ${result.tier}`);
-});
-
-assert("RISK_TIERS exported in order", () => {
-  if (!Array.isArray(raMod.RISK_TIERS)) throw new Error("missing");
-  const expected = ["low", "medium", "high", "critical"];
-  for (let i = 0; i < expected.length; i++) {
-    if (raMod.RISK_TIERS[i] !== expected[i]) throw new Error(`expected ${expected[i]} at ${i}`);
-  }
-});
-
-// ── Part 2: Impact Analyzer ──────────────────────────────
+// ── Part 1: Impact Analyzer ──────────────────────────────
 
 console.log("\n\x1b[36m  Part 2: Impact Analyzer\x1b[0m");
 

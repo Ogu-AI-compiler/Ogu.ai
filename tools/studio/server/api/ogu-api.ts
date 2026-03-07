@@ -19,6 +19,8 @@ import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 import { getBudgetStatus } from "./model-bridge.js";
 import { broadcast } from "../ws/server.js";
+import { getAgentsDir, getArtifactsDir, getAuditDir, getBudgetDir, getStateDir, resolveOguPath, resolveRuntimePath } from "../../../ogu/commands/lib/runtime-paths.mjs";
+import { hasTaskGateEvidence } from "../../../ogu/commands/lib/task-gate-evidence.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -63,7 +65,7 @@ export function createOguApi() {
 
   api.get("/org", (c) => {
     const root = getRoot();
-    const orgSpec = readJson(join(root, ".ogu/OrgSpec.json"));
+    const orgSpec = readJson(resolveOguPath(root, "OrgSpec.json"));
     if (!orgSpec) return c.json({ error: "OrgSpec not initialized. Run: ogu org:init" }, 404);
     return c.json({
       orgId: orgSpec.orgId || orgSpec.$schema,
@@ -79,11 +81,11 @@ export function createOguApi() {
 
   api.get("/agents", (c) => {
     const root = getRoot();
-    const orgSpec = readJson(join(root, ".ogu/OrgSpec.json"));
+    const orgSpec = readJson(resolveOguPath(root, "OrgSpec.json"));
     const roles = orgSpec?.roles || [];
 
     const agents = roles.map((role: any) => {
-      const statePath = join(root, ".ogu/agents", `${role.roleId}.state.json`);
+      const statePath = join(getAgentsDir(root), `${role.roleId}.state.json`);
       const state = readJson(statePath) || {};
       return {
         roleId: role.roleId,
@@ -108,14 +110,14 @@ export function createOguApi() {
 
   api.get("/agents/stats", (c) => {
     const root = getRoot();
-    const orgSpec = readJson(join(root, ".ogu/OrgSpec.json"));
+    const orgSpec = readJson(resolveOguPath(root, "OrgSpec.json"));
     const roles = orgSpec?.roles || [];
 
     let totalCompleted = 0, totalFailed = 0, totalTokens = 0, totalCost = 0, escalations = 0;
     const byDepartment: Record<string, { agents: number; completed: number; failed: number; cost: number }> = {};
 
     for (const role of roles) {
-      const state = readJson(join(root, ".ogu/agents", `${role.roleId}.state.json`)) || {};
+      const state = readJson(join(getAgentsDir(root), `${role.roleId}.state.json`)) || {};
       const completed = state.tasksCompleted || 0;
       const failed = state.tasksFailed || 0;
       const tokens = state.tokensUsed || 0;
@@ -154,11 +156,11 @@ export function createOguApi() {
   api.get("/agents/:roleId", (c) => {
     const roleId = c.req.param("roleId");
     const root = getRoot();
-    const orgSpec = readJson(join(root, ".ogu/OrgSpec.json"));
+    const orgSpec = readJson(resolveOguPath(root, "OrgSpec.json"));
     const role = orgSpec?.roles?.find((r: any) => r.roleId === roleId);
     if (!role) return c.json({ error: `Agent ${roleId} not found` }, 404);
 
-    const statePath = join(root, ".ogu/agents", `${roleId}.state.json`);
+    const statePath = join(getAgentsDir(root), `${roleId}.state.json`);
     const state = readJson(statePath) || {};
 
     return c.json({ ...role, state });
@@ -169,7 +171,7 @@ export function createOguApi() {
   api.get("/budget", (c) => {
     const root = getRoot();
     const status = getBudgetStatus(root);
-    const budgetState = readJson(join(root, ".ogu/budget/budget-state.json")) || {};
+    const budgetState = readJson(join(getBudgetDir(root), "budget-state.json")) || {};
 
     return c.json({
       ...status,
@@ -181,7 +183,7 @@ export function createOguApi() {
   api.get("/budget/history", (c) => {
     const root = getRoot();
     const days = parseInt(c.req.query("days") || "7", 10);
-    const txPath = join(root, ".ogu/budget/transactions.jsonl");
+    const txPath = join(getBudgetDir(root), "transactions.jsonl");
 
     if (!existsSync(txPath)) return c.json({ transactions: [], days });
 
@@ -210,7 +212,7 @@ export function createOguApi() {
       byModel[model].tokens += (tx.inputTokens || 0) + (tx.outputTokens || 0);
       byModel[model].calls += 1;
 
-      const role = tx.roleId || tx.role || "unassigned";
+      const role = tx.agentRoleId || tx.roleId || tx.role || "unassigned";
       if (!byRole[role]) byRole[role] = { spent: 0, tokens: 0, calls: 0 };
       byRole[role].spent += tx.cost || 0;
       byRole[role].tokens += (tx.inputTokens || 0) + (tx.outputTokens || 0);
@@ -233,7 +235,7 @@ export function createOguApi() {
     const limit = parseInt(c.req.query("limit") || "50", 10);
     const type = c.req.query("type");
     const feature = c.req.query("feature");
-    const auditPath = join(root, ".ogu/audit/current.jsonl");
+    const auditPath = join(getAuditDir(root), "current.jsonl");
 
     if (!existsSync(auditPath)) return c.json({ events: [], count: 0 });
 
@@ -253,7 +255,7 @@ export function createOguApi() {
 
   api.get("/audit/types", (c) => {
     const root = getRoot();
-    const auditPath = join(root, ".ogu/audit/current.jsonl");
+    const auditPath = join(getAuditDir(root), "current.jsonl");
     if (!existsSync(auditPath)) return c.json({ types: [] });
 
     const lines = readFileSync(auditPath, "utf-8").trim().split("\n").filter(Boolean);
@@ -272,7 +274,7 @@ export function createOguApi() {
 
   api.get("/governance/pending", (c) => {
     const root = getRoot();
-    const approvalsDir = join(root, ".ogu/approvals");
+    const approvalsDir = resolveRuntimePath(root, "approvals");
     if (!existsSync(approvalsDir)) return c.json({ pending: [], count: 0 });
 
     const files = readdirSync(approvalsDir).filter((f) => f.endsWith(".json"));
@@ -290,7 +292,7 @@ export function createOguApi() {
 
   api.get("/governance/history", (c) => {
     const root = getRoot();
-    const approvalsDir = join(root, ".ogu/approvals");
+    const approvalsDir = resolveRuntimePath(root, "approvals");
     if (!existsSync(approvalsDir)) return c.json({ history: [], count: 0 });
 
     const files = readdirSync(approvalsDir).filter((f) => f.endsWith(".json"));
@@ -317,7 +319,7 @@ export function createOguApi() {
 
   api.get("/governance/policies", (c) => {
     const root = getRoot();
-    const policiesPath = join(root, ".ogu/policies.json");
+    const policiesPath = resolveOguPath(root, "policies.json");
     const policies = readJson(policiesPath) || { rules: [] };
     return c.json(policies);
   });
@@ -326,7 +328,7 @@ export function createOguApi() {
 
   api.get("/model/status", (c) => {
     const root = getRoot();
-    const logPath = join(root, ".ogu/model-log.jsonl");
+    const logPath = resolveRuntimePath(root, "model-log.jsonl");
     if (!existsSync(logPath)) return c.json({ decisions: 0, byModel: {}, recent: [] });
 
     const lines = readFileSync(logPath, "utf-8").trim().split("\n").filter(Boolean);
@@ -354,7 +356,7 @@ export function createOguApi() {
 
   api.get("/determinism", (c) => {
     const root = getRoot();
-    const ledgerPath = join(root, ".ogu/determinism/ledger.jsonl");
+    const ledgerPath = resolveRuntimePath(root, "determinism/ledger.jsonl");
     if (!existsSync(ledgerPath)) return c.json({ violations: 0, entries: [] });
 
     const lines = readFileSync(ledgerPath, "utf-8").trim().split("\n").filter(Boolean);
@@ -375,7 +377,7 @@ export function createOguApi() {
   api.get("/dag/:featureSlug", (c) => {
     const slug = c.req.param("featureSlug");
     const root = getRoot();
-    const dagPath = join(root, `.ogu/orchestrate/${slug}/PLAN_DAG.json`);
+    const dagPath = resolveRuntimePath(root, `orchestrate/${slug}/PLAN_DAG.json`);
     if (!existsSync(dagPath)) return c.json({ error: `No DAG found for ${slug}. Run: ogu orchestrate ${slug}` }, 404);
 
     const dag = readJson(dagPath);
@@ -398,13 +400,22 @@ export function createOguApi() {
     }
 
     // Read scheduler state for live task statuses
-    const schedulerPath = join(root, ".ogu/state/scheduler-state.json");
+    const schedulerPath = join(getStateDir(root), "scheduler-state.json");
     const schedulerState = readJson(schedulerPath);
     const statusMap: Record<string, string> = {};
     if (schedulerState?.queue) {
       for (const entry of schedulerState.queue) {
         if (entry.featureSlug === slug) {
           statusMap[entry.taskId] = entry.status;
+        }
+      }
+    }
+
+    // Fallback: use gate evidence for tasks not in scheduler
+    if (plan?.tasks) {
+      for (const task of plan.tasks) {
+        if (!statusMap[task.id] && hasTaskGateEvidence(root, task.id)) {
+          statusMap[task.id] = "completed";
         }
       }
     }
@@ -431,7 +442,7 @@ export function createOguApi() {
   api.get("/artifacts/:featureSlug", (c) => {
     const slug = c.req.param("featureSlug");
     const root = getRoot();
-    const artifactsDir = join(root, ".ogu/artifacts", slug);
+    const artifactsDir = join(getArtifactsDir(root), slug);
     if (!existsSync(artifactsDir)) return c.json({ artifacts: [], count: 0 });
 
     const files = readdirSync(artifactsDir).filter((f) => f.endsWith(".json") && f !== "index.json");
@@ -471,7 +482,7 @@ export function createOguApi() {
     const result = await runOguSync("org:init", args);
     if (result.exitCode === 0) {
       const root = getRoot();
-      const orgSpec = readJson(join(root, ".ogu/OrgSpec.json"));
+      const orgSpec = readJson(resolveOguPath(root, "OrgSpec.json"));
       broadcast({ type: "org:changed", data: orgSpec });
     }
     return c.json(result);

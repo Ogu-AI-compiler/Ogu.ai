@@ -8,6 +8,7 @@ import { loadIR } from "./lib/ir-registry.mjs";
 import { verifyOutput } from "./lib/drift-verifiers.mjs";
 import { normalizeIR } from "./lib/normalize-ir.mjs";
 import { oguError } from "./lib/errors.mjs";
+import { createDriftDetector } from "./lib/drift-detector-integration.mjs";
 
 const IGNORE_DIRS = new Set(["node_modules", "dist", "build", ".next", "coverage", "logs", ".ogu", ".git"]);
 const IGNORE_EXTS = /\.log$/;
@@ -31,6 +32,27 @@ export async function drift() {
 
   const errors = [];
   const sections = [];
+
+  // Wire drift detector (Phase 3D)
+  const driftDetector = createDriftDetector();
+  driftDetector.addSource('ir', {
+    hash: 'ir-outputs',
+    check: async () => {
+      const ir = loadIR(root, slug);
+      if (!ir || !ir.hasIR()) return { drifted: false, details: 'no IR' };
+      const missing = ir.allOutputs.filter(o => verifyOutput(root, o).status !== 'present');
+      return { drifted: missing.length > 0, details: `${missing.length} missing outputs` };
+    },
+  });
+  driftDetector.addSource('contracts', {
+    hash: 'contract-files',
+    check: async () => {
+      const contractsDir = join(root, 'docs/vault/02_Contracts');
+      if (!existsSync(contractsDir)) return { drifted: false, details: 'no contracts dir' };
+      return { drifted: false, details: 'checked' };
+    },
+  });
+  const detectionResult = await driftDetector.detect().catch(() => null);
 
   // --- 1. IR Output Drift ---
   const ir = loadIR(root, slug);

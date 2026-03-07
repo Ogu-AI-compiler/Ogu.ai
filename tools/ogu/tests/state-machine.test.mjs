@@ -1,14 +1,5 @@
 /**
  * State Machine Tests — v1 (createStateMachine) + v2 (feature lifecycle).
- *
- * 38 tests covering:
- *   Section 1: v1 createStateMachine (6 tests)
- *   Section 2: v2 LIFECYCLE_STATES & TRANSITIONS definitions (4 tests)
- *   Section 3: v2 transition() engine (10 tests)
- *   Section 4: v2 verifyInvariants (5 tests)
- *   Section 5: v2 checkTimeout (4 tests)
- *   Section 6: v2 getAvailableTransitions + getLifecycleInfo (4 tests)
- *   Section 7: v2 checkAutoTransitions + mission generation (5 tests)
  */
 
 import { createStateMachine } from '../commands/lib/state-machine.mjs';
@@ -18,7 +9,8 @@ import {
   getAvailableTransitions, getLifecycleInfo,
   checkAutoTransitions,
 } from '../commands/lib/state-machine-v2.mjs';
-import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
+import { FeatureStates } from '../../contracts/schemas/feature-state.mjs';
+import { mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -47,7 +39,7 @@ function makeTmpRoot() {
 function createFeatureState(root, slug, currentState, extras = {}) {
   const state = {
     currentState,
-    previousState: null,
+    previousState: 'none',
     enteredAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     version: 1,
@@ -63,7 +55,7 @@ function createFeatureState(root, slug, currentState, extras = {}) {
 }
 
 function createFeatureDir(root, slug, files = []) {
-  const dir = join(root, `docs/vault/04_Features/${slug}`);
+  const dir = join(root, `docs/vault/features/${slug}`);
   mkdirSync(dir, { recursive: true });
   for (const f of files) {
     writeFileSync(join(dir, f), `# ${f}\n`, 'utf8');
@@ -148,12 +140,11 @@ function createFeatureDir(root, slug, files = []) {
 // Section 2: v2 LIFECYCLE_STATES & TRANSITIONS definitions
 // ═══════════════════════════════════════════════════════════════════════
 
-// 6. All 12 lifecycle states defined
+// 6. All contract states defined
 {
-  const expected = ['draft', 'specced', 'planned', 'designed', 'allocated', 'building',
-    'reviewing', 'production', 'monitoring', 'optimizing', 'deprecated', 'suspended', 'archived'];
+  const expected = FeatureStates;
   const allPresent = expected.every(s => s in LIFECYCLE_STATES);
-  assert(allPresent, 'v2: all 12+ lifecycle states are defined');
+  assert(allPresent, 'v2: all contract states are defined');
 }
 
 // 7. Each state has invariants and description
@@ -164,31 +155,30 @@ function createFeatureDir(root, slug, files = []) {
   assert(allHaveInvariants, 'v2: every state has invariants array and description');
 }
 
-// 8. 16 transitions defined
+// 8. Transitions defined
 {
-  assert(TRANSITIONS.length >= 16, 'v2: at least 16 transitions defined');
+  assert(TRANSITIONS.length >= 10, 'v2: at least 10 transitions defined');
 }
 
-// 9. Transition T15 uses wildcard from='*'
+// 9. human_suspend uses wildcard from='*'
 {
-  const t15 = TRANSITIONS.find(t => t.id === 'T15');
-  assert(t15 && t15.from === '*' && t15.trigger === 'human_suspend',
-    'v2: T15 wildcard transition (human_suspend from any state)');
+  const t = TRANSITIONS.find(t => t.trigger === 'human_suspend');
+  assert(t && t.from === '*', 'v2: human_suspend wildcard transition from any state');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
 // Section 3: v2 transition() engine
 // ═══════════════════════════════════════════════════════════════════════
 
-// 10. Valid transition: draft → specced
+// 10. Valid transition: specifying → specified
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
-  createFeatureDir(root, 'test-feat', ['PRD.md', 'QA.md', 'Spec.md']);
+  createFeatureState(root, 'test-feat', 'specifying');
+  createFeatureDir(root, 'test-feat', ['PRD.md', 'Spec.md']);
 
   const result = transition(root, 'test-feat', 'spec_complete', { actor: 'pm' });
-  assert(result.success === true && result.newState === 'specced' && result.previousState === 'draft',
-    'v2 transition: draft → specced succeeds');
+  assert(result.success === true && result.newState === 'specified' && result.previousState === 'specifying',
+    'v2 transition: specifying → specified succeeds');
   rmSync(root, { recursive: true, force: true });
 }
 
@@ -204,7 +194,7 @@ function createFeatureDir(root, slug, files = []) {
 // 12. Invalid trigger from current state → error
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
+  createFeatureState(root, 'test-feat', 'idea');
   const result = transition(root, 'test-feat', 'gates_passed');
   assert(result.success === false && result.error.includes('OGU3701'),
     'v2 transition: invalid trigger returns OGU3701');
@@ -214,8 +204,8 @@ function createFeatureDir(root, slug, files = []) {
 // 13. Role not allowed → error
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
-  createFeatureDir(root, 'test-feat', ['PRD.md', 'QA.md', 'Spec.md']);
+  createFeatureState(root, 'test-feat', 'specifying');
+  createFeatureDir(root, 'test-feat', ['PRD.md', 'Spec.md']);
 
   const result = transition(root, 'test-feat', 'spec_complete', { actor: 'developer' });
   assert(result.success === false && result.error.includes('OGU3702'),
@@ -226,8 +216,8 @@ function createFeatureDir(root, slug, files = []) {
 // 14. Guard fails when PRD missing
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
-  createFeatureDir(root, 'test-feat', ['QA.md', 'Spec.md']); // no PRD.md
+  createFeatureState(root, 'test-feat', 'specifying');
+  createFeatureDir(root, 'test-feat', ['Spec.md']); // no PRD.md
 
   const result = transition(root, 'test-feat', 'spec_complete', { actor: 'pm' });
   assert(result.success === false && result.error.includes('OGU3703') && result.error.includes('PRD.md'),
@@ -238,11 +228,11 @@ function createFeatureDir(root, slug, files = []) {
 // 15. Force flag bypasses guards
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
-  createFeatureDir(root, 'test-feat'); // no files at all
+  createFeatureState(root, 'test-feat', 'specifying');
+  createFeatureDir(root, 'test-feat'); // no files
 
   const result = transition(root, 'test-feat', 'spec_complete', { actor: 'pm', force: true });
-  assert(result.success === true && result.newState === 'specced',
+  assert(result.success === true && result.newState === 'specified',
     'v2 transition: force=true bypasses guard failures');
   rmSync(root, { recursive: true, force: true });
 }
@@ -250,12 +240,12 @@ function createFeatureDir(root, slug, files = []) {
 // 16. State history is appended
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
-  createFeatureDir(root, 'test-feat', ['PRD.md', 'QA.md', 'Spec.md']);
+  createFeatureState(root, 'test-feat', 'specifying');
+  createFeatureDir(root, 'test-feat', ['PRD.md', 'Spec.md']);
 
   transition(root, 'test-feat', 'spec_complete', { actor: 'pm' });
   const state = JSON.parse(readFileSync(join(root, '.ogu/state/features/test-feat.state.json'), 'utf8'));
-  assert(state.stateHistory.length === 1 && state.stateHistory[0].from === 'draft' && state.stateHistory[0].to === 'specced',
+  assert(state.stateHistory.length === 1 && state.stateHistory[0].from === 'specifying' && state.stateHistory[0].to === 'specified',
     'v2 transition: state history records transition');
   rmSync(root, { recursive: true, force: true });
 }
@@ -263,8 +253,8 @@ function createFeatureDir(root, slug, files = []) {
 // 17. Version increments on transition
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft', { version: 3 });
-  createFeatureDir(root, 'test-feat', ['PRD.md', 'QA.md', 'Spec.md']);
+  createFeatureState(root, 'test-feat', 'specifying', { version: 3 });
+  createFeatureDir(root, 'test-feat', ['PRD.md', 'Spec.md']);
 
   transition(root, 'test-feat', 'spec_complete', { actor: 'pm' });
   const state = JSON.parse(readFileSync(join(root, '.ogu/state/features/test-feat.state.json'), 'utf8'));
@@ -275,25 +265,25 @@ function createFeatureDir(root, slug, files = []) {
 // 18. buildAttempts increments when entering building state
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'allocated', { buildAttempts: 1 });
+  createFeatureState(root, 'test-feat', 'designed', { buildAttempts: 1 });
   createFeatureDir(root, 'test-feat');
 
   const result = transition(root, 'test-feat', 'first_task_started', { actor: 'kadima' });
-  assert(result.success === true, 'v2 transition: allocated → building succeeds');
+  assert(result.success === true, 'v2 transition: designed → building succeeds');
   const state = JSON.parse(readFileSync(join(root, '.ogu/state/features/test-feat.state.json'), 'utf8'));
   assert(state.buildAttempts === 2, 'v2 transition: buildAttempts increments when entering building');
   rmSync(root, { recursive: true, force: true });
 }
 
-// 19. Wildcard T15 (human_suspend) from any state
+// 19. Wildcard human_suspend from any state
 {
   const root = makeTmpRoot();
   createFeatureState(root, 'test-feat', 'building');
   createFeatureDir(root, 'test-feat');
 
   const result = transition(root, 'test-feat', 'human_suspend', { actor: 'cto' });
-  assert(result.success === true && result.newState === 'suspended',
-    'v2 transition: wildcard T15 human_suspend works from building state');
+  assert(result.success === true && result.newState === 'paused',
+    'v2 transition: wildcard human_suspend works from building state');
   rmSync(root, { recursive: true, force: true });
 }
 
@@ -301,35 +291,35 @@ function createFeatureDir(root, slug, files = []) {
 // Section 4: v2 verifyInvariants
 // ═══════════════════════════════════════════════════════════════════════
 
-// 20. Draft state: feature_directory_exists passes when dir exists
+// 20. Specified state passes when PRD + Spec exist
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
-  createFeatureDir(root, 'test-feat');
+  createFeatureState(root, 'test-feat', 'specified');
+  createFeatureDir(root, 'test-feat', ['PRD.md', 'Spec.md']);
   const result = verifyInvariants(root, 'test-feat');
-  assert(result.valid === true, 'v2 invariants: draft state passes when feature dir exists');
+  assert(result.valid === true, 'v2 invariants: specified passes when PRD/Spec exist');
   rmSync(root, { recursive: true, force: true });
 }
 
-// 21. Draft state: feature_directory_exists fails when dir missing
+// 21. Specified state fails when PRD missing
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
-  // Don't create feature dir
+  createFeatureState(root, 'test-feat', 'specified');
+  createFeatureDir(root, 'test-feat', ['Spec.md']);
   const result = verifyInvariants(root, 'test-feat');
-  assert(result.valid === false && result.violations.some(v => v.invariant === 'feature_directory_exists'),
-    'v2 invariants: draft state fails when feature dir missing');
+  assert(result.valid === false && result.violations.some(v => v.invariant === 'prd_exists'),
+    'v2 invariants: specified fails when PRD.md missing');
   rmSync(root, { recursive: true, force: true });
 }
 
-// 22. Specced state: prd_exists, qa_exists
+// 22. Planned state fails without Plan.json
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'specced');
-  createFeatureDir(root, 'test-feat', ['PRD.md']); // QA.md missing
+  createFeatureState(root, 'test-feat', 'planned');
+  createFeatureDir(root, 'test-feat', ['Spec.md']);
   const result = verifyInvariants(root, 'test-feat');
-  assert(result.valid === false && result.violations.some(v => v.invariant === 'qa_exists'),
-    'v2 invariants: specced state fails when QA.md missing');
+  assert(result.valid === false && result.violations.some(v => v.invariant === 'plan_exists'),
+    'v2 invariants: planned fails without Plan.json');
   rmSync(root, { recursive: true, force: true });
 }
 
@@ -342,14 +332,14 @@ function createFeatureDir(root, slug, files = []) {
   rmSync(root, { recursive: true, force: true });
 }
 
-// 24. Planned state: plan_json_valid fails without Plan.json
+// 24. Designed state fails without DESIGN.md
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'planned');
-  createFeatureDir(root, 'test-feat', ['Spec.md']); // no Plan.json
+  createFeatureState(root, 'test-feat', 'designed');
+  createFeatureDir(root, 'test-feat', []); // missing DESIGN.md
   const result = verifyInvariants(root, 'test-feat');
-  assert(result.valid === false && result.violations.some(v => v.invariant === 'plan_json_valid'),
-    'v2 invariants: planned state fails without Plan.json');
+  assert(result.valid === false && result.violations.some(v => v.invariant === 'design_exists'),
+    'v2 invariants: designed fails when DESIGN.md missing');
   rmSync(root, { recursive: true, force: true });
 }
 
@@ -357,33 +347,33 @@ function createFeatureDir(root, slug, files = []) {
 // Section 5: v2 checkTimeout
 // ═══════════════════════════════════════════════════════════════════════
 
-// 25. No timeout defined for draft state
+// 25. No timeout defined for idea state
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
+  createFeatureState(root, 'test-feat', 'idea');
   const result = checkTimeout(root, 'test-feat');
-  assert(result === null, 'v2 timeout: null when state has no timeout defined (draft)');
+  assert(result === null, 'v2 timeout: null when state has no timeout defined (idea)');
   rmSync(root, { recursive: true, force: true });
 }
 
-// 26. Not timed out — feature in specced within 72h
+// 26. Not timed out — specifying within 72h
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'specced', { enteredAt: new Date().toISOString() });
+  createFeatureState(root, 'test-feat', 'specifying', { enteredAt: new Date().toISOString() });
   const result = checkTimeout(root, 'test-feat');
   assert(result !== null && result.timedOut === false && result.remainingMs > 0,
     'v2 timeout: not timed out when within window');
   rmSync(root, { recursive: true, force: true });
 }
 
-// 27. Timed out — feature in specced for > 72h
+// 27. Timed out — specifying for > 72h
 {
   const root = makeTmpRoot();
   const enteredAt = new Date(Date.now() - 73 * 3600000).toISOString(); // 73 hours ago
-  createFeatureState(root, 'test-feat', 'specced', { enteredAt });
+  createFeatureState(root, 'test-feat', 'specifying', { enteredAt });
   const result = checkTimeout(root, 'test-feat');
   assert(result !== null && result.timedOut === true && result.escalation === 'auto_suspend',
-    'v2 timeout: timed out after 72h in specced state → auto_suspend');
+    'v2 timeout: timed out after 72h in specifying state → auto_suspend');
   rmSync(root, { recursive: true, force: true });
 }
 
@@ -399,15 +389,14 @@ function createFeatureDir(root, slug, files = []) {
 // Section 6: v2 getAvailableTransitions + getLifecycleInfo
 // ═══════════════════════════════════════════════════════════════════════
 
-// 29. getAvailableTransitions from draft
+// 29. getAvailableTransitions from specifying
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
+  createFeatureState(root, 'test-feat', 'specifying');
   const transitions = getAvailableTransitions(root, 'test-feat');
-  // Should include T01 (spec_complete) + T15 (human_suspend wildcard)
-  assert(transitions.some(t => t.trigger === 'spec_complete') &&
+  assert(transitions.some(t => t.trigger === 'specified') &&
          transitions.some(t => t.trigger === 'human_suspend'),
-    'v2 available: draft shows spec_complete + wildcard human_suspend');
+    'v2 available: specifying shows specified + human_suspend');
   rmSync(root, { recursive: true, force: true });
 }
 
@@ -417,8 +406,8 @@ function createFeatureDir(root, slug, files = []) {
   createFeatureState(root, 'test-feat', 'building');
   const transitions = getAvailableTransitions(root, 'test-feat');
   const triggers = transitions.map(t => t.trigger);
-  assert(triggers.includes('all_tasks_complete') && triggers.includes('critical_failure') && triggers.includes('human_suspend'),
-    'v2 available: building shows all_tasks_complete, critical_failure, human_suspend');
+  assert(triggers.includes('built') && triggers.includes('gate_failure_fixable') && triggers.includes('human_suspend'),
+    'v2 available: building shows built, gate_failure_fixable, human_suspend');
   rmSync(root, { recursive: true, force: true });
 }
 
@@ -457,7 +446,6 @@ function createFeatureDir(root, slug, files = []) {
   createFeatureState(root, 'test-feat', 'building');
   createFeatureDir(root, 'test-feat');
   const result = checkAutoTransitions(root, 'test-feat');
-  // Auto conditions return false by default (require Kadima runtime)
   assert(result === null, 'v2 auto: returns null when no auto conditions met');
   rmSync(root, { recursive: true, force: true });
 }
@@ -470,53 +458,50 @@ function createFeatureDir(root, slug, files = []) {
   rmSync(root, { recursive: true, force: true });
 }
 
-// 35. Mission generation on T09 (monitoring → optimizing)
+// 35. Mission generation on gate_failure_fixable
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'monitoring');
-  createFeatureDir(root, 'test-feat');
-  // T09 requires role kadima, but we use force to bypass guards
-  const result = transition(root, 'test-feat', 'optimization_needed', { actor: 'kadima', force: true });
-  assert(result.success === true && result.newState === 'optimizing', 'v2 mission: T09 transition succeeds');
-
-  const state = JSON.parse(readFileSync(join(root, '.ogu/state/features/test-feat.state.json'), 'utf8'));
-  assert(state.pendingMissions && state.pendingMissions.length > 0 &&
-         state.pendingMissions[0].type === 'optimization',
-    'v2 mission: T09 generates optimization mission');
-  rmSync(root, { recursive: true, force: true });
-}
-
-// 36. Mission generation on T14 (reviewing → building fix)
-{
-  const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'reviewing');
+  createFeatureState(root, 'test-feat', 'verifying');
   createFeatureDir(root, 'test-feat');
   const result = transition(root, 'test-feat', 'gate_failure_fixable', { actor: 'tech-lead', force: true });
-  assert(result.success === true && result.newState === 'building', 'v2 mission: T14 transition succeeds');
+  assert(result.success === true && result.newState === 'building', 'v2 mission: gate_failure_fixable transition succeeds');
 
   const state = JSON.parse(readFileSync(join(root, '.ogu/state/features/test-feat.state.json'), 'utf8'));
   assert(state.pendingMissions && state.pendingMissions.some(m => m.type === 'fix'),
-    'v2 mission: T14 generates fix mission');
+    'v2 mission: gate_failure_fixable generates fix mission');
   rmSync(root, { recursive: true, force: true });
 }
 
-// 37. Full lifecycle: draft → specced → planned → designed
+// 36. Direct target transition works (specified → planning)
 {
   const root = makeTmpRoot();
-  createFeatureState(root, 'test-feat', 'draft');
-  createFeatureDir(root, 'test-feat', ['PRD.md', 'QA.md', 'Spec.md', 'Plan.json', 'DESIGN.md']);
+  createFeatureState(root, 'test-feat', 'specified');
+  createFeatureDir(root, 'test-feat', ['PRD.md', 'Spec.md']);
+  const result = transition(root, 'test-feat', 'planning', { actor: 'pm' });
+  assert(result.success === true && result.newState === 'planning', 'v2 transition: direct target transition works');
+  rmSync(root, { recursive: true, force: true });
+}
 
-  const r1 = transition(root, 'test-feat', 'spec_complete', { actor: 'pm' });
-  assert(r1.success && r1.newState === 'specced', 'v2 lifecycle: draft → specced');
+// 37. Full lifecycle slice: idea → specifying → specified → planning → planned
+{
+  const root = makeTmpRoot();
+  createFeatureState(root, 'test-feat', 'idea');
+  createFeatureDir(root, 'test-feat', ['PRD.md', 'Spec.md', 'Plan.json']);
 
-  const r2 = transition(root, 'test-feat', 'plan_complete', { actor: 'architect' });
-  assert(r2.success && r2.newState === 'planned', 'v2 lifecycle: specced → planned');
+  const r1 = transition(root, 'test-feat', 'specifying', { actor: 'pm' });
+  assert(r1.success && r1.newState === 'specifying', 'v2 lifecycle: idea → specifying');
 
-  const r3 = transition(root, 'test-feat', 'design_complete', { actor: 'designer' });
-  assert(r3.success && r3.newState === 'designed', 'v2 lifecycle chain: draft → specced → planned → designed');
+  const r2 = transition(root, 'test-feat', 'spec_complete', { actor: 'pm' });
+  assert(r2.success && r2.newState === 'specified', 'v2 lifecycle: specifying → specified');
+
+  const r3 = transition(root, 'test-feat', 'planning', { actor: 'pm' });
+  assert(r3.success && r3.newState === 'planning', 'v2 lifecycle: specified → planning');
+
+  const r4 = transition(root, 'test-feat', 'plan_complete', { actor: 'architect' });
+  assert(r4.success && r4.newState === 'planned', 'v2 lifecycle: planning → planned');
 
   const state = JSON.parse(readFileSync(join(root, '.ogu/state/features/test-feat.state.json'), 'utf8'));
-  assert(state.stateHistory.length === 3, 'v2 lifecycle: 3 transitions recorded in history');
+  assert(state.stateHistory.length === 4, 'v2 lifecycle: 4 transitions recorded in history');
   rmSync(root, { recursive: true, force: true });
 }
 

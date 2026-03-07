@@ -8,6 +8,9 @@
  * No external dependencies — uses native fetch.
  */
 
+import { estimateTokens as countTokens, countMessages } from './token-counter.mjs';
+import { createContextWindowManager } from './context-window-manager.mjs';
+
 /**
  * Call an LLM.
  *
@@ -35,7 +38,25 @@ export async function callLLM(options) {
   } = options;
 
   if (simulate) {
-    return simulateResponse(messages, system, simulateFiles);
+    console.warn('[llm] simulate requested but disabled — forcing real API call');
+  }
+
+  // Pre-call token estimation using token-counter
+  const systemTokens = countTokens(system);
+  const messageTokens = countMessages(messages);
+  const estimatedInputTokens = systemTokens + messageTokens;
+
+  // Context window check using context-window-manager
+  // Note: MODEL_OUTPUT_LIMITS is for max_tokens (output cap), NOT context window.
+  // All current Claude models have a 200K context window.
+  const contextWindowLimit = 200000;
+  const ctxManager = createContextWindowManager({ maxTokens: contextWindowLimit });
+  const allocation = ctxManager.allocate('request', estimatedInputTokens + maxTokens);
+  if (!allocation.success) {
+    throw new Error(
+      `Context window overflow: request needs ~${estimatedInputTokens + maxTokens} tokens ` +
+      `but model "${model}" has ${contextWindowLimit} token limit (remaining: ${allocation.remaining})`
+    );
   }
 
   if (provider === 'anthropic') {
@@ -61,14 +82,14 @@ export function calculateCost(usage, costPer1kInput, costPer1kOutput) {
 /**
  * Rough token estimation (chars / 4 heuristic).
  * Good enough for budget checks; actual counts come from API response.
+ * Delegates to token-counter for consistent estimation.
  *
  * @param {string} text
  * @returns {number}
  */
 export function estimateTokens(text) {
   if (!text) return 0;
-  // ~4 chars per token is a reasonable approximation for English/code
-  return Math.max(1, Math.ceil(text.length / 4));
+  return Math.max(1, countTokens(text));
 }
 
 // ── Simulate Mode ──
@@ -99,15 +120,26 @@ function simulateResponse(messages, system, simulateFiles) {
 
 // ── Anthropic API ──
 
+// Per-model output token limits (from Anthropic API docs)
+const MODEL_OUTPUT_LIMITS = {
+  'claude-haiku-4-5-20251001': 8192,
+  'claude-sonnet-4-6': 16384,
+  'claude-opus-4-6': 32768,
+};
+
 async function callAnthropic({ model, messages, system, maxTokens, temperature }) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY environment variable is not set');
   }
 
+  // Cap max_tokens at the model's known output limit to avoid API rejection
+  const modelLimit = MODEL_OUTPUT_LIMITS[model] || 8192;
+  const cappedMaxTokens = Math.min(maxTokens, modelLimit);
+
   const body = {
     model,
-    max_tokens: maxTokens,
+    max_tokens: cappedMaxTokens,
     temperature,
     messages,
   };

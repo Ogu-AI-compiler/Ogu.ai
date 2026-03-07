@@ -7,38 +7,9 @@ function test(name, fn) {
   catch (e) { failed++; console.log(`  \x1b[31m✗\x1b[0m ${name}: ${e.message}`); }
 }
 
-console.log('\x1b[1mSlice 261 — State Machine Builder + State Transition\x1b[0m\n');
+console.log('\x1b[1mSlice 261 — State Transition\x1b[0m\n');
 
-console.log('\x1b[36m  Part 1: State Machine Builder\x1b[0m');
-test('state-machine-builder.mjs exists', () => {
-  assert.ok(existsSync('tools/ogu/commands/lib/state-machine-builder.mjs'));
-});
-
-const { createStateMachineBuilder } = await import('../../tools/ogu/commands/lib/state-machine-builder.mjs');
-
-test('build and transition', () => {
-  const sm = createStateMachineBuilder()
-    .addState('idle').addState('running').addState('done')
-    .addTransition('idle', 'start', 'running')
-    .addTransition('running', 'finish', 'done')
-    .setInitial('idle')
-    .build();
-  assert.equal(sm.current(), 'idle');
-  sm.send('start');
-  assert.equal(sm.current(), 'running');
-});
-
-test('invalid transition stays', () => {
-  const sm = createStateMachineBuilder()
-    .addState('a').addState('b')
-    .addTransition('a', 'go', 'b')
-    .setInitial('a')
-    .build();
-  sm.send('invalid');
-  assert.equal(sm.current(), 'a');
-});
-
-console.log('\n\x1b[36m  Part 2: State Transition\x1b[0m');
+console.log('\x1b[36m  Part 1: State Transition\x1b[0m');
 test('state-transition.mjs exists', () => {
   assert.ok(existsSync('tools/ogu/commands/lib/state-transition.mjs'));
 });

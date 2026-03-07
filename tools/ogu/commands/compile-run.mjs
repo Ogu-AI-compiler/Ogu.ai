@@ -6,6 +6,9 @@ import { repoRoot } from '../util.mjs';
 import { emitAudit } from './lib/audit-emitter.mjs';
 import { buildDAG } from './lib/dag-builder.mjs';
 import { runGates, checkDrift } from './lib/gate-runner.mjs';
+import { getPlanPath } from './lib/plan-loader.mjs';
+import { resolveFeatureFile } from './lib/feature-paths.mjs';
+import { getCacheDir, getReportsDir, getStateDir } from './lib/runtime-paths.mjs';
 
 /**
  * ogu compile:run <slug> — Full compilation pipeline.
@@ -36,9 +39,9 @@ export async function compileRun() {
   console.log(`[compile] Starting compilation for "${slug}"`);
 
   // ── 1. Load Plan.json ──
-  const planPath = join(root, `docs/vault/features/${slug}/Plan.json`);
-  if (!existsSync(planPath)) {
-    console.error(`[compile] Plan.json not found: ${planPath}`);
+  const planPath = getPlanPath(slug, root);
+  if (!planPath || !existsSync(planPath)) {
+    console.error(`[compile] Plan.json not found for "${slug}"`);
     return 1;
   }
   const plan = JSON.parse(readFileSync(planPath, 'utf8'));
@@ -75,7 +78,7 @@ export async function compileRun() {
 
   // ── 5. Run verification gates ──
   console.log(`[compile] Running verification gates...`);
-  const specPath = join(root, `docs/vault/features/${slug}/Spec.json`);
+  const specPath = resolveFeatureFile(root, slug, 'Spec.json');
   let gateResults = [];
 
   if (existsSync(specPath)) {
@@ -105,7 +108,7 @@ export async function compileRun() {
   }
 
   // ── 7. Count completed tasks ──
-  const schedulerPath = join(root, '.ogu/state/scheduler-state.json');
+  const schedulerPath = join(getStateDir(root), 'scheduler-state.json');
   let tasksCompleted = 0;
   if (existsSync(schedulerPath)) {
     const state = JSON.parse(readFileSync(schedulerPath, 'utf8'));
@@ -134,7 +137,7 @@ export async function compileRun() {
     drift,
   };
 
-  const reportsDir = join(root, '.ogu/reports');
+  const reportsDir = getReportsDir(root);
   mkdirSync(reportsDir, { recursive: true });
   writeFileSync(
     join(reportsDir, `${slug}.compile.json`),
@@ -143,7 +146,7 @@ export async function compileRun() {
   );
 
   // ── 9. Generate compile manifest (for incremental builds) ──
-  const cacheDir = join(root, '.ogu/cache');
+  const cacheDir = getCacheDir(root);
   mkdirSync(cacheDir, { recursive: true });
   const manifest = {
     featureSlug: slug,

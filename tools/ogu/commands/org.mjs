@@ -4,6 +4,7 @@ import { repoRoot } from '../util.mjs';
 import { emitAudit } from './lib/audit-emitter.mjs';
 import { loadBudget } from './lib/budget-tracker.mjs';
 import { validateOrgSpec } from './lib/agent-registry.mjs';
+import { seedOrgSpec } from './lib/orgspec-seeder.mjs';
 
 /**
  * ogu org:init [--force] [--from-skills]
@@ -265,8 +266,8 @@ function createFullOrgSpec(skillCount) {
         type: 'anthropic',
         models: [
           { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', capabilities: ['code_generation', 'testing', 'documentation'], costPer1kInput: 0.001, costPer1kOutput: 0.005, maxTokens: 200000, tier: 'fast' },
-          { id: 'claude-sonnet-4-6-20250514', name: 'Claude Sonnet 4.6', capabilities: ['code_generation', 'testing', 'documentation', 'review'], costPer1kInput: 0.003, costPer1kOutput: 0.015, maxTokens: 200000, tier: 'standard' },
-          { id: 'claude-opus-4-6-20250514', name: 'Claude Opus 4.6', capabilities: ['code_generation', 'testing', 'documentation', 'review', 'architecture', 'security_audit'], costPer1kInput: 0.015, costPer1kOutput: 0.075, maxTokens: 200000, tier: 'premium' },
+          { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', capabilities: ['code_generation', 'testing', 'documentation', 'review'], costPer1kInput: 0.003, costPer1kOutput: 0.015, maxTokens: 200000, tier: 'standard' },
+          { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', capabilities: ['code_generation', 'testing', 'documentation', 'review', 'architecture', 'security_audit'], costPer1kInput: 0.015, costPer1kOutput: 0.075, maxTokens: 200000, tier: 'premium' },
         ],
         enabled: true,
       },
@@ -316,7 +317,11 @@ export async function orgInit() {
     mkdirSync(join(root, dir), { recursive: true });
   }
 
+  // Use seeder to generate base spec (Phase 3E), then overlay with full spec
+  const seededSpec = seedOrgSpec();
   const orgSpec = createFullOrgSpec();
+  // Attach seeded metadata
+  orgSpec._seeded = { version: seededSpec.version, rolesSeeded: seededSpec.roles.length, createdAt: seededSpec.createdAt };
 
   // If --from-skills, scan existing skills and report
   let skillCount = 0;

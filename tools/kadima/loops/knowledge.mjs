@@ -14,8 +14,9 @@
 
 import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { getArtifactsDir, getMemoryDir, getRunnersDir, resolveRuntimePath } from '../../ogu/commands/lib/runtime-paths.mjs';
 
-const KNOWLEDGE_STATE = (root) => join(root, '.ogu/state/knowledge-state.json');
+const KNOWLEDGE_STATE = (root) => resolveRuntimePath(root, 'state', 'knowledge-state.json');
 
 function loadKnowledgeState(root) {
   const path = KNOWLEDGE_STATE(root);
@@ -30,7 +31,7 @@ function loadKnowledgeState(root) {
 }
 
 function saveKnowledgeState(root, state) {
-  const dir = join(root, '.ogu/state');
+  const dir = resolveRuntimePath(root, 'state');
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   writeFileSync(KNOWLEDGE_STATE(root), JSON.stringify(state, null, 2), 'utf8');
 }
@@ -92,7 +93,7 @@ function extractPatterns(taskId, output) {
  * Scan for completed tasks that haven't been indexed yet.
  */
 function findUnindexedTasks(root, knowledgeState) {
-  const runnersDir = join(root, '.ogu/runners');
+  const runnersDir = getRunnersDir(root);
   if (!existsSync(runnersDir)) return [];
 
   const indexed = new Set(knowledgeState.indexedTasks || []);
@@ -256,7 +257,83 @@ export function createKnowledgeLoop({ root, intervalMs, emitAudit }) {
       state.indexedTasks.push(taskId);
     }
 
-    // Phase 2: Curate memory (every 6th tick, ~30 min)
+    // Phase 2: Memory Fabric — index new artifacts via indexSource()
+    let fabricIndexed = 0;
+    let fabricStale = 0;
+    try {
+      const memFabric = await import('../../ogu/commands/lib/memory-fabric.mjs');
+
+      // Index completed task artifacts (specs, contracts, ADRs)
+      const memoryDir = getMemoryDir(root);
+      const sourcePaths = [
+        { type: 'contract', path: 'docs/vault/02_Contracts' },
+        { type: 'adr', path: 'docs/vault/03_ADRs' },
+        { type: 'pattern', path: memoryDir },
+      ];
+
+      for (const src of sourcePaths) {
+        try {
+          const fullPath = join(root, src.path);
+          if (existsSync(fullPath)) {
+            const result = memFabric.indexSource(root, src.type, src.path);
+            fabricIndexed += result.indexed || 0;
+          }
+        } catch { /* best-effort indexing per source */ }
+      }
+
+      // Also index feature-specific artifacts from completed tasks
+      const artifactsDir = getArtifactsDir(root);
+      if (existsSync(artifactsDir)) {
+        try {
+          const featureDirs = readdirSync(artifactsDir).filter(f => {
+            try { return readdirSync(join(artifactsDir, f)).length > 0; } catch { return false; }
+          });
+          for (const featureDir of featureDirs) {
+            try {
+              const result = memFabric.indexSource(root, 'artifact', join(artifactsDir, featureDir));
+              fabricIndexed += result.indexed || 0;
+            } catch { /* skip */ }
+          }
+        } catch { /* skip */ }
+      }
+
+      // Detect and prune stale entities (every 6th tick, ~30 min)
+      if (tickCount % 6 === 0) {
+        const staleEntities = memFabric.detectStaleness(root, 30);
+        fabricStale = staleEntities.length;
+
+        // Prune entities older than 60 days
+        if (staleEntities.length > 0) {
+          const pruneResult = memFabric.pruneStale(root, 60);
+          fabricStale = pruneResult.pruned;
+        }
+      }
+
+      // Generate knowledge summary for standup (every 12th tick, ~60 min)
+      if (tickCount % 12 === 0) {
+        try {
+          const stats = memFabric.getStats(root);
+          const summary = {
+            entityCount: stats.entityCount,
+            relationCount: stats.relationCount,
+            avgStaleness: stats.avgStaleness,
+            typeBreakdown: stats.typeBreakdown,
+            generatedAt: lastTick,
+          };
+
+          // Persist summary for standup consumption
+          const summaryDir = resolveRuntimePath(root, 'state');
+          if (!existsSync(summaryDir)) mkdirSync(summaryDir, { recursive: true });
+          writeFileSync(
+            join(summaryDir, 'knowledge-summary.json'),
+            JSON.stringify(summary, null, 2),
+            'utf8'
+          );
+        } catch { /* summary generation is best-effort */ }
+      }
+    } catch { /* memory-fabric not available — continue with semantic-memory only */ }
+
+    // Phase 3: Curate semantic memory (every 6th tick, ~30 min)
     if (tickCount % 6 === 0) {
       const curation = curateMemory(root, fns);
       pruned = curation.removed;
@@ -270,22 +347,31 @@ export function createKnowledgeLoop({ root, intervalMs, emitAudit }) {
     }
 
     state.totalIndexed = (state.totalIndexed || 0) + indexed;
+    state.fabricIndexed = (state.fabricIndexed || 0) + fabricIndexed;
+    state.fabricPruned = (state.fabricPruned || 0) + fabricStale;
     saveKnowledgeState(root, state);
 
     lastReport = {
       indexed,
       pruned,
+      fabricIndexed,
+      fabricStale,
       unindexedFound: unindexed.length,
       totalIndexed: state.totalIndexed,
       totalPruned: state.totalPruned,
+      totalFabricIndexed: state.fabricIndexed,
+      totalFabricPruned: state.fabricPruned,
       timestamp: lastTick,
     };
 
-    if (indexed > 0 || pruned > 0) {
+    if (indexed > 0 || pruned > 0 || fabricIndexed > 0 || fabricStale > 0) {
       emitAudit('knowledge.indexed', {
         indexed,
         pruned,
+        fabricIndexed,
+        fabricStale,
         totalIndexed: state.totalIndexed,
+        totalFabricIndexed: state.fabricIndexed,
       });
     }
   };

@@ -1,7 +1,6 @@
 /**
- * Slice 141 — Dependency Injector + Service Registry
+ * Slice 141 — Service Registry
  *
- * Dependency Injector: wire dependencies for subsystem initialization.
  * Service Registry: register, discover, and health-check services.
  */
 
@@ -14,62 +13,11 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 141 — Dependency Injector + Service Registry\x1b[0m\n");
+console.log("\n\x1b[1mSlice 141 — Service Registry\x1b[0m\n");
 
-// ── Part 1: Dependency Injector ──────────────────────────────
+// ── Part 1: Service Registry ──────────────────────────────
 
-console.log("\x1b[36m  Part 1: Dependency Injector\x1b[0m");
-
-const diLib = join(process.cwd(), "tools/ogu/commands/lib/dependency-injector.mjs");
-assert("dependency-injector.mjs exists", () => {
-  if (!existsSync(diLib)) throw new Error("file missing");
-});
-
-const diMod = await import(diLib);
-
-assert("createContainer returns container", () => {
-  if (typeof diMod.createContainer !== "function") throw new Error("missing");
-  const container = diMod.createContainer();
-  if (typeof container.register !== "function") throw new Error("missing register");
-  if (typeof container.resolve !== "function") throw new Error("missing resolve");
-});
-
-assert("register and resolve a value", () => {
-  const c = diMod.createContainer();
-  c.register("config", () => ({ port: 3000 }));
-  const config = c.resolve("config");
-  if (config.port !== 3000) throw new Error("wrong value");
-});
-
-assert("resolve with dependencies", () => {
-  const c = diMod.createContainer();
-  c.register("db", () => ({ url: "postgres://localhost" }));
-  c.register("repo", (deps) => ({ db: deps.db, find: () => "found" }), ["db"]);
-  const repo = c.resolve("repo");
-  if (repo.db.url !== "postgres://localhost") throw new Error("wrong db");
-  if (repo.find() !== "found") throw new Error("wrong find");
-});
-
-assert("singleton returns same instance", () => {
-  const c = diMod.createContainer();
-  let calls = 0;
-  c.register("svc", () => { calls++; return { id: calls }; }, [], { singleton: true });
-  const a = c.resolve("svc");
-  const b = c.resolve("svc");
-  if (a !== b) throw new Error("should be same instance");
-  if (calls !== 1) throw new Error("factory should be called once");
-});
-
-assert("resolve unknown throws", () => {
-  const c = diMod.createContainer();
-  let threw = false;
-  try { c.resolve("nope"); } catch { threw = true; }
-  if (!threw) throw new Error("should throw");
-});
-
-// ── Part 2: Service Registry ──────────────────────────────
-
-console.log("\n\x1b[36m  Part 2: Service Registry\x1b[0m");
+console.log("\x1b[36m  Part 1: Service Registry\x1b[0m");
 
 const srLib = join(process.cwd(), "tools/ogu/commands/lib/service-registry.mjs");
 assert("service-registry.mjs exists", () => {

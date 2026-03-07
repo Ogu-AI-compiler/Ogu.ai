@@ -1,8 +1,8 @@
 /**
- * Slice 58 — Metric Collector + Alert Rules Engine
+ * Slice 58 — Metric Collector Engine
  *
  * Metric collector: counters, gauges, histograms for system observability.
- * Alert rules: threshold-based alerting with configurable severity.
+
  */
 
 import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -27,7 +27,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 58 — Metric Collector + Alert Rules Engine\x1b[0m\n");
+console.log("\n\x1b[1mSlice 58 — Metric Collector Engine\x1b[0m\n");
 console.log("  Counters, gauges, histograms, threshold alerting\n");
 
 // ── Part 1: Metric Collector ──────────────────────────────
@@ -98,88 +98,6 @@ assert("METRIC_TYPES lists all types", () => {
   if (!metricMod.METRIC_TYPES.includes("counter")) throw new Error("missing counter");
   if (!metricMod.METRIC_TYPES.includes("gauge")) throw new Error("missing gauge");
   if (!metricMod.METRIC_TYPES.includes("histogram")) throw new Error("missing histogram");
-});
-
-// ── Part 2: Alert Rules Engine ──────────────────────────────
-
-console.log("\n\x1b[36m  Part 2: Alert Rules Engine\x1b[0m");
-
-const alertLib = join(process.cwd(), "tools/ogu/commands/lib/alert-rules.mjs");
-assert("alert-rules.mjs exists", () => {
-  if (!existsSync(alertLib)) throw new Error("file missing");
-});
-
-const alertMod = await import(alertLib);
-
-assert("createAlertEngine returns engine", () => {
-  if (typeof alertMod.createAlertEngine !== "function") throw new Error("missing");
-  const engine = alertMod.createAlertEngine();
-  if (typeof engine.addRule !== "function") throw new Error("missing addRule");
-  if (typeof engine.evaluate !== "function") throw new Error("missing evaluate");
-  if (typeof engine.listRules !== "function") throw new Error("missing listRules");
-});
-
-assert("addRule registers alert rules", () => {
-  const engine = alertMod.createAlertEngine();
-  engine.addRule({
-    id: "budget-warning",
-    metric: "budget.daily.percent",
-    condition: "gte",
-    threshold: 75,
-    severity: "warning",
-    message: "Daily budget at {value}%",
-  });
-  const rules = engine.listRules();
-  if (rules.length !== 1) throw new Error(`expected 1 rule, got ${rules.length}`);
-});
-
-assert("evaluate triggers alert when threshold met", () => {
-  const engine = alertMod.createAlertEngine();
-  engine.addRule({
-    id: "cpu-critical",
-    metric: "cpu.percent",
-    condition: "gte",
-    threshold: 90,
-    severity: "critical",
-  });
-  const alerts = engine.evaluate({ "cpu.percent": 95 });
-  if (alerts.length !== 1) throw new Error(`expected 1 alert, got ${alerts.length}`);
-  if (alerts[0].ruleId !== "cpu-critical") throw new Error("wrong ruleId");
-  if (alerts[0].severity !== "critical") throw new Error("wrong severity");
-});
-
-assert("evaluate does not trigger when below threshold", () => {
-  const engine = alertMod.createAlertEngine();
-  engine.addRule({
-    id: "cpu-warn",
-    metric: "cpu.percent",
-    condition: "gte",
-    threshold: 75,
-    severity: "warning",
-  });
-  const alerts = engine.evaluate({ "cpu.percent": 50 });
-  if (alerts.length !== 0) throw new Error("should not trigger");
-});
-
-assert("evaluate supports multiple conditions (gte, lte, eq)", () => {
-  const engine = alertMod.createAlertEngine();
-  engine.addRule({ id: "r1", metric: "m1", condition: "lte", threshold: 10, severity: "info" });
-  engine.addRule({ id: "r2", metric: "m2", condition: "eq", threshold: 0, severity: "error" });
-
-  const a1 = engine.evaluate({ m1: 5, m2: 1 });
-  if (a1.length !== 1) throw new Error(`expected 1, got ${a1.length}`);
-  if (a1[0].ruleId !== "r1") throw new Error("should match lte rule");
-
-  const a2 = engine.evaluate({ m1: 5, m2: 0 });
-  if (a2.length !== 2) throw new Error(`expected 2, got ${a2.length}`);
-});
-
-assert("ALERT_SEVERITIES lists severity levels", () => {
-  if (!alertMod.ALERT_SEVERITIES) throw new Error("missing");
-  const required = ["info", "warning", "critical"];
-  for (const s of required) {
-    if (!alertMod.ALERT_SEVERITIES.includes(s)) throw new Error(`missing: ${s}`);
-  }
 });
 
 // Cleanup

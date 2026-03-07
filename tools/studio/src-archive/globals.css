@@ -1,0 +1,268 @@
+@import "tailwindcss";
+
+@theme {
+  /* Neutral gray palette */
+  --color-bg: #1a1a1a;
+  --color-bg-card: #242424;
+  --color-bg-card-hover: #2c2c2c;
+  --color-bg-input: #1e1e1e;
+  --color-bg-elevated: #303030;
+  --color-border: #383838;
+  --color-border-hover: #4a4a4a;
+  --color-border-focus: #63f19d;
+  --color-text: #efefef;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #737373;
+  --color-accent: #63f19d;
+  --color-accent-hover: #8af4b6;
+  --color-accent-soft: rgba(99 241 157 / 15%);
+  --color-accent-text: #1a1a1a;
+  --color-success: #34d399;
+  --color-success-soft: rgba(52, 211, 153, 0.15);
+  --color-error: #f87171;
+  --color-error-soft: rgba(248, 113, 113, 0.15);
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.15);
+  --color-info: #a3a3a3;
+  --color-info-soft: rgba(163, 163, 163, 0.12);
+  --color-user-bubble: rgba(99, 241, 157, 0.10);
+  --color-ogu-bubble: rgba(255, 255, 255, 0.05);
+
+  --font-sans: "Geist", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", "JetBrains Mono", monospace;
+}
+
+/* Base reset */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar — visually hidden but scrolling works */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Toast animations */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+/* Boot stagger animation */
+@keyframes boot-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.boot-stagger > * {
+  opacity: 0;
+  animation: boot-fade-in 0.4s ease forwards;
+}
+.boot-stagger > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.boot-stagger > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.boot-stagger > *:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.boot-stagger > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.boot-stagger > *:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.boot-stagger > *:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+/* DAG critical path pulse */
+@keyframes dag-pulse {
+  0%, 100% { opacity: 1; r: 2; }
+  50% { opacity: 0.4; r: 3.5; }
+}
+.dag-critical-pulse {
+  animation: dag-pulse 2s ease-in-out infinite;
+}
+
+/* Stage transition */
+@keyframes stage-enter {
+  from { opacity: 0; transform: translateY(16px); filter: blur(3px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.stage-enter {
+  animation: stage-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Rotating word — per-letter 3D flip */
+@keyframes letter-flip-out {
+  from { opacity: 1; filter: blur(0px); transform: translateY(0) rotateX(0deg); }
+  to { opacity: 0; filter: blur(4px); transform: translateY(-14px) rotateX(90deg); }
+}
+@keyframes letter-flip-in {
+  from { opacity: 0; filter: blur(4px); transform: translateY(14px) rotateX(-90deg); }
+  to { opacity: 1; filter: blur(0px); transform: translateY(0) rotateX(0deg); }
+}
+
+/* Home screen chip hover — animated gradient border */
+.home-chip {
+  position: relative;
+  transition: color 0.3s ease, transform 0.2s ease;
+  z-index: 0;
+}
+.home-chip::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    270deg,
+    #737373, #a3a3a3, #efefef, #a3a3a3, #737373
+  );
+  background-size: 400% 400%;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.home-chip:hover {
+  border-color: transparent !important;
+  color: var(--color-text) !important;
+  transform: translateY(-2px);
+}
+.home-chip:hover::before {
+  opacity: 1;
+  animation: gradient-spin 3s linear infinite;
+}
+@keyframes gradient-spin {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Vercel-style shimmer border button ── */
+@property --shimmer-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes shimmer-rotate {
+  to { --shimmer-angle: 360deg; }
+}
+
+.btn-shimmer {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+.btn-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--shimmer-angle),
+    transparent 40%,
+    var(--color-accent) 50%,
+    var(--color-accent-hover) 55%,
+    transparent 60%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.btn-shimmer:hover::before {
+  opacity: 1;
+  animation: shimmer-rotate 2.5s linear infinite;
+}
+.btn-shimmer:hover {
+  transform: translateY(-1px);
+}
+
+/* ── Task Graph animations ── */
+/* Sequence: CTO (0s) → Nodes (0.5s+) → Dots (after nodes) → Edges (after dots) */
+@keyframes ctoAppear {
+  from { opacity: 0; transform: scale(0.8) translateY(14px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes nodeAppear {
+  from { opacity: 0; transform: scale(0.85) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes edgeDraw {
+  0% { stroke-dashoffset: 500; opacity: 0; }
+  10% { opacity: 0.4; }
+  100% { stroke-dashoffset: 0; opacity: 0.6; }
+}
+@keyframes beamShoot {
+  0% { stroke-dashoffset: 460; opacity: 0; }
+  10% { opacity: 0.8; }
+  80% { opacity: 0.8; }
+  100% { stroke-dashoffset: -460; opacity: 0; }
+}
+@keyframes beamGlowLoop {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.5; }
+}
+@keyframes dotPop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes pulseRing {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.04); }
+}
+
+/* CTO chat markdown */
+.cto-md { word-break: break-word; }
+.cto-md pre { scrollbar-width: thin; }

@@ -8,12 +8,13 @@
 import { Hono } from "hono";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { resolveOguPath } from "../../../ogu/commands/lib/runtime-paths.mjs";
 
 const DEFAULT_KADIMA_PORT = 4210;
 
 function getKadimaUrl(): string {
   const root = process.env.OGU_ROOT || process.cwd();
-  const configPath = join(root, ".ogu/kadima.config.json");
+  const configPath = resolveOguPath(root, "kadima.config.json");
   let port = DEFAULT_KADIMA_PORT;
   let host = "127.0.0.1";
 

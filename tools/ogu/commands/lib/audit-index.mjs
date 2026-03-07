@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { repoRoot } from '../../util.mjs';
+import { getAuditDir } from './runtime-paths.mjs';
 
 /**
  * Audit Index — quick lookup by feature, type, date.
@@ -10,7 +11,7 @@ import { repoRoot } from '../../util.mjs';
  */
 
 function loadEvents(root) {
-  const p = join(root, '.ogu/audit/current.jsonl');
+  const p = join(getAuditDir(root), 'current.jsonl');
   if (!existsSync(p)) return [];
   return readFileSync(p, 'utf8')
     .trim()
@@ -78,7 +79,7 @@ export function lookupByFeature({ root, feature } = {}) {
  */
 export function saveIndex({ root, index } = {}) {
   root = root || repoRoot();
-  writeFileSync(join(root, '.ogu/audit/index.json'), JSON.stringify(index, null, 2));
+  writeFileSync(join(getAuditDir(root), 'index.json'), JSON.stringify(index, null, 2));
 }
 
 /**
@@ -86,7 +87,7 @@ export function saveIndex({ root, index } = {}) {
  */
 export function loadIndex({ root } = {}) {
   root = root || repoRoot();
-  const p = join(root, '.ogu/audit/index.json');
+  const p = join(getAuditDir(root), 'index.json');
   if (!existsSync(p)) return null;
   return JSON.parse(readFileSync(p, 'utf8'));
 }

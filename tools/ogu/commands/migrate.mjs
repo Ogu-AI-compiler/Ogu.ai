@@ -2,11 +2,20 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { repoRoot, readJsonSafe } from "../util.mjs";
+import { createMigrationEngine } from "./lib/config-migrate.mjs";
 
 export async function migrate() {
   const args = process.argv.slice(3);
   const dryRun = args.includes("--dry-run");
   const root = repoRoot();
+
+  // Wire config migration engine (Phase 3E)
+  const migrationEngine = createMigrationEngine();
+  migrationEngine.register('1', '2', (config) => {
+    // Example transform: ensure ogu_version field
+    if (!config.ogu_version) config.ogu_version = 2;
+    return config;
+  });
 
   const statePath = join(root, ".ogu/STATE.json");
   const state = readJsonSafe(statePath);

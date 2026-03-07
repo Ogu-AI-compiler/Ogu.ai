@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { templates } from "../templates.mjs";
 import { repoRoot } from "../util.mjs";
+import { seedModelConfig } from './lib/model-config-seeder.mjs';
 
 export async function init() {
   const root = repoRoot();
@@ -23,6 +24,17 @@ export async function init() {
       console.log(`  created  ${relPath}`);
       created++;
     }
+  }
+
+  // Seed model config if not present
+  const modelConfigPath = join(root, '.ogu/model-config.json');
+  if (!existsSync(modelConfigPath)) {
+    const oguDir = join(root, '.ogu');
+    if (!existsSync(oguDir)) mkdirSync(oguDir, { recursive: true });
+    const modelConfig = seedModelConfig();
+    writeFileSync(modelConfigPath, JSON.stringify(modelConfig, null, 2), 'utf-8');
+    console.log(`  created  .ogu/model-config.json`);
+    created++;
   }
 
   console.log("");

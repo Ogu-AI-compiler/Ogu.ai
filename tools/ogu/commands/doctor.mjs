@@ -7,6 +7,8 @@ import { log } from "./log.mjs";
 import { remember } from "./remember.mjs";
 import { contextLock } from "./context-lock.mjs";
 import { repoRoot } from "../util.mjs";
+import { createAuditChain } from "./lib/audit-trail-integrity.mjs";
+import { validateConfig, OGU_SCHEMAS } from "./lib/config-schema.mjs";
 
 const EXIT_CODES = {
   validate: 11,
@@ -157,6 +159,40 @@ function runStrictChecks(root) {
       errors.push(`Repo_Map.md has only ${lines.length} non-empty lines (need at least 15)`);
     }
   }
+
+  // Audit trail integrity check (Phase 3C)
+  try {
+    const auditFile = join(root, ".ogu/audit/current.jsonl");
+    if (existsSync(auditFile)) {
+      const lines = readFileSync(auditFile, "utf-8").trim().split("\n").filter(Boolean);
+      const chain = createAuditChain();
+      let chainValid = true;
+      for (const line of lines) {
+        try {
+          const event = JSON.parse(line);
+          chain.append(event);
+        } catch { /* skip malformed lines */ }
+      }
+      chainValid = chain.verify();
+      if (!chainValid) {
+        errors.push("Audit trail integrity check failed — chain hash mismatch");
+      }
+    }
+  } catch { /* best-effort */ }
+
+  // Config schema check: STATE.json (Phase 3E)
+  try {
+    const statePath = join(root, ".ogu/STATE.json");
+    if (existsSync(statePath)) {
+      const state = JSON.parse(readFileSync(statePath, "utf-8"));
+      const { valid, errors: schemaErrors } = validateConfig(state, OGU_SCHEMAS.STATE);
+      if (!valid) {
+        for (const e of schemaErrors) {
+          errors.push(`STATE.json schema error: ${e}`);
+        }
+      }
+    }
+  } catch { /* best-effort */ }
 
   return errors;
 }

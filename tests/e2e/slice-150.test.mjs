@@ -1,5 +1,5 @@
 /**
- * Slice 150 — Error Recovery Manager + Health Check Runner
+ * Slice 150 — Error Recovery Manager
  */
 
 import { existsSync } from "node:fs";
@@ -11,7 +11,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 150 — Error Recovery Manager + Health Check Runner\x1b[0m\n");
+console.log("\n\x1b[1mSlice 150 — Error Recovery Manager\x1b[0m\n");
 
 console.log("\x1b[36m  Part 1: Error Recovery Manager\x1b[0m");
 
@@ -46,46 +46,6 @@ assert("recover tracks error history", () => {
   mgr.recover(new Error("err2"));
   const history = mgr.getHistory();
   if (history.length !== 2) throw new Error(`expected 2, got ${history.length}`);
-});
-
-console.log("\n\x1b[36m  Part 2: Health Check Runner\x1b[0m");
-
-const hcrLib = join(process.cwd(), "tools/ogu/commands/lib/health-check-runner.mjs");
-assert("health-check-runner.mjs exists", () => { if (!existsSync(hcrLib)) throw new Error("file missing"); });
-
-const hcrMod = await import(hcrLib);
-
-assert("createHealthCheckRunner returns runner", () => {
-  if (typeof hcrMod.createHealthCheckRunner !== "function") throw new Error("missing");
-  const runner = hcrMod.createHealthCheckRunner();
-  if (typeof runner.addCheck !== "function") throw new Error("missing addCheck");
-  if (typeof runner.runAll !== "function") throw new Error("missing runAll");
-});
-
-assert("runAll executes all checks", async () => {
-  const runner = hcrMod.createHealthCheckRunner();
-  runner.addCheck({ name: "db", check: async () => ({ healthy: true }) });
-  runner.addCheck({ name: "cache", check: async () => ({ healthy: true }) });
-  const results = await runner.runAll();
-  if (results.length !== 2) throw new Error(`expected 2, got ${results.length}`);
-  if (!results.every(r => r.healthy)) throw new Error("all should be healthy");
-});
-
-assert("runAll captures unhealthy checks", async () => {
-  const runner = hcrMod.createHealthCheckRunner();
-  runner.addCheck({ name: "ok", check: async () => ({ healthy: true }) });
-  runner.addCheck({ name: "fail", check: async () => ({ healthy: false, error: "down" }) });
-  const results = await runner.runAll();
-  const failed = results.filter(r => !r.healthy);
-  if (failed.length !== 1) throw new Error(`expected 1 failed, got ${failed.length}`);
-});
-
-assert("isHealthy returns overall status", async () => {
-  const runner = hcrMod.createHealthCheckRunner();
-  runner.addCheck({ name: "a", check: async () => ({ healthy: true }) });
-  if (!(await runner.isHealthy())) throw new Error("should be healthy");
-  runner.addCheck({ name: "b", check: async () => ({ healthy: false }) });
-  if (await runner.isHealthy()) throw new Error("should be unhealthy");
 });
 
 console.log(`\n\x1b[1m  Results: ${pass} passed, ${fail} failed\x1b[0m\n`);

@@ -1,7 +1,7 @@
 /**
- * Slice 76 — Job Queue + Daemon Registry
+ * Slice 76 — Daemon Registry
  *
- * Job queue: deterministic job scheduling with persistence.
+
  * Daemon registry: service discovery for runners and daemons.
  */
 
@@ -18,79 +18,9 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 76 — Job Queue + Daemon Registry\x1b[0m\n");
+console.log("\n\x1b[1mSlice 76 — Daemon Registry\x1b[0m\n");
 
-// ── Part 1: Job Queue ──────────────────────────────
-
-console.log("\x1b[36m  Part 1: Job Queue\x1b[0m");
-
-const jqLib = join(process.cwd(), "tools/ogu/commands/lib/job-queue.mjs");
-assert("job-queue.mjs exists", () => {
-  if (!existsSync(jqLib)) throw new Error("file missing");
-});
-
-const jqMod = await import(jqLib);
-
-assert("createJobQueue returns queue", () => {
-  if (typeof jqMod.createJobQueue !== "function") throw new Error("missing");
-  const q = jqMod.createJobQueue();
-  if (typeof q.enqueue !== "function") throw new Error("missing enqueue");
-  if (typeof q.dequeue !== "function") throw new Error("missing dequeue");
-  if (typeof q.markCompleted !== "function") throw new Error("missing markCompleted");
-});
-
-assert("enqueue adds job and dequeue retrieves", () => {
-  const q = jqMod.createJobQueue();
-  const id = q.enqueue({ taskId: "t1", command: "build" });
-  if (typeof id !== "string") throw new Error("should return job id");
-  const job = q.dequeue();
-  if (!job) throw new Error("should dequeue a job");
-  if (job.taskId !== "t1") throw new Error("wrong taskId");
-});
-
-assert("FIFO order maintained", () => {
-  const q = jqMod.createJobQueue();
-  q.enqueue({ taskId: "first" });
-  q.enqueue({ taskId: "second" });
-  q.enqueue({ taskId: "third" });
-  const j1 = q.dequeue();
-  const j2 = q.dequeue();
-  if (j1.taskId !== "first") throw new Error(`expected first, got ${j1.taskId}`);
-  if (j2.taskId !== "second") throw new Error(`expected second, got ${j2.taskId}`);
-});
-
-assert("markCompleted removes job from active", () => {
-  const q = jqMod.createJobQueue();
-  const id = q.enqueue({ taskId: "t1" });
-  q.dequeue();
-  q.markCompleted(id);
-  const stats = q.getStats();
-  if (stats.completed !== 1) throw new Error(`expected 1 completed, got ${stats.completed}`);
-});
-
-assert("retry re-enqueues a job", () => {
-  const q = jqMod.createJobQueue();
-  const id = q.enqueue({ taskId: "flaky" });
-  q.dequeue();
-  q.retry(id);
-  const job = q.dequeue();
-  if (!job) throw new Error("retried job should be dequeued");
-  if (job.retryCount !== 1) throw new Error(`expected retryCount 1, got ${job.retryCount}`);
-});
-
-assert("getStats returns queue statistics", () => {
-  const q = jqMod.createJobQueue();
-  q.enqueue({ taskId: "a" });
-  q.enqueue({ taskId: "b" });
-  q.dequeue();
-  const stats = q.getStats();
-  if (typeof stats.pending !== "number") throw new Error("missing pending");
-  if (typeof stats.active !== "number") throw new Error("missing active");
-  if (stats.pending !== 1) throw new Error(`expected 1 pending, got ${stats.pending}`);
-  if (stats.active !== 1) throw new Error(`expected 1 active, got ${stats.active}`);
-});
-
-// ── Part 2: Daemon Registry ──────────────────────────────
+// ── Part 1: Daemon Registry ──────────────────────────────
 
 console.log("\n\x1b[36m  Part 2: Daemon Registry\x1b[0m");
 

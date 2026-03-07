@@ -116,3 +116,5 @@ This is the root index of the project's knowledge vault.
 - [ADR 0101 — E2E Test Decision](docs/vault/03_ADRs/ADR_0101_e2e-test-decision.md)
 - [ADR 0102 — E2E Test Decision](docs/vault/03_ADRs/ADR_0102_e2e-test-decision.md)
 - [ADR 0103 — E2E Test Decision](docs/vault/03_ADRs/ADR_0103_e2e-test-decision.md)
+- [ADR 0104 — E2E Test Decision](docs/vault/03_ADRs/ADR_0104_e2e-test-decision.md)
+- [ADR 0105 — E2E Test Decision](docs/vault/03_ADRs/ADR_0105_e2e-test-decision.md)

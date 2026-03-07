@@ -2,17 +2,17 @@
   "version": 1,
   "loops": {
     "scheduler": {
-      "intervalMs": 1000,
+      "intervalMs": 500,
       "enabled": true
     },
     "stateMachine": {
-      "intervalMs": 1000,
+      "intervalMs": 500,
       "enabled": true
     }
   },
   "api": {
     "host": "127.0.0.1",
-    "port": 4200,
+    "port": 4210,
     "metricsPort": 4201
   },
   "runners": {

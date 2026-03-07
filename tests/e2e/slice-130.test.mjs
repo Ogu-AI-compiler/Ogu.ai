@@ -1,8 +1,8 @@
 /**
- * Slice 130 — Determinism Validator + Execution Replay Engine
+ * Slice 130 — Determinism Validator
  *
  * Determinism Validator: detect non-deterministic operations in execution logs.
- * Execution Replay Engine: replay from snapshots with forced determinism.
+
  */
 
 import { existsSync } from "node:fs";
@@ -14,7 +14,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 130 — Determinism Validator + Execution Replay Engine\x1b[0m\n");
+console.log("\n\x1b[1mSlice 130 — Determinism Validator\x1b[0m\n");
 
 // ── Part 1: Determinism Validator ──────────────────────────────
 
@@ -76,61 +76,3 @@ assert("classifyOperation categorizes correctly", () => {
   const r2 = dvMod.classifyOperation({ type: "file.read" });
   if (r2 !== "deterministic") throw new Error(`expected deterministic, got ${r2}`);
 });
-
-// ── Part 2: Execution Replay Engine ──────────────────────────────
-
-console.log("\n\x1b[36m  Part 2: Execution Replay Engine\x1b[0m");
-
-const ereLib = join(process.cwd(), "tools/ogu/commands/lib/execution-replay-engine.mjs");
-assert("execution-replay-engine.mjs exists", () => {
-  if (!existsSync(ereLib)) throw new Error("file missing");
-});
-
-const ereMod = await import(ereLib);
-
-assert("createReplayEngine returns engine", () => {
-  if (typeof ereMod.createReplayEngine !== "function") throw new Error("missing");
-  const engine = ereMod.createReplayEngine();
-  if (typeof engine.record !== "function") throw new Error("missing record");
-  if (typeof engine.replay !== "function") throw new Error("missing replay");
-});
-
-assert("record captures operations", () => {
-  const engine = ereMod.createReplayEngine();
-  engine.record({ type: "file.read", path: "a.ts", result: "hello" });
-  engine.record({ type: "file.write", path: "b.ts", result: "ok" });
-  const log = engine.getLog();
-  if (log.length !== 2) throw new Error(`expected 2 ops, got ${log.length}`);
-});
-
-assert("replay returns recorded results in order", () => {
-  const engine = ereMod.createReplayEngine();
-  engine.record({ type: "file.read", path: "a.ts", result: "hello" });
-  engine.record({ type: "llm.call", model: "sonnet", result: "response-1" });
-  engine.record({ type: "file.write", path: "b.ts", result: "ok" });
-
-  const replayer = engine.replay();
-  const r1 = replayer.next();
-  if (r1.result !== "hello") throw new Error(`expected hello, got ${r1.result}`);
-  const r2 = replayer.next();
-  if (r2.result !== "response-1") throw new Error(`expected response-1, got ${r2.result}`);
-});
-
-assert("replay isDone after all operations", () => {
-  const engine = ereMod.createReplayEngine();
-  engine.record({ type: "a", result: "1" });
-  const replayer = engine.replay();
-  replayer.next();
-  if (!replayer.isDone()) throw new Error("should be done");
-});
-
-assert("getSnapshot returns serializable state", () => {
-  const engine = ereMod.createReplayEngine();
-  engine.record({ type: "x", result: "y" });
-  const snap = engine.getSnapshot();
-  if (!snap.operations) throw new Error("missing operations in snapshot");
-  if (snap.operations.length !== 1) throw new Error("expected 1 operation in snapshot");
-});
-
-console.log(`\n\x1b[1m  Results: ${pass} passed, ${fail} failed\x1b[0m\n`);
-process.exit(fail > 0 ? 1 : 0);

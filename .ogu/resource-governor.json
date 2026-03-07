@@ -1,0 +1,47 @@
+{
+  "$schema": "ResourceGovernor/1.0",
+  "limits": {
+    "maxParallelAgents": 3,
+    "maxParallelModelCalls": 2,
+    "maxParallelBuilds": 1,
+    "maxParallelTests": 2,
+    "maxWorktrees": 5
+  },
+  "queuing": {
+    "policy": "priority",
+    "maxQueueSize": 20,
+    "queueTimeoutMs": 600000
+  },
+  "resourceTypes": {
+    "model_call": {
+      "maxConcurrent": 2,
+      "description": "Concurrent LLM API calls"
+    },
+    "build": {
+      "maxConcurrent": 1,
+      "mutuallyExclusive": [
+        "test_integration"
+      ],
+      "description": "npm build / compile processes"
+    },
+    "test_unit": {
+      "maxConcurrent": 2,
+      "description": "Unit test runners"
+    },
+    "test_integration": {
+      "maxConcurrent": 1,
+      "mutuallyExclusive": [
+        "build"
+      ],
+      "description": "Integration / E2E tests"
+    },
+    "worktree": {
+      "maxConcurrent": 5,
+      "description": "Git worktree instances"
+    },
+    "npm_install": {
+      "maxConcurrent": 1,
+      "description": "npm/pnpm install (single-writer)"
+    }
+  }
+}

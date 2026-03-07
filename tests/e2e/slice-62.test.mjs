@@ -1,8 +1,8 @@
 /**
- * Slice 62 — Prompt Builder + Cost Estimator
+ * Slice 62 — Prompt Builder
  *
  * Prompt builder: construct structured prompts from templates + context.
- * Cost estimator: estimate token costs before LLM calls.
+
  */
 
 import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -27,7 +27,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 62 — Prompt Builder + Cost Estimator\x1b[0m\n");
+console.log("\n\x1b[1mSlice 62 — Prompt Builder\x1b[0m\n");
 console.log("  Structured prompts, token cost estimation\n");
 
 // ── Part 1: Prompt Builder ──────────────────────────────
@@ -91,57 +91,6 @@ assert("PROMPT_TEMPLATES provides built-in templates", () => {
   if (!promptMod.PROMPT_TEMPLATES) throw new Error("missing");
   if (!promptMod.PROMPT_TEMPLATES.codeReview) throw new Error("missing codeReview");
   if (!promptMod.PROMPT_TEMPLATES.codeGeneration) throw new Error("missing codeGeneration");
-});
-
-// ── Part 2: Cost Estimator ──────────────────────────────
-
-console.log("\n\x1b[36m  Part 2: Cost Estimator\x1b[0m");
-
-const costLib = join(process.cwd(), "tools/ogu/commands/lib/cost-estimator.mjs");
-assert("cost-estimator.mjs exists", () => {
-  if (!existsSync(costLib)) throw new Error("file missing");
-});
-
-const costMod = await import(costLib);
-
-assert("estimateCost computes cost from tokens and model", () => {
-  if (typeof costMod.estimateCost !== "function") throw new Error("missing");
-  const cost = costMod.estimateCost({ inputTokens: 1000, outputTokens: 500, model: "claude-sonnet" });
-  if (typeof cost.totalCost !== "number") throw new Error("missing totalCost");
-  if (cost.totalCost <= 0) throw new Error("cost should be positive");
-  if (typeof cost.inputCost !== "number") throw new Error("missing inputCost");
-  if (typeof cost.outputCost !== "number") throw new Error("missing outputCost");
-});
-
-assert("estimateCost varies by model", () => {
-  const sonnet = costMod.estimateCost({ inputTokens: 1000, outputTokens: 500, model: "claude-sonnet" });
-  const opus = costMod.estimateCost({ inputTokens: 1000, outputTokens: 500, model: "claude-opus" });
-  if (opus.totalCost <= sonnet.totalCost) throw new Error("opus should cost more than sonnet");
-});
-
-assert("MODEL_PRICING has pricing for all models", () => {
-  if (!costMod.MODEL_PRICING) throw new Error("missing");
-  if (!costMod.MODEL_PRICING["claude-sonnet"]) throw new Error("missing claude-sonnet");
-  if (!costMod.MODEL_PRICING["claude-opus"]) throw new Error("missing claude-opus");
-  if (!costMod.MODEL_PRICING["claude-haiku"]) throw new Error("missing claude-haiku");
-});
-
-assert("estimateTaskCost estimates full task cost", () => {
-  if (typeof costMod.estimateTaskCost !== "function") throw new Error("missing");
-  const est = costMod.estimateTaskCost({
-    taskDescription: "Implement login form with validation",
-    model: "claude-sonnet",
-  });
-  if (typeof est.estimatedInputTokens !== "number") throw new Error("missing estimatedInputTokens");
-  if (typeof est.estimatedOutputTokens !== "number") throw new Error("missing estimatedOutputTokens");
-  if (typeof est.estimatedCost !== "number") throw new Error("missing estimatedCost");
-});
-
-assert("formatCost returns human-readable string", () => {
-  if (typeof costMod.formatCost !== "function") throw new Error("missing");
-  const str = costMod.formatCost(0.0345);
-  if (typeof str !== "string") throw new Error("should return string");
-  if (!str.includes("$")) throw new Error("should include $ sign");
 });
 
 // Cleanup

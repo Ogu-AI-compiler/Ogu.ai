@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync, unlink
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { repoRoot } from '../../util.mjs';
+import { getCheckpointsDir } from './runtime-paths.mjs';
 
 /**
  * Task Checkpoint — checkpoint/resume for individual tasks.
@@ -11,7 +12,7 @@ import { repoRoot } from '../../util.mjs';
  */
 
 function cpDir(root) {
-  const dir = join(root, '.ogu/checkpoints');
+  const dir = getCheckpointsDir(root);
   mkdirSync(dir, { recursive: true });
   return dir;
 }

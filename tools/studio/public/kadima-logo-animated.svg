@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 530.1 313.71">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: #fff;
+      }
+      .cls-2 {
+        font-family: Geist-ExtraBold, Geist, sans-serif;
+        font-size: 2.22px;
+        font-weight: 700;
+      }
+
+      /* Part 1: Rectangle - breathe cycle offset 0s */
+      #part-rect {
+        transform-origin: 520.4px 5.7px;
+        animation: mutate-rect 6s ease-in-out infinite;
+      }
+
+      /* Part 2: Text - breathe cycle offset 2s */
+      #part-text {
+        transform-origin: 524px 14px;
+        animation: mutate-text 6s ease-in-out 2s infinite;
+      }
+
+      /* Part 3: Organic blob - breathe cycle offset 4s */
+      #part-blob {
+        transform-origin: 5px 308px;
+        animation: mutate-blob 6s ease-in-out 4s infinite;
+      }
+    </style>
+
+    <!-- Turbulence filter for organic distortion on each part -->
+    <filter id="warp-rect" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" seed="1" result="noise">
+        <animate attributeName="baseFrequency" values="0.015;0.04;0.015" dur="6s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" values="0;8;0" dur="6s" repeatCount="indefinite"/>
+      </feDisplacementMap>
+    </filter>
+
+    <filter id="warp-text" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="7" result="noise">
+        <animate attributeName="baseFrequency" values="0.02;0.06;0.02" dur="6s" begin="2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" values="0;6;0" dur="6s" begin="2s" repeatCount="indefinite"/>
+      </feDisplacementMap>
+    </filter>
+
+    <filter id="warp-blob" x="-30%" y="-30%" width="160%" height="160%">
+      <feTurbulence type="turbulence" baseFrequency="0.01" numOctaves="4" seed="42" result="noise">
+        <animate attributeName="baseFrequency" values="0.01;0.05;0.01" dur="6s" begin="4s" repeatCount="indefinite"/>
+        <animate attributeName="seed" values="42;99;42" dur="6s" begin="4s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" values="0;14;0" dur="6s" begin="4s" repeatCount="indefinite"/>
+      </feDisplacementMap>
+    </filter>
+
+    <!-- Glow filter for the active part -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Part 1: Rectangle bar -->
+  <g id="part-rect" filter="url(#warp-rect)">
+    <rect class="cls-1" x="519.01" width="2.81" height="11.45">
+      <animate attributeName="width" values="2.81;4.5;2.81" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="height" values="11.45;16;11.45" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="x" values="519.01;517.5;519.01" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="rx" values="0;2;0" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0.7;1" dur="6s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Part 2: Text "Kadima Os" -->
+  <g id="part-text" filter="url(#warp-text)">
+    <text class="cls-2" transform="translate(519.01 14.14)">
+      <tspan x="0" y="0">Kadima Os</tspan>
+      <animate attributeName="opacity" values="1;0.6;1" dur="6s" begin="2s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="scale" values="1;1.3 1.6;1" dur="6s" begin="2s" repeatCount="indefinite" additive="sum"/>
+    </text>
+  </g>
+
+  <!-- Part 3: Organic blob glyph -->
+  <g id="part-blob" filter="url(#warp-blob)">
+    <path class="cls-1" d="M4.21,311.3c.14.51.22,1.06.04,1.55-.13.36-.46.58-.84.6-.66.02-1.31-.4-1.77-.85-.36-.35-.65-.76-.88-1.21-.58-1.12-.82-2.36-.74-3.62.05-.74.21-1.45.49-2.14.34-.82.88-1.54,1.58-2.1.96-.76,2.46-1.24,3.64-.75.5.21.84.63.95,1.16.08.4.03.79-.11,1.17-.2.53-.49.81-.61,1.39-.1.46.02.91.33,1.26s.75.59,1.23.63c.39.03.7-.2.79-.57.06-.24.05-.48-.02-.72l-.2-.71c-.22-.77.06-1.62.89-1.86s1.72.18,2.31.77c.73.73,1.17,1.73,1.22,2.76.03.59-.15,1.23-.6,1.62-.4.34-.94.4-1.4.15-.52-.28-.75-.69-1.07-1.15-.15-.21-.45-.51-.7-.37-.07.04-.12.13-.14.22-.08.53.58.74.85,1.62.22.72.14,1.51-.22,2.17-.47.86-1.52,1.41-2.49,1.38-.83-.03-1.49-.45-1.79-1.24s-.15-1.79.21-2.54l.39-.81c.13-.28.22-.57.21-.87,0-.22-.07-.43-.2-.6-.19-.23-.49-.29-.75-.15-.22.12-.38.31-.51.53-.46.82-.45,1.83-.21,2.71l.15.54Z">
+      <animateTransform attributeName="transform" type="scale" values="1;1.8 2.2;1" dur="6s" begin="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0.65;1" dur="6s" begin="4s" repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg>

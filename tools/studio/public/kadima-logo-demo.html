@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadima Os — Liquid Heartbeat</title>
+<style>
+  * { margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  canvas { max-width: 90vw; max-height: 90vh; }
+</style>
+</head>
+<body>
+<canvas id="c" width="600" height="600"></canvas>
+<script>
+var canvas = document.getElementById('c');
+var ctx = canvas.getContext('2d');
+var W = 600, H = 600;
+var CX = 6.25, CY = 5.57;
+var SCALE = 40;
+var PATH_D = 'M4.21,8.72c.14.51.22,1.06.04,1.55-.13.36-.46.58-.84.6-.66.02-1.31-.4-1.77-.85-.36-.35-.65-.76-.88-1.21C.18,7.69-.06,6.45.01,5.19c.05-.74.21-1.45.49-2.14.34-.82.88-1.54,1.58-2.1C3.05.19,4.55-.29,5.72.2c.5.21.84.63.95,1.16.08.4.03.79-.11,1.17-.2.53-.49.81-.61,1.39-.1.46.02.91.33,1.26s.75.59,1.23.63c.39.03.7-.2.79-.57.06-.24.05-.48-.02-.72l-.2-.71c-.22-.77.06-1.62.89-1.86s1.72.18,2.31.77c.73.73,1.17,1.73,1.22,2.76.03.59-.15,1.23-.6,1.62-.4.34-.94.4-1.4.15-.52-.28-.75-.69-1.07-1.15-.15-.21-.45-.51-.7-.37-.07.04-.12.13-.14.22-.08.53.58.74.85,1.62.22.72.14,1.51-.22,2.17-.47.86-1.52,1.41-2.49,1.38-.83-.03-1.49-.45-1.79-1.24s-.15-1.79.21-2.54l.39-.81c.13-.28.22-.57.21-.87,0-.22-.07-.43-.2-.6-.19-.23-.49-.29-.75-.15-.22.12-.38.31-.51.53-.46.82-.45,1.83-.21,2.71l.15.54Z';
+
+// Sample path into points
+function samplePath(numPoints) {
+  var ns = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(ns, 'svg');
+  var p = document.createElementNS(ns, 'path');
+  p.setAttribute('d', PATH_D);
+  svg.appendChild(p);
+  document.body.appendChild(svg);
+  svg.style.cssText = 'position:absolute;opacity:0;pointer-events:none';
+
+  var len = p.getTotalLength();
+  var points = [];
+  for (var i = 0; i < numPoints; i++) {
+    var pt = p.getPointAtLength((i / numPoints) * len);
+    points.push([pt.x, pt.y]);
+  }
+  document.body.removeChild(svg);
+  return points;
+}
+
+var NUM = 150;
+var base = samplePath(NUM);
+
+// Precompute: for each point, store angle and distance from center
+var angles = new Float64Array(NUM);
+var dists = new Float64Array(NUM);
+for (var i = 0; i < NUM; i++) {
+  var dx = base[i][0] - CX;
+  var dy = base[i][1] - CY;
+  angles[i] = Math.atan2(dy, dx);
+  dists[i] = Math.sqrt(dx * dx + dy * dy);
+}
+
+// Smooth a closed array of values (gaussian-like)
+function smooth(arr, passes, radius) {
+  var n = arr.length;
+  var buf = new Float64Array(n);
+  for (var pass = 0; pass < passes; pass++) {
+    for (var i = 0; i < n; i++) {
+      var sum = 0, count = 0;
+      for (var j = -radius; j <= radius; j++) {
+        var w = 1 - Math.abs(j) / (radius + 1); // triangle kernel
+        sum += arr[(i + j + n) % n] * w;
+        count += w;
+      }
+      buf[i] = sum / count;
+    }
+    for (var i = 0; i < n; i++) arr[i] = buf[i];
+  }
+}
+
+// Working arrays for displacement
+var dispX = new Float64Array(NUM);
+var dispY = new Float64Array(NUM);
+
+function tick() {
+  var now = performance.now();
+  ctx.clearRect(0, 0, W, H);
+  var t = now * 0.001;
+
+  // Heartbeat envelope
+  var beat = (now % 1100) / 1100;
+  var pulse = Math.exp(-Math.pow((beat) * 14, 2)) +
+              Math.exp(-Math.pow((beat - 0.18) * 12, 2)) * 0.7;
+
+  // Per-point displacement (in SVG units) — low frequency waves along path index
+  for (var i = 0; i < NUM; i++) {
+    var p = i / NUM;
+    var wave = Math.sin(p * Math.PI * 3 + t * 2.0) * 0.3
+             + Math.sin(p * Math.PI * 5 - t * 1.4) * 0.15;
+    var d = wave * (0.2 + pulse * 0.6);
+
+    // Push outward from center
+    dispX[i] = Math.cos(angles[i]) * d;
+    dispY[i] = Math.sin(angles[i]) * d;
+  }
+
+  // Smooth the displacement itself — kills any jumps
+  smooth(dispX, 4, 8);
+  smooth(dispY, 4, 8);
+
+  // Build smoothed screen points
+  var pts = [];
+  for (var i = 0; i < NUM; i++) {
+    pts.push({
+      x: (base[i][0] + dispX[i]) * SCALE,
+      y: (base[i][1] + dispY[i]) * SCALE
+    });
+  }
+
+  ctx.save();
+  ctx.translate(W / 2 - CX * SCALE, H / 2 - CY * SCALE);
+
+  // Draw smooth closed spline
+  ctx.beginPath();
+  ctx.moveTo(
+    (pts[NUM - 1].x + pts[0].x) / 2,
+    (pts[NUM - 1].y + pts[0].y) / 2
+  );
+  for (var i = 0; i < NUM; i++) {
+    var next = pts[(i + 1) % NUM];
+    ctx.quadraticCurveTo(
+      pts[i].x, pts[i].y,
+      (pts[i].x + next.x) / 2,
+      (pts[i].y + next.y) / 2
+    );
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'white';
+  ctx.fill();
+
+  ctx.restore();
+  requestAnimationFrame(tick);
+}
+
+tick();
+</script>
+</body>
+</html>

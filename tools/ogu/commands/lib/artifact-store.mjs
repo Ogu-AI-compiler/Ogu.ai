@@ -24,8 +24,9 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 
 import { join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { repoRoot } from '../../util.mjs';
+import { getArtifactsDir } from './runtime-paths.mjs';
 
-const ARTIFACTS_DIR = () => join(repoRoot(), '.ogu/artifacts');
+const ARTIFACTS_DIR = (root = null) => getArtifactsDir(root || repoRoot());
 
 /** Valid artifact types */
 const ARTIFACT_TYPES = ['FILE', 'API', 'ROUTE', 'COMPONENT', 'SCHEMA', 'CONTRACT', 'TOKEN', 'TEST'];
@@ -46,7 +47,7 @@ const ARTIFACT_TYPES = ['FILE', 'API', 'ROUTE', 'COMPONENT', 'SCHEMA', 'CONTRACT
  * @returns {object} The stored artifact record
  */
 export function storeArtifact(taskId, featureSlug, data, root = null) {
-  const baseDir = root ? join(root, '.ogu/artifacts') : ARTIFACTS_DIR();
+  const baseDir = ARTIFACTS_DIR(root);
   const dir = join(baseDir, featureSlug);
   mkdirSync(dir, { recursive: true });
 
@@ -95,7 +96,7 @@ export function storeArtifact(taskId, featureSlug, data, root = null) {
  * @returns {object|null} Artifact record or null
  */
 export function loadArtifact(taskId, featureSlug, root = null) {
-  const baseDir = root ? join(root, '.ogu/artifacts') : ARTIFACTS_DIR();
+  const baseDir = ARTIFACTS_DIR(root);
   const filePath = join(baseDir, featureSlug, `${taskId}.json`);
   if (!existsSync(filePath)) return null;
   try {
@@ -143,7 +144,7 @@ export function verifyArtifact(taskId, featureSlug, verifiedBy, root = null) {
   artifact.verifiedAt = new Date().toISOString();
   artifact.verifiedBy = verifiedBy;
 
-  const baseDir = root ? join(root, '.ogu/artifacts') : ARTIFACTS_DIR();
+  const baseDir = ARTIFACTS_DIR(root);
   writeFileSync(join(baseDir, featureSlug, `${taskId}.json`), JSON.stringify(artifact, null, 2), 'utf8');
 
   // Update index
@@ -232,7 +233,7 @@ export function checkAllDependencies(featureSlug, tasks, root = null) {
  * @returns {string[]} Task IDs
  */
 export function listArtifacts(featureSlug, root = null) {
-  const baseDir = root ? join(root, '.ogu/artifacts') : ARTIFACTS_DIR();
+  const baseDir = ARTIFACTS_DIR(root);
   const dir = join(baseDir, featureSlug);
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
@@ -249,7 +250,7 @@ export function listArtifacts(featureSlug, root = null) {
  * @returns {object|null} — { artifacts: { [identifier]: { taskId, type, verified, producedAt } } }
  */
 export function getArtifactIndex(featureSlug, root = null) {
-  const baseDir = root ? join(root, '.ogu/artifacts') : ARTIFACTS_DIR();
+  const baseDir = ARTIFACTS_DIR(root);
   const indexPath = join(baseDir, featureSlug, 'index.json');
   if (!existsSync(indexPath)) return null;
   try {

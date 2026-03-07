@@ -2,6 +2,15 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, basename } from "node:path";
 import { repoRoot, readJsonSafe } from "../util.mjs";
 
+// ── Phase 4B: Time Travel & Snapshots ──
+import { createTimeTravelEngine } from "./lib/time-travel-engine.mjs";
+import { listSnapshots } from "./lib/time-travel.mjs";
+import { createSnapshotVersioner } from "./lib/snapshot-versioner.mjs";
+
+// Shared time-travel and snapshot instances for status display
+const _timeTravelEngine = createTimeTravelEngine();
+const _snapshotVersioner = createSnapshotVersioner();
+
 export async function status() {
   const root = repoRoot();
   const projectName = basename(root);
@@ -102,7 +111,23 @@ export async function status() {
     console.log(`  Memory     ${lines} entries`);
   }
 
-  // 9. Observation
+  // 9. Snapshots (time-travel)
+  try {
+    const snaps = listSnapshots({ root });
+    if (snaps.length > 0) {
+      const latest = snaps[snaps.length - 1];
+      console.log(`  Snapshots  ${snaps.length} total, latest: ${latest.label} (${timeSince(latest.timestamp)})`);
+
+      // Load latest snapshot into time-travel engine for in-memory replay
+      _timeTravelEngine.setState({ latestSnapshot: latest.id, snapCount: snaps.length });
+      _timeTravelEngine.takeSnapshot('status-check');
+
+      // Version the snapshot list via snapshot versioner
+      _snapshotVersioner.commit({ count: snaps.length, latestId: latest.id, checkedAt: new Date().toISOString() });
+    }
+  } catch { /* best-effort — snapshots dir may not exist */ }
+
+  // 10. Observation
   const observeConfig = readJsonSafe(join(root, ".ogu/OBSERVE.json"));
   if (observeConfig?.last_observation) {
     const ago = timeSince(observeConfig.last_observation);

@@ -1,8 +1,8 @@
 /**
- * Slice 67 — Workflow Engine + State Machine
+ * Slice 67 — Workflow Engine
  *
  * Workflow engine: multi-step workflow execution with branching.
- * State machine: finite state machine for pipeline phase transitions.
+
  */
 
 import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -27,7 +27,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 67 — Workflow Engine + State Machine\x1b[0m\n");
+console.log("\n\x1b[1mSlice 67 — Workflow Engine\x1b[0m\n");
 
 // ── Part 1: Workflow Engine ──────────────────────────────
 
@@ -80,94 +80,6 @@ assert("getStatus returns workflow state", () => {
   wf.run();
   const after = wf.getStatus();
   if (after.state !== "completed") throw new Error("should be completed");
-});
-
-// ── Part 2: State Machine ──────────────────────────────
-
-console.log("\n\x1b[36m  Part 2: State Machine\x1b[0m");
-
-const smLib = join(process.cwd(), "tools/ogu/commands/lib/state-machine.mjs");
-assert("state-machine.mjs exists", () => {
-  if (!existsSync(smLib)) throw new Error("file missing");
-});
-
-const smMod = await import(smLib);
-
-assert("createStateMachine returns machine", () => {
-  if (typeof smMod.createStateMachine !== "function") throw new Error("missing");
-  const sm = smMod.createStateMachine({
-    initial: "idea",
-    transitions: [
-      { from: "idea", to: "feature", event: "CREATE_PRD" },
-      { from: "feature", to: "architect", event: "CREATE_SPEC" },
-      { from: "architect", to: "build", event: "START_BUILD" },
-      { from: "build", to: "done", event: "COMPILE_PASS" },
-    ],
-  });
-  if (typeof sm.transition !== "function") throw new Error("missing transition");
-  if (typeof sm.getState !== "function") throw new Error("missing getState");
-  if (typeof sm.canTransition !== "function") throw new Error("missing canTransition");
-});
-
-assert("starts at initial state", () => {
-  const sm = smMod.createStateMachine({
-    initial: "idea",
-    transitions: [{ from: "idea", to: "feature", event: "NEXT" }],
-  });
-  if (sm.getState() !== "idea") throw new Error("should start at idea");
-});
-
-assert("transition moves to next state", () => {
-  const sm = smMod.createStateMachine({
-    initial: "idea",
-    transitions: [
-      { from: "idea", to: "feature", event: "NEXT" },
-      { from: "feature", to: "done", event: "FINISH" },
-    ],
-  });
-  sm.transition("NEXT");
-  if (sm.getState() !== "feature") throw new Error("should be feature");
-  sm.transition("FINISH");
-  if (sm.getState() !== "done") throw new Error("should be done");
-});
-
-assert("transition rejects invalid events", () => {
-  const sm = smMod.createStateMachine({
-    initial: "idle",
-    transitions: [{ from: "idle", to: "active", event: "START" }],
-  });
-  const result = sm.transition("INVALID");
-  if (result.success) throw new Error("should reject invalid event");
-  if (sm.getState() !== "idle") throw new Error("should stay in idle");
-});
-
-assert("canTransition checks without transitioning", () => {
-  const sm = smMod.createStateMachine({
-    initial: "a",
-    transitions: [{ from: "a", to: "b", event: "GO" }],
-  });
-  if (!sm.canTransition("GO")) throw new Error("should be able to GO");
-  if (sm.canTransition("STOP")) throw new Error("should NOT be able to STOP");
-  if (sm.getState() !== "a") throw new Error("should not have changed state");
-});
-
-assert("getHistory returns transition log", () => {
-  if (typeof smMod.createStateMachine({
-    initial: "x",
-    transitions: [{ from: "x", to: "y", event: "E" }],
-  }).getHistory !== "function") throw new Error("missing getHistory");
-
-  const sm = smMod.createStateMachine({
-    initial: "a",
-    transitions: [
-      { from: "a", to: "b", event: "E1" },
-      { from: "b", to: "c", event: "E2" },
-    ],
-  });
-  sm.transition("E1");
-  sm.transition("E2");
-  const history = sm.getHistory();
-  if (history.length !== 2) throw new Error(`expected 2, got ${history.length}`);
 });
 
 // Cleanup

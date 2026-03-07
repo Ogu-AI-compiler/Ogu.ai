@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
  * Feature State Machine — formal lifecycle states.
@@ -100,6 +102,17 @@ export const FeatureStateSchema = z.object({
 
 /** @typedef {z.infer<typeof FeatureStateSchema>} FeatureState */
 
+function resolveFeatureFile(root, slug, filename) {
+  const candidates = [
+    join(root, `docs/vault/features/${slug}/${filename}`),
+    join(root, `docs/vault/04_Features/${slug}/${filename}`),
+  ];
+  for (const path of candidates) {
+    if (existsSync(path)) return path;
+  }
+  return candidates[0];
+}
+
 /**
  * Validate that a state transition is legal.
  * @param {string} from
@@ -119,27 +132,21 @@ export function isValidTransition(from, to) {
  */
 export const StateInvariants = {
   specified: ({ root, slug }) => {
-    const { existsSync } = require('node:fs');
-    const { join } = require('node:path');
-    const prd = join(root, `docs/vault/04_Features/${slug}/PRD.md`);
-    const spec = join(root, `docs/vault/04_Features/${slug}/Spec.md`);
+    const prd = resolveFeatureFile(root, slug, 'PRD.md');
+    const spec = resolveFeatureFile(root, slug, 'Spec.md');
     if (!existsSync(prd)) return { valid: false, reason: `PRD.md missing for ${slug}` };
     if (!existsSync(spec)) return { valid: false, reason: `Spec.md missing for ${slug}` };
     return { valid: true };
   },
 
   planned: ({ root, slug }) => {
-    const { existsSync } = require('node:fs');
-    const { join } = require('node:path');
-    const plan = join(root, `docs/vault/04_Features/${slug}/Plan.json`);
+    const plan = resolveFeatureFile(root, slug, 'Plan.json');
     if (!existsSync(plan)) return { valid: false, reason: `Plan.json missing for ${slug}` };
     return { valid: true };
   },
 
   designed: ({ root, slug }) => {
-    const { existsSync } = require('node:fs');
-    const { join } = require('node:path');
-    const design = join(root, `docs/vault/04_Features/${slug}/DESIGN.md`);
+    const design = resolveFeatureFile(root, slug, 'DESIGN.md');
     if (!existsSync(design)) return { valid: false, reason: `DESIGN.md missing for ${slug}` };
     return { valid: true };
   },

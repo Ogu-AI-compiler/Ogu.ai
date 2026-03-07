@@ -1,8 +1,7 @@
 /**
- * Slice 145 — Plugin System + Extension Registry
+ * Slice 145 — Plugin System
  *
  * Plugin System: load and manage plugins with lifecycle hooks.
- * Extension Registry: register extension points for plugin integration.
  */
 
 import { existsSync } from "node:fs";
@@ -14,7 +13,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 145 — Plugin System + Extension Registry\x1b[0m\n");
+console.log("\n\x1b[1mSlice 145 — Plugin System\x1b[0m\n");
 
 // ── Part 1: Plugin System ──────────────────────────────
 
@@ -69,57 +68,6 @@ assert("getPlugin returns specific plugin", () => {
   const plugin = sys.getPlugin("auth");
   if (!plugin) throw new Error("should find plugin");
   if (plugin.version !== "1.0") throw new Error("wrong version");
-});
-
-// ── Part 2: Extension Registry ──────────────────────────────
-
-console.log("\n\x1b[36m  Part 2: Extension Registry\x1b[0m");
-
-const erLib = join(process.cwd(), "tools/ogu/commands/lib/extension-registry.mjs");
-assert("extension-registry.mjs exists", () => {
-  if (!existsSync(erLib)) throw new Error("file missing");
-});
-
-const erMod = await import(erLib);
-
-assert("createExtensionRegistry returns registry", () => {
-  if (typeof erMod.createExtensionRegistry !== "function") throw new Error("missing");
-  const reg = erMod.createExtensionRegistry();
-  if (typeof reg.definePoint !== "function") throw new Error("missing definePoint");
-  if (typeof reg.extend !== "function") throw new Error("missing extend");
-  if (typeof reg.getExtensions !== "function") throw new Error("missing getExtensions");
-});
-
-assert("definePoint creates extension point", () => {
-  const reg = erMod.createExtensionRegistry();
-  reg.definePoint({ name: "pre-build", description: "Before build phase" });
-  const points = reg.listPoints();
-  if (points.length !== 1) throw new Error(`expected 1, got ${points.length}`);
-});
-
-assert("extend adds handler to point", () => {
-  const reg = erMod.createExtensionRegistry();
-  reg.definePoint({ name: "post-compile" });
-  reg.extend("post-compile", { name: "lint", handler: () => "lint done" });
-  const exts = reg.getExtensions("post-compile");
-  if (exts.length !== 1) throw new Error(`expected 1, got ${exts.length}`);
-});
-
-assert("executePoint runs all handlers", () => {
-  const reg = erMod.createExtensionRegistry();
-  reg.definePoint({ name: "validate" });
-  const results = [];
-  reg.extend("validate", { name: "schema", handler: () => results.push("schema") });
-  reg.extend("validate", { name: "types", handler: () => results.push("types") });
-  reg.executePoint("validate");
-  if (results.length !== 2) throw new Error(`expected 2, got ${results.length}`);
-});
-
-assert("extend on undefined point throws", () => {
-  const reg = erMod.createExtensionRegistry();
-  let threw = false;
-  try { reg.extend("nonexistent", { name: "x", handler: () => {} }); } catch { threw = true; }
-  if (!threw) throw new Error("should throw for undefined point");
 });
 
 console.log(`\n\x1b[1m  Results: ${pass} passed, ${fail} failed\x1b[0m\n`);

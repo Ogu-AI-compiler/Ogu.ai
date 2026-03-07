@@ -10,6 +10,7 @@
 
 import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { getStateDir } from '../../ogu/commands/lib/runtime-paths.mjs';
 
 export function createConsistencyLoop({ root, intervalMs, runnerPool, emitAudit }) {
   let timer = null;
@@ -25,7 +26,7 @@ export function createConsistencyLoop({ root, intervalMs, runnerPool, emitAudit 
     const issues = [];
 
     // 1. Orphaned tasks: dispatched but not in runner pool
-    const schedulerPath = join(root, '.ogu/state/scheduler-state.json');
+    const schedulerPath = join(getStateDir(root), 'scheduler-state.json');
     if (existsSync(schedulerPath)) {
       const state = JSON.parse(readFileSync(schedulerPath, 'utf8'));
       const now = Date.now();
@@ -65,7 +66,7 @@ export function createConsistencyLoop({ root, intervalMs, runnerPool, emitAudit 
         issues.push({ type: 'archived_completed', count: archived.length });
 
         // Write to archive file
-        const archivePath = join(root, '.ogu/state/scheduler-archive.jsonl');
+        const archivePath = join(getStateDir(root), 'scheduler-archive.jsonl');
         for (const t of archived) {
           delete t._archived;
           appendFileSync(archivePath, JSON.stringify(t) + '\n', 'utf8');
@@ -79,7 +80,7 @@ export function createConsistencyLoop({ root, intervalMs, runnerPool, emitAudit 
     }
 
     // 2. Feature state drift: building features with no pending/dispatched tasks
-    const featuresDir = join(root, '.ogu/state/features');
+    const featuresDir = join(getStateDir(root), 'features');
     if (existsSync(featuresDir)) {
       for (const file of readdirSync(featuresDir)) {
         if (!file.endsWith('.state.json')) continue;
@@ -102,6 +103,98 @@ export function createConsistencyLoop({ root, intervalMs, runnerPool, emitAudit 
             }
           }
         } catch { /* skip corrupt files */ }
+      }
+    }
+
+    // 3. Saga-based consistency reconciliation for multi-step fixes
+    try {
+      const { createSaga: createConsistencySaga } = await import('../../ogu/commands/lib/consistency-model.mjs');
+      const { createSagaIntegrator } = await import('../../ogu/commands/lib/saga-integrator.mjs');
+      const { createSagaOrchestrator } = await import('../../ogu/commands/lib/saga-orchestrator.mjs');
+      const { createTransactionLog } = await import('../../ogu/commands/lib/transaction-log.mjs');
+
+      const txLog = createTransactionLog();
+      const sagaIntegrator = createSagaIntegrator();
+
+      // If we found orphaned tasks, use a saga to safely re-enqueue them
+      const orphanedIssues = issues.filter(i => i.type === 'orphaned_task');
+      if (orphanedIssues.length > 0) {
+        sagaIntegrator.defineSaga('reconcile-orphans', {
+          steps: orphanedIssues.map(issue => ({
+            name: `reset-${issue.taskId}`,
+            execute: async () => {
+              txLog.append({ type: 'orphan_reset', taskId: issue.taskId });
+              return { taskId: issue.taskId, reset: true };
+            },
+            compensate: async () => {
+              txLog.append({ type: 'orphan_reset_compensated', taskId: issue.taskId });
+            },
+          })),
+        });
+
+        const sagaResult = await sagaIntegrator.executeSaga('reconcile-orphans');
+        txLog.append({ type: 'saga_result', saga: 'reconcile-orphans', status: sagaResult.status });
+
+        if (sagaResult.status === 'completed') {
+          emitAudit('consistency.saga_completed', {
+            saga: 'reconcile-orphans',
+            stepsCompleted: sagaResult.stepsCompleted?.length || 0,
+          });
+        }
+      }
+
+      // Use consistency-model saga for stuck features
+      const stuckIssues = issues.filter(i => i.type === 'stuck_feature');
+      if (stuckIssues.length > 0) {
+        for (const stuck of stuckIssues) {
+          const featureSaga = createConsistencySaga(`fix-stuck-${stuck.slug}`);
+          featureSaga.step(
+            'mark-needs-attention',
+            async () => { txLog.append({ type: 'stuck_flagged', slug: stuck.slug }); },
+            async () => { txLog.append({ type: 'stuck_flag_reverted', slug: stuck.slug }); },
+          );
+          try {
+            await featureSaga.execute();
+          } catch {
+            // Saga compensated automatically on failure
+          }
+        }
+      }
+
+      // Saga orchestrator: coordinate multi-step consistency repairs atomically
+      if (issues.length > 0) {
+        const orchestrator = createSagaOrchestrator();
+        orchestrator.addStep({
+          execute: () => { txLog.append({ type: 'consistency_repair_started', issueCount: issues.length }); },
+          compensate: () => { txLog.append({ type: 'consistency_repair_reverted', issueCount: issues.length }); },
+        });
+        orchestrator.run();
+        if (orchestrator.getStatus() === 'completed') {
+          txLog.append({ type: 'consistency_repair_committed', issueCount: issues.length });
+        }
+      }
+    } catch {
+      // Enhanced consistency modules unavailable — basic reconciliation above still applies
+    }
+
+    // 4. State file compaction — compact scheduler archive and audit logs periodically
+    if (tickCount % 60 === 0) { // Every ~30 minutes at 30s interval
+      try {
+        const { compactJSONL, analyzeCompaction } = await import('../../ogu/commands/lib/state-compaction.mjs');
+
+        const archivePath = join(getStateDir(root), 'scheduler-archive.jsonl');
+        const analysis = analyzeCompaction({ filePath: archivePath, keyField: 'taskId' });
+        if (analysis.duplicates > 10) {
+          const result = compactJSONL({ filePath: archivePath, keyField: 'taskId' });
+          emitAudit('consistency.compaction', {
+            file: 'scheduler-archive.jsonl',
+            before: result.before,
+            after: result.after,
+            removed: result.removed,
+          });
+        }
+      } catch {
+        // Compaction module unavailable — skip
       }
     }
 

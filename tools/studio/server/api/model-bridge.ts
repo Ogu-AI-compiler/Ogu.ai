@@ -8,6 +8,7 @@
 
 import { existsSync, readFileSync, appendFileSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
+import { getBudgetDir, resolveOguPath, resolveRuntimePath } from "../../../ogu/commands/lib/runtime-paths.mjs";
 
 // ── Types ──
 
@@ -85,7 +86,7 @@ const PHASE_TIER: Record<string, number> = {
 // ── Core functions ──
 
 function loadModelConfig(root: string): ModelConfig {
-  const configPath = join(root, ".ogu/model-config.json");
+  const configPath = resolveOguPath(root, "model-config.json");
   if (existsSync(configPath)) {
     try {
       return JSON.parse(readFileSync(configPath, "utf8"));
@@ -95,8 +96,8 @@ function loadModelConfig(root: string): ModelConfig {
 }
 
 function loadBudgetState(root: string): { dailyLimit: number; todaySpent: number } {
-  const budgetPath = join(root, ".ogu/budget/budget-state.json");
-  const orgPath = join(root, ".ogu/OrgSpec.json");
+  const budgetPath = join(getBudgetDir(root), "budget-state.json");
+  const orgPath = resolveOguPath(root, "OrgSpec.json");
 
   let dailyLimit = 10; // $10 default
   if (existsSync(orgPath)) {
@@ -196,7 +197,7 @@ export function routeChat(root: string, requestedModel?: string, phase?: string)
  * Record token spend from a completed chat turn.
  */
 export function recordChatSpend(root: string, record: SpendRecord): void {
-  const budgetDir = join(root, ".ogu/budget");
+  const budgetDir = getBudgetDir(root);
   mkdirSync(budgetDir, { recursive: true });
 
   // Append to transactions log
@@ -254,7 +255,7 @@ export function getBudgetStatus(root: string): {
 // ── Internal ──
 
 function logRouting(root: string, data: Record<string, any>): void {
-  const logDir = join(root, ".ogu");
+  const logDir = resolveRuntimePath(root, "");
   mkdirSync(logDir, { recursive: true });
   const entry = { timestamp: new Date().toISOString(), source: "studio-chat", ...data };
   try {

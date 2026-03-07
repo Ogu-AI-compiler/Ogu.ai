@@ -13,6 +13,9 @@
 
 import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { createCollector } from '../../ogu/commands/lib/metric-collector.mjs';
+import { computeOrgHealth, getHealthLevel } from '../../ogu/commands/lib/org-health-scorer.mjs';
+import { getBudgetDir, getStateDir, resolveOguPath } from '../../ogu/commands/lib/runtime-paths.mjs';
 
 export function createMetricsAggregatorLoop({ root, intervalMs, runnerPool, emitAudit }) {
   let timer = null;
@@ -21,6 +24,9 @@ export function createMetricsAggregatorLoop({ root, intervalMs, runnerPool, emit
   let tickCount = 0;
   let lastSnapshot = null;
   let previousCompleted = null; // Track throughput
+
+  // Wire metric collector (Phase 3E)
+  const collector = createCollector();
 
   const tick = async () => {
     lastTick = new Date().toISOString();
@@ -35,7 +41,7 @@ export function createMetricsAggregatorLoop({ root, intervalMs, runnerPool, emit
     };
 
     // Scheduler stats
-    const schedulerPath = join(root, '.ogu/state/scheduler-state.json');
+    const schedulerPath = join(getStateDir(root), 'scheduler-state.json');
     if (existsSync(schedulerPath)) {
       try {
         const state = JSON.parse(readFileSync(schedulerPath, 'utf8'));
@@ -63,13 +69,13 @@ export function createMetricsAggregatorLoop({ root, intervalMs, runnerPool, emit
 
     // Budget burn rate
     const today = new Date().toISOString().slice(0, 10);
-    const budgetPath = join(root, '.ogu/budget/budget-state.json');
+    const budgetPath = join(getBudgetDir(root), 'budget-state.json');
     if (existsSync(budgetPath)) {
       try {
         const budget = JSON.parse(readFileSync(budgetPath, 'utf8'));
         const dailySpent = budget.daily?.[today]?.spent || 0;
         let dailyLimit = 100;
-        const orgSpecPath = join(root, '.ogu/org-spec.json');
+        const orgSpecPath = resolveOguPath(root, 'org-spec.json');
         if (existsSync(orgSpecPath)) {
           const org = JSON.parse(readFileSync(orgSpecPath, 'utf8'));
           if (org.budget?.daily?.limit) dailyLimit = org.budget.daily.limit;
@@ -82,15 +88,32 @@ export function createMetricsAggregatorLoop({ root, intervalMs, runnerPool, emit
       } catch { /* skip */ }
     }
 
-    // Org health score (try to import from metrics lib)
+    // Wire metric collector (Phase 3E) — record this tick's metrics
+    collector.counter('metrics.ticks');
+    collector.gauge('scheduler.pending', snapshot.scheduler.pending);
+    collector.gauge('scheduler.completed', snapshot.scheduler.completed);
+    collector.gauge('runners.utilization', snapshot.runners.utilization);
+    collector.gauge('budget.burnRate', snapshot.budget.burnRate);
+
+    // Wire org-health-scorer (Phase 3E) — compute weighted health
     try {
-      const { calculateOrgHealth } = await import('../../ogu/commands/lib/metrics.mjs');
-      const health = calculateOrgHealth(root);
-      const score = health.orgScore ?? health.score ?? 0;
+      const pending = snapshot.scheduler.pending;
+      const completed = snapshot.scheduler.completed + 1; // avoid div/0
+      const gatePassRate = Math.max(0, Math.min(1, completed / (completed + pending)));
+      const agentPerformance = snapshot.runners.utilization > 0
+        ? Math.min(1, snapshot.runners.utilization / 100)
+        : 1;
+      const budgetAdherence = Math.max(0, 1 - snapshot.budget.burnRate / 100);
+      const driftLevel = pending > 20 ? 0.5 : pending > 10 ? 0.25 : 0;
+      const orgHealth = computeOrgHealth({ gatePassRate, agentPerformance, budgetAdherence, driftLevel });
+      const scorePercent = Math.round(orgHealth.overall * 100);
       snapshot.health = {
-        score,
-        status: score >= 80 ? 'healthy' : score >= 60 ? 'degraded' : 'critical',
+        score: scorePercent,
+        status: scorePercent >= 80 ? 'healthy' : scorePercent >= 60 ? 'degraded' : 'critical',
+        level: orgHealth.level,
+        breakdown: orgHealth.breakdown,
       };
+      collector.gauge('health.score', scorePercent);
     } catch {
       // Fallback: simple health based on scheduler state
       const pending = snapshot.scheduler.pending;
@@ -100,7 +123,7 @@ export function createMetricsAggregatorLoop({ root, intervalMs, runnerPool, emit
     }
 
     // Write latest snapshot
-    const stateDir = join(root, '.ogu/state');
+    const stateDir = getStateDir(root);
     if (!existsSync(stateDir)) mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, 'metrics-snapshot.json'), JSON.stringify(snapshot, null, 2), 'utf8');
 

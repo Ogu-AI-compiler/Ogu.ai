@@ -1,7 +1,7 @@
 /**
- * Slice 133 — Agent Performance Loop + Trend Analysis Engine
+ * Slice 133 — Trend Analysis Engine
  *
- * Agent Performance Loop: closed-loop tracking and model selection improvement.
+
  * Trend Analysis Engine: org-level trend analysis and anomaly detection.
  */
 
@@ -14,61 +14,9 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 133 — Agent Performance Loop + Trend Analysis Engine\x1b[0m\n");
+console.log("\n\x1b[1mSlice 133 — Trend Analysis Engine\x1b[0m\n");
 
-// ── Part 1: Agent Performance Loop ──────────────────────────────
-
-console.log("\x1b[36m  Part 1: Agent Performance Loop\x1b[0m");
-
-const aplLib = join(process.cwd(), "tools/ogu/commands/lib/agent-performance-loop.mjs");
-assert("agent-performance-loop.mjs exists", () => {
-  if (!existsSync(aplLib)) throw new Error("file missing");
-});
-
-const aplMod = await import(aplLib);
-
-assert("createPerformanceLoop returns loop", () => {
-  if (typeof aplMod.createPerformanceLoop !== "function") throw new Error("missing");
-  const loop = aplMod.createPerformanceLoop();
-  if (typeof loop.recordOutcome !== "function") throw new Error("missing recordOutcome");
-  if (typeof loop.getStats !== "function") throw new Error("missing getStats");
-  if (typeof loop.recommend !== "function") throw new Error("missing recommend");
-});
-
-assert("recordOutcome tracks success/failure", () => {
-  const loop = aplMod.createPerformanceLoop();
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "sonnet", success: true, duration: 5000, cost: 0.03 });
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "sonnet", success: false, duration: 8000, cost: 0.05 });
-  const stats = loop.getStats("dev");
-  if (stats.total !== 2) throw new Error(`expected 2 total, got ${stats.total}`);
-  if (stats.successes !== 1) throw new Error(`expected 1 success, got ${stats.successes}`);
-});
-
-assert("recommend suggests best model for task type", () => {
-  const loop = aplMod.createPerformanceLoop();
-  // Sonnet: 3 successes, 1 failure
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "sonnet", success: true, duration: 5000, cost: 0.03 });
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "sonnet", success: true, duration: 4000, cost: 0.03 });
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "sonnet", success: true, duration: 6000, cost: 0.03 });
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "sonnet", success: false, duration: 9000, cost: 0.05 });
-  // Haiku: 1 success, 3 failures
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "haiku", success: true, duration: 2000, cost: 0.01 });
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "haiku", success: false, duration: 3000, cost: 0.01 });
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "haiku", success: false, duration: 4000, cost: 0.01 });
-  loop.recordOutcome({ agentId: "dev", taskType: "build", model: "haiku", success: false, duration: 3000, cost: 0.01 });
-  const rec = loop.recommend({ taskType: "build" });
-  if (rec.model !== "sonnet") throw new Error(`expected sonnet, got ${rec.model}`);
-});
-
-assert("getStats returns per-agent breakdown", () => {
-  const loop = aplMod.createPerformanceLoop();
-  loop.recordOutcome({ agentId: "qa", taskType: "test", model: "haiku", success: true, duration: 1000, cost: 0.005 });
-  const stats = loop.getStats("qa");
-  if (stats.successRate !== 1) throw new Error("expected 100% success rate");
-  if (stats.avgDuration !== 1000) throw new Error(`expected avgDuration 1000, got ${stats.avgDuration}`);
-});
-
-// ── Part 2: Trend Analysis Engine ──────────────────────────────
+// ── Part 1: Trend Analysis Engine ──────────────────────────────
 
 console.log("\n\x1b[36m  Part 2: Trend Analysis Engine\x1b[0m");
 

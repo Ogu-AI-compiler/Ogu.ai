@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { repoRoot } from '../../util.mjs';
+import { getAgentsDir, resolveOguPath } from './runtime-paths.mjs';
 
 /**
  * Agent Registry — role matching, agent state, OrgSpec access, validation.
@@ -14,8 +15,8 @@ import { repoRoot } from '../../util.mjs';
  *   riskTierLevel(tier)         — Convert risk tier to numeric level
  */
 
-const ORGSPEC_PATH = '.ogu/OrgSpec.json';
-const AGENT_STATE_DIR = '.ogu/agents';
+const ORGSPEC_PATH = (root) => resolveOguPath(root, 'OrgSpec.json');
+const AGENT_STATE_DIR = (root) => getAgentsDir(root);
 
 const RISK_ORDER = { low: 1, medium: 2, high: 3, critical: 4 };
 
@@ -24,7 +25,7 @@ const RISK_ORDER = { low: 1, medium: 2, high: 3, critical: 4 };
  */
 export function loadOrgSpec(root) {
   root = root || repoRoot();
-  const orgPath = join(root, ORGSPEC_PATH);
+  const orgPath = ORGSPEC_PATH(root);
   if (!existsSync(orgPath)) return null;
   const spec = JSON.parse(readFileSync(orgPath, 'utf8'));
   if (!spec || !spec.roles) throw new Error('OGU2001: OrgSpec missing or invalid');
@@ -179,7 +180,7 @@ export function matchRole(criteria = {}) {
  */
 export function loadAgentState(roleId, root) {
   root = root || repoRoot();
-  const statePath = join(root, AGENT_STATE_DIR, `${roleId}.state.json`);
+  const statePath = join(AGENT_STATE_DIR(root), `${roleId}.state.json`);
 
   if (existsSync(statePath)) {
     return JSON.parse(readFileSync(statePath, 'utf8'));
@@ -207,7 +208,7 @@ export function loadAgentState(roleId, root) {
  */
 export function saveAgentState(roleId, state) {
   const root = repoRoot();
-  const dir = join(root, AGENT_STATE_DIR);
+  const dir = AGENT_STATE_DIR(root);
   mkdirSync(dir, { recursive: true });
   const statePath = join(dir, `${roleId}.state.json`);
   writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');

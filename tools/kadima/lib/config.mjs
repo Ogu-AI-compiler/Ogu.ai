@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { getOguRoot, resolveOguPath } from '../../ogu/commands/lib/runtime-paths.mjs';
 
 /**
  * Kadima Config — Loads, validates, and persists daemon configuration.
@@ -39,7 +40,7 @@ const LOOP_NAMES = [
  * @returns {object} Fully merged config
  */
 export function loadConfig(root, overrides = {}) {
-  const configPath = join(root, '.ogu/kadima.config.json');
+  const configPath = resolveOguPath(root, 'kadima.config.json');
 
   // Layer 1: defaults
   let config = structuredClone(DEFAULT_CONFIG);
@@ -71,7 +72,7 @@ export function loadConfig(root, overrides = {}) {
  * Save config to .ogu/kadima.config.json.
  */
 export function saveConfig(root, config) {
-  const dir = join(root, '.ogu');
+  const dir = getOguRoot(root);
   mkdirSync(dir, { recursive: true });
   writeFileSync(
     join(dir, 'kadima.config.json'),

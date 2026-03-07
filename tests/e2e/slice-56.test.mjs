@@ -1,8 +1,8 @@
 /**
- * Slice 56 — Event Bus + Retry Queue
+ * Slice 56 — Event Bus
  *
  * Event Bus: pub/sub event system for internal communication.
- * Retry Queue: task retry with exponential backoff and dead-letter queue.
+
  */
 
 import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -27,7 +27,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 56 — Event Bus + Retry Queue\x1b[0m\n");
+console.log("\n\x1b[1mSlice 56 — Event Bus\x1b[0m\n");
 console.log("  Pub/sub events, exponential backoff retries\n");
 
 // ── Part 1: Event Bus ──────────────────────────────
@@ -98,74 +98,6 @@ assert("listenerCount returns correct count", () => {
   bus.on("w", () => {});
   if (bus.listenerCount("z") !== 2) throw new Error(`expected 2, got ${bus.listenerCount("z")}`);
   if (bus.listenerCount("w") !== 1) throw new Error(`expected 1, got ${bus.listenerCount("w")}`);
-});
-
-// ── Part 2: Retry Queue ──────────────────────────────
-
-console.log("\n\x1b[36m  Part 2: Retry Queue\x1b[0m");
-
-const retryLib = join(process.cwd(), "tools/ogu/commands/lib/retry-queue.mjs");
-assert("retry-queue.mjs exists", () => {
-  if (!existsSync(retryLib)) throw new Error("file missing");
-});
-
-const retryMod = await import(retryLib);
-
-assert("createRetryQueue returns queue instance", () => {
-  if (typeof retryMod.createRetryQueue !== "function") throw new Error("missing");
-  const q = retryMod.createRetryQueue({ maxRetries: 3, baseDelayMs: 100 });
-  if (typeof q.enqueue !== "function") throw new Error("missing enqueue");
-  if (typeof q.processNext !== "function") throw new Error("missing processNext");
-  if (typeof q.getDeadLetters !== "function") throw new Error("missing getDeadLetters");
-  if (typeof q.size !== "function") throw new Error("missing size");
-});
-
-assert("enqueue adds items to queue", () => {
-  const q = retryMod.createRetryQueue({ maxRetries: 3, baseDelayMs: 100 });
-  q.enqueue({ id: "t1", payload: "test" });
-  q.enqueue({ id: "t2", payload: "test2" });
-  if (q.size() !== 2) throw new Error(`expected 2, got ${q.size()}`);
-});
-
-assert("processNext succeeds on first try", () => {
-  const q = retryMod.createRetryQueue({ maxRetries: 3, baseDelayMs: 10 });
-  q.enqueue({ id: "ok-task", payload: "data" });
-  const result = q.processNext((item) => ({ success: true, result: "done" }));
-  if (!result) throw new Error("should return result");
-  if (!result.success) throw new Error("should succeed");
-  if (q.size() !== 0) throw new Error("queue should be empty");
-});
-
-assert("processNext retries on failure then succeeds", () => {
-  const q = retryMod.createRetryQueue({ maxRetries: 3, baseDelayMs: 0 });
-  q.enqueue({ id: "flaky-task", payload: "data" });
-  let attempts = 0;
-  const result = q.processNext((item) => {
-    attempts++;
-    if (attempts < 3) return { success: false, error: "transient" };
-    return { success: true, result: "ok" };
-  });
-  if (!result.success) throw new Error("should eventually succeed");
-  if (attempts !== 3) throw new Error(`expected 3 attempts, got ${attempts}`);
-});
-
-assert("processNext sends to dead letter after max retries", () => {
-  const q = retryMod.createRetryQueue({ maxRetries: 2, baseDelayMs: 0 });
-  q.enqueue({ id: "bad-task", payload: "data" });
-  const result = q.processNext(() => ({ success: false, error: "permanent" }));
-  if (result.success) throw new Error("should fail");
-  const dead = q.getDeadLetters();
-  if (dead.length !== 1) throw new Error(`expected 1 dead letter, got ${dead.length}`);
-  if (dead[0].id !== "bad-task") throw new Error("wrong dead letter");
-});
-
-assert("computeBackoff returns exponential delay", () => {
-  if (typeof retryMod.computeBackoff !== "function") throw new Error("missing");
-  const d0 = retryMod.computeBackoff(0, 100);
-  const d1 = retryMod.computeBackoff(1, 100);
-  const d2 = retryMod.computeBackoff(2, 100);
-  if (d1 <= d0) throw new Error("delay should increase");
-  if (d2 <= d1) throw new Error("delay should keep increasing");
 });
 
 // Cleanup

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { repoRoot } from '../util.mjs';
+import { getRunnersDir } from './lib/runtime-paths.mjs';
 
 /**
  * ogu build:status <slug> [--json] — Show build progress for a feature.
@@ -50,7 +51,7 @@ export async function buildStatus() {
   // Count files created across all output envelopes
   let totalFilesCreated = 0;
   const taskStatuses = tasks.map(t => {
-    const outputPath = join(root, `.ogu/runners/${t.taskId}.output.json`);
+    const outputPath = join(getRunnersDir(root), `${t.taskId}.output.json`);
     let filesCreated = 0;
     if (existsSync(outputPath)) {
       const output = JSON.parse(readFileSync(outputPath, 'utf8'));

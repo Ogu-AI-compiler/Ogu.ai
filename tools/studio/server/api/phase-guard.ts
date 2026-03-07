@@ -5,6 +5,7 @@
  */
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { getStateDir, resolveRuntimePath } from "../../../ogu/commands/lib/runtime-paths.mjs";
 
 /** Ordered pipeline phases */
 export const PHASES = [
@@ -124,12 +125,33 @@ function hasRealContent(filePath: string): boolean {
   }
 }
 
+/** Map FSM phase names to Phase enum */
+const FSM_TO_PHASE: Record<string, Phase> = {
+  discovery: "discovery",
+  feature: "feature",
+  architect: "architect",
+  design: "preflight",
+  preflight: "preflight",
+  lock: "preflight",
+  building: "build",
+  verifying: "build",
+  enforcing: "build",
+  previewing: "gates",
+  done: "deliver",
+  observing: "deliver",
+};
+
 /** Detect the current phase by inspecting filesystem artifacts */
 export function detectCurrentPhase(root: string, slug: string | null): Phase {
   if (!slug) return "discovery";
 
   const featureDir = join(root, "docs/vault/04_Features", slug);
-  if (!existsSync(featureDir)) return "discovery";
+  if (!existsSync(featureDir)) {
+    // Fall back to FSM state file (wizard-created projects without a feature vault dir)
+    const fsmState = readJsonSafe(join(getStateDir(root), "features", `${slug}.state.json`));
+    if (fsmState?.currentPhase) return FSM_TO_PHASE[fsmState.currentPhase] || "discovery";
+    return "discovery";
+  }
 
   const has = (f: string) => existsSync(join(featureDir, f));
   const hasFilled = (f: string) => has(f) && hasRealContent(join(featureDir, f));
@@ -138,7 +160,7 @@ export function detectCurrentPhase(root: string, slug: string | null): Phase {
   const metrics = readJsonSafe(join(featureDir, "METRICS.json"));
   if (metrics?.completed) return "deliver";
 
-  const gateState = readJsonSafe(join(root, ".ogu/GATE_STATE.json"));
+  const gateState = readJsonSafe(resolveRuntimePath(root, "GATE_STATE.json"));
   if (gateState?.feature === slug && Object.keys(gateState.gates || {}).length > 0) return "gates";
 
   // Architect done = Spec.md filled (no TODO markers) + Plan.json has tasks
@@ -150,7 +172,7 @@ export function detectCurrentPhase(root: string, slug: string | null): Phase {
 
     if (specFilled && planHasTasks) {
       // Check if preflight was done (doctor log or context lock exists)
-      const contextLock = readJsonSafe(join(root, ".ogu/CONTEXT_LOCK.json"));
+      const contextLock = readJsonSafe(resolveRuntimePath(root, "CONTEXT_LOCK.json"));
       if (contextLock) return "build";
       return "preflight";
     }
@@ -159,21 +181,21 @@ export function detectCurrentPhase(root: string, slug: string | null): Phase {
   // Feature done = PRD.md has real content (not just template headers)
   if (hasFilled("PRD.md")) return "architect";
 
-  // Discovery done = IDEA.md has real content
-  if (hasFilled("IDEA.md")) return "feature";
+  // Discovery done = IDEA.md or ProjectBrief.md has real content
+  if (hasFilled("ProjectBrief.md") || hasFilled("IDEA.md")) return "feature";
 
   return "discovery";
 }
 
 /** Get the active feature slug from STATE.json */
 export function getActiveSlug(root: string): string | null {
-  const state = readJsonSafe(join(root, ".ogu/STATE.json"));
+  const state = readJsonSafe(resolveRuntimePath(root, "STATE.json"));
   return state?.current_task || null;
 }
 
 /** Get the involvement level from STATE.json */
 export function getInvolvementLevel(root: string): string | null {
-  const state = readJsonSafe(join(root, ".ogu/STATE.json"));
+  const state = readJsonSafe(resolveRuntimePath(root, "STATE.json"));
   return state?.involvement_level || null;
 }
 

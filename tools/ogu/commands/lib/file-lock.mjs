@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, unlink
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { repoRoot } from '../../util.mjs';
+import { getLocksDir } from './runtime-paths.mjs';
 
 /**
  * Semantic File Lock — prevents concurrent writes to the same file by multiple agents.
@@ -15,7 +16,7 @@ import { repoRoot } from '../../util.mjs';
  *   listLocks()                             — List all active locks
  */
 
-const LOCKS_DIR = () => join(repoRoot(), '.ogu/locks');
+const LOCKS_DIR = () => getLocksDir(repoRoot());
 
 /**
  * Acquire a lock on a set of file paths.

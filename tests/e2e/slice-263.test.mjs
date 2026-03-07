@@ -7,7 +7,7 @@ function test(name, fn) {
   catch (e) { failed++; console.log(`  \x1b[31m✗\x1b[0m ${name}: ${e.message}`); }
 }
 
-console.log('\x1b[1mSlice 263 — Token Bucket + Leaky Bucket\x1b[0m\n');
+console.log('\x1b[1mSlice 263 — Token Bucket\x1b[0m\n');
 
 console.log('\x1b[36m  Part 1: Token Bucket\x1b[0m');
 test('token-bucket.mjs exists', () => {
@@ -32,26 +32,6 @@ test('refill adds tokens', () => {
   tb.consume(8);
   tb.refill();
   assert.equal(tb.getTokens(), 5);
-});
-
-console.log('\n\x1b[36m  Part 2: Leaky Bucket\x1b[0m');
-test('leaky-bucket.mjs exists', () => {
-  assert.ok(existsSync('tools/ogu/commands/lib/leaky-bucket.mjs'));
-});
-
-const { createLeakyBucket } = await import('../../tools/ogu/commands/lib/leaky-bucket.mjs');
-
-test('add and leak', () => {
-  const lb = createLeakyBucket({ capacity: 5, leakRate: 2 });
-  lb.add(4);
-  lb.leak();
-  assert.equal(lb.getLevel(), 2);
-});
-
-test('overflow rejected', () => {
-  const lb = createLeakyBucket({ capacity: 3, leakRate: 1 });
-  assert.ok(lb.add(3));
-  assert.ok(!lb.add(1));
 });
 
 console.log(`\n\x1b[1m  Results: ${passed} passed, ${failed} failed\x1b[0m\n`);

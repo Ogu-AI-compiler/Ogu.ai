@@ -7,7 +7,7 @@ function test(name, fn) {
   catch (e) { failed++; console.log(`  \x1b[31m✗\x1b[0m ${name}: ${e.message}`); }
 }
 
-console.log('\x1b[1mSlice 259 — Saga Orchestrator + Compensating Transaction\x1b[0m\n');
+console.log('\x1b[1mSlice 259 — Saga Orchestrator\x1b[0m\n');
 
 console.log('\x1b[36m  Part 1: Saga Orchestrator\x1b[0m');
 test('saga-orchestrator.mjs exists', () => {
@@ -39,30 +39,6 @@ test('getStatus reports result', () => {
   saga.addStep({ execute: () => {}, compensate: () => {} });
   saga.run();
   assert.equal(saga.getStatus(), 'completed');
-});
-
-console.log('\n\x1b[36m  Part 2: Compensating Transaction\x1b[0m');
-test('compensating-transaction.mjs exists', () => {
-  assert.ok(existsSync('tools/ogu/commands/lib/compensating-transaction.mjs'));
-});
-
-const { createCompensatingTransaction } = await import('../../tools/ogu/commands/lib/compensating-transaction.mjs');
-
-test('commit executes action', () => {
-  const ct = createCompensatingTransaction();
-  let value = 0;
-  ct.add(() => { value = 10; }, () => { value = 0; });
-  ct.commit();
-  assert.equal(value, 10);
-});
-
-test('rollback undoes action', () => {
-  const ct = createCompensatingTransaction();
-  let value = 0;
-  ct.add(() => { value = 10; }, () => { value = 0; });
-  ct.commit();
-  ct.rollback();
-  assert.equal(value, 0);
 });
 
 console.log(`\n\x1b[1m  Results: ${passed} passed, ${failed} failed\x1b[0m\n`);

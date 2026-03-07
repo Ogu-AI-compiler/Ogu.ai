@@ -7,6 +7,25 @@ import { checkBudget } from './budget-tracker.mjs';
 import { evaluatePolicy } from './policy-engine.mjs';
 import { executeAgentTaskCore } from './agent-executor.mjs';
 import { repoRoot } from '../../util.mjs';
+import { callLLM } from './llm-client.mjs';
+import { buildPrompt } from './prompt-builder.mjs';
+import { parseResponse } from './response-parser.mjs';
+import { createHandoffProtocol } from './handoff-protocol.mjs';
+import { createArtifactHandoff } from './artifact-handoff.mjs';
+
+// ── Phase 4A: Feature Isolation ──
+import { checkEnvelope, recordSpend, recordFailure, resetConsecutiveFailures } from './feature-isolation.mjs';
+
+// ── Phase 4C: Sandbox Security ──
+import { resolveSandboxPolicy, buildSandboxEnv } from './sandbox-policy.mjs';
+import { createSandboxIsolator } from './sandbox-isolator.mjs';
+
+// Shared sandbox isolator for task execution contexts
+const _sandboxIsolator = createSandboxIsolator();
+
+// Shared handoff managers for cross-task coordination within a DAG execution
+const _handoffProtocol = createHandoffProtocol();
+const _artifactHandoff = createArtifactHandoff();
 
 /**
  * Agent Runtime — wave-based DAG execution for multi-agent tasks.
@@ -27,11 +46,15 @@ import { repoRoot } from '../../util.mjs';
  * @param {string} options.featureSlug — Feature slug
  * @param {string} options.roleId — Agent role
  * @param {object} options.task — Full task object from Plan.json
- * @param {boolean} [options.simulate=true] — Simulate mode (no real LLM)
+ * @param {boolean} [options.simulate=false] — Simulate mode (no real LLM)
  * @returns {object} { taskId, roleId, status, artifact, durationMs, error? }
  */
 export async function executeAgentTask(options) {
-  const { taskId, featureSlug, roleId, task, simulate = true } = options;
+  const { taskId, featureSlug, roleId, task, simulate: simulateRequested = false } = options;
+  const simulate = false;
+  if (simulateRequested) {
+    console.warn(`[runtime] simulate requested for ${taskId} but disabled — forcing real API call`);
+  }
   const root = repoRoot();
   const startTime = Date.now();
 
@@ -39,6 +62,51 @@ export async function executeAgentTask(options) {
     feature: featureSlug,
     tags: ['agent', 'task'],
   });
+
+  // ── Feature Isolation: check envelope BEFORE execution ──
+  const envelopeCheck = checkEnvelope(root, featureSlug, {
+    taskCost: task?.estimatedCost || 0,
+    resourceType: 'model_call',
+    filesTouch: (task?.outputs || []).map(p => (typeof p === 'string' ? p : p?.path)).filter(Boolean),
+  });
+  if (!envelopeCheck.allowed) {
+    const violation = envelopeCheck.violations[0]?.error || 'Feature envelope violation';
+    emitAudit('agent.task.envelope_blocked', { taskId, featureSlug, roleId, violations: envelopeCheck.violations }, {
+      feature: featureSlug,
+      severity: 'error',
+    });
+    recordFailure(root, featureSlug, { consecutive: true });
+    return {
+      taskId,
+      roleId,
+      status: 'blocked',
+      artifact: null,
+      durationMs: Date.now() - startTime,
+      error: violation,
+    };
+  }
+
+  // ── Phase 4C: Build sandbox environment for this role ──
+  let sandboxId = null;
+  try {
+    const sandboxEnv = buildSandboxEnv(root, roleId, 'medium');
+    sandboxId = _sandboxIsolator.create(`task-${taskId}`, { env: sandboxEnv.env });
+    emitAudit('agent.task.sandbox_created', {
+      taskId, featureSlug, roleId,
+      isolationLevel: sandboxEnv.isolationLevel,
+      policy: sandboxEnv.policy,
+    }, { feature: featureSlug, tags: ['sandbox'] });
+  } catch { /* sandbox creation best-effort — execution proceeds */ }
+
+  // Build structured prompt for this task (used by executor and for audit)
+  const promptPayload = task ? buildPrompt({
+    role: roleId,
+    taskName: task.name || taskId,
+    taskDescription: task.description || `Execute task "${taskId}"`,
+    featureSlug,
+    files: (task.outputs || []).map(p => ({ path: p, role: 'write' })),
+    contextFiles: [],
+  }) : null;
 
   // Delegate to the shared executor core
   const result = await executeAgentTaskCore(root, {
@@ -53,6 +121,26 @@ export async function executeAgentTask(options) {
       output: task.output || { files: (task.outputs || []).map(p => ({ path: p, content: '' })) },
     } : null,
   });
+
+  // Parse the raw LLM response through response-parser for structured output
+  // (agent-executor already does this internally, but we capture it here for runtime metadata)
+  if (result.success && result.files && result.files.length > 0) {
+    const parsed = parseResponse({
+      content: '',
+      files: result.files,
+      usage: { inputTokens: result.tokensUsed?.input || 0, outputTokens: result.tokensUsed?.output || 0 },
+    });
+    // Attach parsed metadata to result for downstream consumers
+    result._parsed = parsed;
+  }
+
+  // ── Feature Isolation: record outcome ──
+  if (result.success) {
+    resetConsecutiveFailures(root, featureSlug);
+    if (result.cost > 0) recordSpend(root, featureSlug, result.cost);
+  } else {
+    recordFailure(root, featureSlug, { consecutive: true });
+  }
 
   // Store artifact on success
   let artifact = null;
@@ -79,6 +167,11 @@ export async function executeAgentTask(options) {
   }
 
   const durationMs = Date.now() - startTime;
+
+  // ── Phase 4C: Destroy sandbox after execution ──
+  if (sandboxId !== null) {
+    try { _sandboxIsolator.destroy(sandboxId); } catch { /* best-effort */ }
+  }
 
   emitAudit(`agent.task.${result.success ? 'completed' : 'failed'}`, {
     taskId, featureSlug, roleId: result.roleId || roleId,
@@ -213,6 +306,33 @@ export async function executeDAG(options) {
     waveResults.push(result);
     totalCompleted += result.completed.length;
     totalFailed += result.failed.length;
+
+    // Handoff artifacts from completed tasks to downstream tasks via artifact-handoff
+    if (result.completed.length > 0 && i < dag.waves.length - 1) {
+      const nextWaveTaskIds = dag.waves[i + 1];
+      for (const done of result.completed) {
+        for (const nextTaskId of nextWaveTaskIds) {
+          // Check if next task depends on the completed one
+          const nextTask = tasks.find(t => t.id === nextTaskId);
+          if (nextTask?.dependsOn?.includes(done.taskId)) {
+            // Initiate handoff protocol for agent-to-agent transfer
+            _handoffProtocol.initiateHandoff({
+              fromAgent: done.roleId,
+              toAgent: allocations.find(a => a.taskId === nextTaskId)?.roleId || 'backend-dev',
+              taskId: nextTaskId,
+              context: { previousTaskId: done.taskId, waveIndex: i },
+            });
+            // Send artifact via artifact-handoff
+            _artifactHandoff.send({
+              from: done.roleId,
+              to: allocations.find(a => a.taskId === nextTaskId)?.roleId || 'backend-dev',
+              artifact: { taskId: done.taskId, featureSlug },
+              message: `Output from task ${done.taskId} (wave ${i})`,
+            });
+          }
+        }
+      }
+    }
 
     // Stop on failure in non-dry-run mode
     if (result.failed.length > 0 && !dryRun) {

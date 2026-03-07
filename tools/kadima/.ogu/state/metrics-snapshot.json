@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-07T16:27:32.262Z",
+  "scheduler": {
+    "total": 0,
+    "pending": 0,
+    "dispatched": 0,
+    "completed": 0,
+    "throughput": 0
+  },
+  "runners": {
+    "maxConcurrent": 4,
+    "active": 0,
+    "utilization": 0
+  },
+  "budget": {
+    "dailySpent": 0,
+    "dailyLimit": 100,
+    "burnRate": 0
+  },
+  "health": {
+    "score": 100,
+    "status": "healthy",
+    "level": "excellent",
+    "breakdown": {
+      "gatePassRate": {
+        "value": 1,
+        "weight": 0.35,
+        "weighted": 0.35
+      },
+      "agentPerformance": {
+        "value": 1,
+        "weight": 0.25,
+        "weighted": 0.25
+      },
+      "budgetAdherence": {
+        "value": 1,
+        "weight": 0.2,
+        "weighted": 0.2
+      },
+      "driftLevel": {
+        "value": 1,
+        "weight": 0.2,
+        "weighted": 0.2
+      }
+    }
+  }
+}

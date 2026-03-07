@@ -15,9 +15,11 @@ import { join } from 'node:path';
 import { repoRoot } from '../../util.mjs';
 import { emitAudit } from './audit-emitter.mjs';
 import { loadAllEnvelopes, loadEnvelope } from './feature-isolation.mjs';
+import { resolveRuntimePath, getAuditDir } from './runtime-paths.mjs';
 export { createCollector, METRIC_TYPES } from './metric-collector.mjs';
 
-const METRICS_DIR = (root) => join(root, '.ogu/metrics');
+const METRICS_DIR = (root) => resolveRuntimePath(root, 'metrics');
+const PRODUCTION_STATES = new Set(['deployed', 'observing', 'completed', 'production', 'monitoring', 'optimizing']);
 
 // ── Metrics Config (embedded) ─────────────────────────────────────────
 
@@ -184,8 +186,8 @@ function calculateKPI(root, kpi) {
 }
 
 function calcFeatureVelocity(root) {
-  // Count features that reached production state in last 7 days
-  const featureStatesDir = join(root, '.ogu/state/features');
+  // Count features that reached production-equivalent state in last 7 days
+  const featureStatesDir = resolveRuntimePath(root, 'state', 'features');
   if (!existsSync(featureStatesDir)) return 0;
   let completed = 0;
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -193,7 +195,7 @@ function calcFeatureVelocity(root) {
     for (const f of readdirSync(featureStatesDir)) {
       if (!f.endsWith('.state.json')) continue;
       const state = JSON.parse(readFileSync(join(featureStatesDir, f), 'utf8'));
-      if (state.currentState === 'production' && state.updatedAt) {
+      if (PRODUCTION_STATES.has(state.currentState) && state.updatedAt) {
         if (new Date(state.updatedAt).getTime() > weekAgo) completed++;
       }
     }
@@ -216,7 +218,7 @@ function calcBudgetEfficiency(root) {
 
 function calcQualityScore(root) {
   // Gate pass rate from audit events
-  const auditDir = join(root, '.ogu/audit');
+  const auditDir = getAuditDir(root);
   if (!existsSync(auditDir)) return 85;
   let gateAttempts = 0;
   let gatePasses = 0;
@@ -240,7 +242,7 @@ function calcQualityScore(root) {
 
 function calcAgentProductivity(root) {
   // Tasks completed from scheduler state
-  const schedulerPath = join(root, '.ogu/state/scheduler-state.json');
+  const schedulerPath = resolveRuntimePath(root, 'state', 'scheduler-state.json');
   if (!existsSync(schedulerPath)) return 2.0;
   try {
     const state = JSON.parse(readFileSync(schedulerPath, 'utf8'));
@@ -253,7 +255,7 @@ function calcAgentProductivity(root) {
 
 function calcSystemReliability(root) {
   // Percentage of transactions that completed without rollback
-  const transactionDir = join(root, '.ogu/transactions');
+  const transactionDir = resolveRuntimePath(root, 'transactions');
   if (!existsSync(transactionDir)) return 95;
   let total = 0;
   let committed = 0;
@@ -273,7 +275,7 @@ function calcGovernanceHealth(root) {
   let violations = 0;
   let overrides = 0;
   try {
-    const auditDir = join(root, '.ogu/audit');
+    const auditDir = getAuditDir(root);
     if (existsSync(auditDir)) {
       for (const f of readdirSync(auditDir)) {
         if (!f.endsWith('.jsonl')) continue;
@@ -292,8 +294,8 @@ function calcGovernanceHealth(root) {
 }
 
 function calcMeanTimeToFeature(root) {
-  // Average hours from draft to production
-  const featureStatesDir = join(root, '.ogu/state/features');
+  // Average hours from idea to production-equivalent state
+  const featureStatesDir = resolveRuntimePath(root, 'state', 'features');
   if (!existsSync(featureStatesDir)) return 48;
   let totalHours = 0;
   let count = 0;
@@ -301,7 +303,7 @@ function calcMeanTimeToFeature(root) {
     for (const f of readdirSync(featureStatesDir)) {
       if (!f.endsWith('.state.json')) continue;
       const state = JSON.parse(readFileSync(join(featureStatesDir, f), 'utf8'));
-      if (state.currentState === 'production' && state.createdAt && state.updatedAt) {
+      if (PRODUCTION_STATES.has(state.currentState) && state.createdAt && state.updatedAt) {
         const hours = (new Date(state.updatedAt) - new Date(state.createdAt)) / (1000 * 60 * 60);
         totalHours += hours;
         count++;
@@ -423,7 +425,7 @@ function measureSLA(root, sla) {
 }
 
 function measureSchedulingSLA(root) {
-  const schedulerPath = join(root, '.ogu/state/scheduler-state.json');
+  const schedulerPath = resolveRuntimePath(root, 'state', 'scheduler-state.json');
   if (!existsSync(schedulerPath)) return { value: '0s avg', met: true, details: 'No scheduler data' };
   try {
     const state = JSON.parse(readFileSync(schedulerPath, 'utf8'));
@@ -451,7 +453,7 @@ function measureConsistencySLA(root) {
 }
 
 function measureRecoverySLA(root) {
-  const cbPath = join(root, '.ogu/state/circuit-breakers.json');
+  const cbPath = resolveRuntimePath(root, 'state', 'circuit-breakers.json');
   if (!existsSync(cbPath)) return { value: '0s', met: true, details: 'No circuit trips' };
   try {
     const state = JSON.parse(readFileSync(cbPath, 'utf8'));
@@ -615,7 +617,7 @@ export function exportMetrics(root) {
 // ── Helpers ───────────────────────────────────────────────────────────
 
 function loadFeatureState(root, slug) {
-  const path = join(root, `.ogu/state/features/${slug}.state.json`);
+  const path = resolveRuntimePath(root, 'state', 'features', `${slug}.state.json`);
   if (!existsSync(path)) return null;
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }

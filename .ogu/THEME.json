@@ -1,53 +1,64 @@
 {
-  "version": 1,
-  "mood": "minimal",
-  "description": "Clean, white, lots of breathing room. Less is more.",
+  "version": 2,
+  "mood": "brand:github.com",
+  "description": "Brand DNA extracted from https://github.com/",
   "references": [
-    "apple.com",
-    "linear.app",
-    "notion"
+    "https://github.com/"
   ],
   "constraints": {
     "dark_mode": false,
     "high_contrast": false,
     "animations": "subtle-fade",
-    "typography_feel": "clean-sans",
-    "color_palette": "neutral-with-accent"
+    "typography_feel": "Helvetica",
+    "color_palette": "brand:github.com"
   },
   "generated_tokens": {
     "colors": {
-      "primary": "#000000",
-      "secondary": "#6366f1",
+      "primary": "#023b95",
+      "secondary": "#0969da",
       "background": "#ffffff",
-      "surface": "#f8f9fa",
-      "error": "#ef4444",
-      "success": "#22c55e",
-      "warning": "#f59e0b",
-      "text": "#111827",
-      "text_muted": "#9ca3af"
+      "surface": "#f0f6fc",
+      "error": "#3c0614",
+      "success": "#122117",
+      "warning": "#241c14",
+      "text": "#010409",
+      "text_muted": "#656c76"
     },
     "spacing": {
-      "xs": "4px",
-      "sm": "8px",
-      "md": "16px",
-      "lg": "24px",
-      "xl": "40px",
-      "2xl": "64px"
+      "xs": "1px",
+      "sm": "2px",
+      "md": "3px",
+      "lg": "5px",
+      "xl": "6px",
+      "2xl": "10px"
     },
     "radius": {
-      "sm": "6px",
-      "md": "8px",
-      "lg": "12px"
+      "sm": "1px",
+      "md": "4px",
+      "lg": "6px"
     },
     "typography": {
-      "font_body": "'Inter', -apple-system, system-ui, sans-serif",
-      "font_heading": "'Inter', -apple-system, system-ui, sans-serif",
-      "font_mono": "'SF Mono', 'Fira Code', monospace"
+      "font_body": "'Helvetica', -apple-system, system-ui, sans-serif",
+      "font_heading": "'Mona Sans', -apple-system, system-ui, sans-serif",
+      "font_mono": "'SFMono-Regular', 'SF Mono', monospace",
+      "font_face_css": "",
+      "type_scale": {}
     },
     "effects": {
       "glow": "none",
-      "border_style": "1px solid #e5e7eb",
-      "shadow": "0 1px 3px rgba(0, 0, 0, 0.1)"
+      "border_style": "0",
+      "shadow": "none"
+    },
+    "shadows": null,
+    "transitions": null,
+    "components": {
+      "button": {},
+      "card": null,
+      "input": null
     }
+  },
+  "brand_assets": {
+    "logo": "/logo.svg",
+    "logo_source": "homepage-link-svg"
   }
 }

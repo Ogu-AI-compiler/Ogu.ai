@@ -1,6 +1,8 @@
 import { existsSync, readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { repoRoot, readJsonSafe } from "../util.mjs";
+import { detectTrend, detectAnomalies } from "./lib/trend-analyzer.mjs";
+import { createTrendEngine } from "./lib/trend-analysis-engine.mjs";
 
 export async function trends() {
   const root = repoRoot();
@@ -19,6 +21,31 @@ export async function trends() {
     console.log("  Complete features with /done to generate metrics.");
     return 0;
   }
+
+  // Wire trend engine (Phase 3D) — feed completion times as time-series
+  const trendEngine = createTrendEngine();
+  for (let i = 0; i < features.length; i++) {
+    const f = features[i];
+    const started = f.globalMetrics?.started_at || f.metrics?.started_at;
+    const completed = f.globalMetrics?.completed_at || f.metrics?.completed_at;
+    if (started && completed) {
+      const hours = (new Date(completed) - new Date(started)) / (1000 * 60 * 60);
+      trendEngine.addDataPoint({ metric: 'completion_hours', value: hours, timestamp: i });
+    }
+    const gateResults = f.globalMetrics?.gate_results || f.metrics?.gate_results || {};
+    const gateFails = Object.values(gateResults).filter(r => (r.attempts || 1) > 1).length;
+    trendEngine.addDataPoint({ metric: 'gate_failures', value: gateFails, timestamp: i });
+  }
+  const completionTrend = trendEngine.getTrend('completion_hours');
+  const gateFailTrend = trendEngine.getTrend('gate_failures');
+
+  // Wire trend-analyzer (Phase 3D) — statistical trend on gate failure counts
+  const gateFailSeries = features.map(f => {
+    const gateResults = f.globalMetrics?.gate_results || f.metrics?.gate_results || {};
+    return Object.values(gateResults).filter(r => (r.attempts || 1) > 1).length;
+  });
+  const statTrend = detectTrend(gateFailSeries);
+  const anomalies = detectAnomalies(gateFailSeries);
 
   // Aggregate gate failure rates
   const gateStats = aggregateGateStats(features);
@@ -40,6 +67,11 @@ export async function trends() {
   // Console summary
   console.log(`  features ${features.length} analyzed`);
   console.log(`  gates    ${Object.keys(gateStats).length} tracked`);
+  console.log(`  trend    completion: ${completionTrend.direction}, gate failures: ${gateFailTrend.direction}`);
+  console.log(`  slope    gate-fails ${statTrend.direction} (slope: ${statTrend.slope.toFixed(3)})`);
+  if (anomalies.length > 0) {
+    console.log(`  anomaly  ${anomalies.length} anomalous feature(s) detected (z-score > 2)`);
+  }
 
   if (Object.keys(gateStats).length > 0) {
     const worstGate = Object.entries(gateStats).sort((a, b) => b[1].failRate - a[1].failRate)[0];

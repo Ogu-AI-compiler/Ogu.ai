@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { repoRoot } from '../../util.mjs';
+import { resolveRuntimePath } from './runtime-paths.mjs';
 
 /**
  * Session Cleanup — find and clean stale agent sessions.
@@ -19,7 +20,7 @@ import { repoRoot } from '../../util.mjs';
  */
 export function findStaleSessions({ root, maxAgeMs } = {}) {
   root = root || repoRoot();
-  const sessDir = join(root, '.ogu/agents/sessions');
+  const sessDir = resolveRuntimePath(root, 'agents', 'sessions');
   if (!existsSync(sessDir)) return [];
 
   const now = Date.now();
@@ -55,7 +56,7 @@ export function findStaleSessions({ root, maxAgeMs } = {}) {
  */
 export function cleanupStaleSessions({ root, maxAgeMs } = {}) {
   root = root || repoRoot();
-  const sessDir = join(root, '.ogu/agents/sessions');
+  const sessDir = resolveRuntimePath(root, 'agents', 'sessions');
   const stale = findStaleSessions({ root, maxAgeMs });
 
   for (const s of stale) {

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ogu Studio</title>
+    <title>Kadima OS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -29,7 +29,7 @@
         --font: 'Google Sans', 'Google Sans Text', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
       }
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      * { box-sizing: border-box; }
       html, body, #root { height: 100%; width: 100%; overflow: hidden; }
       body {
         background: var(--gradient);
@@ -58,6 +58,15 @@
       /* Quote button appears on hover */
       .chat-line:hover .quote-btn { opacity: 1 !important; }
       .chat-line:hover .quote-btn:hover { color: var(--accent) !important; background: var(--bg-card-hover); }
+
+      /* ── Utility animations ── */
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes ping {
+        75%, 100% { transform: scale(1.6); opacity: 0; }
+      }
 
       /* ── Thinking indicator ── */
       @keyframes shimmer {
@@ -97,6 +106,81 @@
       }
       .thinking-pulse {
         animation: boltPulse 1.5s ease-in-out infinite;
+      }
+
+      /* ── Letter shimmer (spotlight sweep across text) ── */
+      @keyframes letterSweep {
+        0% { background-position: 100% center; }
+        100% { background-position: -100% center; }
+      }
+      .letter-shimmer {
+        background: linear-gradient(90deg,
+          var(--text-muted) 0%, var(--text-muted) 35%,
+          var(--text) 50%,
+          var(--text-muted) 65%, var(--text-muted) 100%
+        );
+        background-size: 600% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: letterSweep 2s linear infinite;
+      }
+
+      /* ── Infinite Canvas: Node appearance ── */
+      @keyframes nodeAppear {
+        from { opacity: 0; transform: scale(0.3); }
+        to { opacity: 1; transform: scale(1); }
+      }
+
+      /* ── Infinite Canvas: Edge draw-in ── */
+      @keyframes edgeDraw {
+        from { stroke-dashoffset: 100; opacity: 0; }
+        to { stroke-dashoffset: 0; opacity: 1; }
+      }
+
+      /* ── Infinite Canvas: CTO pulsing ring ── */
+      @keyframes pulseRing {
+        0%, 100% { r: 36; opacity: 0.4; }
+        50% { r: 46; opacity: 0; }
+      }
+
+      /* ── Infinite Canvas: Flowing dash on active edges ── */
+      @keyframes flowDash {
+        from { stroke-dashoffset: 20; }
+        to { stroke-dashoffset: 0; }
+      }
+
+      /* ── Vercel-style beam shooting from CTO to agent ── */
+      @keyframes beamShoot {
+        0% { stroke-dashoffset: 460; opacity: 0; }
+        10% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { stroke-dashoffset: -60; opacity: 0; }
+      }
+
+      /* ── Dot pop: scale 0 → 110% → 100% ── */
+      @keyframes dotPop {
+        0% { transform: scale(0); opacity: 0; }
+        60% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+
+      /* ── Looping glow for in-progress beams ── */
+      @keyframes beamGlowLoop {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 0.8; }
+      }
+
+      /* ── Task node hover effect ── */
+      .task-node { cursor: default; transition: transform 0.2s ease, filter 0.2s ease; }
+      .task-node:hover { transform: scale(1.06); filter: drop-shadow(0 0 10px var(--node-glow, rgba(255,255,255,0.12))); }
+      .task-node-tooltip-wrap .node-tooltip { opacity: 0 !important; transition: opacity 0.15s ease; pointer-events: none; }
+      .task-node-tooltip-wrap:hover .node-tooltip { opacity: 1 !important; }
+
+      /* ── Terminal cursor blink ── */
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
       }
     </style>
   </head>

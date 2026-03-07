@@ -2,13 +2,17 @@ import { existsSync, mkdirSync, appendFileSync, readFileSync, writeFileSync } fr
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { repoRoot } from '../../util.mjs';
+import { createAuditSealer } from './audit-seal.mjs';
+import { buildIndex, saveIndex } from './audit-index.mjs';
+import { replayChain as replayAuditChain } from './audit-replay.mjs';
+import { getAuditDir } from './runtime-paths.mjs';
 
 /**
  * Append-only JSONL audit emitter with daily rotation and replay support.
  * Writes structured events to .ogu/audit/current.jsonl and .ogu/audit/YYYY-MM-DD.jsonl
  */
 
-const AUDIT_DIR = () => join(repoRoot(), '.ogu/audit');
+const AUDIT_DIR = () => getAuditDir(repoRoot());
 const AUDIT_FILE = () => join(AUDIT_DIR(), 'current.jsonl');
 const INDEX_FILE = () => join(AUDIT_DIR(), 'index.json');
 
@@ -108,6 +112,40 @@ export function loadAllEvents() {
   if (!existsSync(file)) return [];
   const lines = readFileSync(file, 'utf8').trim().split('\n').filter(Boolean);
   return lines.map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
+}
+
+// ── Audit Sealer (lazy singleton) ──
+let _sealer = null;
+function getSealer() {
+  if (!_sealer) {
+    _sealer = createAuditSealer({ secret: process.env.OGU_AUDIT_SECRET || 'ogu-audit-secret' });
+  }
+  return _sealer;
+}
+
+/**
+ * Seal an audit entry — returns { data, signature, sealedAt }.
+ */
+export function sealAuditEntry(data) {
+  return getSealer().seal(data);
+}
+
+/**
+ * Rebuild the audit index from current.jsonl and save it.
+ */
+export function rebuildAuditIndex({ root } = {}) {
+  const r = root || repoRoot();
+  const index = buildIndex({ root: r });
+  saveIndex({ root: r, index });
+  return index;
+}
+
+/**
+ * Replay audit events and compute derived state.
+ * @param {Array} events - Array of audit events to replay
+ */
+export function replayAuditEvents(events) {
+  return replayAuditChain(events);
 }
 
 // ── Index management ──

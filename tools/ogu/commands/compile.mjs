@@ -5,11 +5,18 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { repoRoot, readJsonSafe } from "../util.mjs";
+import { resolveFeatureDir } from "./lib/feature-paths.mjs";
 import { loadIR, scanPreExisting } from "./lib/ir-registry.mjs";
 import { normalizeIR, normalizeRouteForConflict } from "./lib/normalize-ir.mjs";
 import { verifyOutput } from "./lib/drift-verifiers.mjs";
 import { oguError, formatErrors, hasErrors } from "./lib/errors.mjs";
 import { emitAudit } from "./lib/audit-emitter.mjs";
+import { validateDeterminism } from "./lib/determinism-validator.mjs";
+import { logNonDeterminism, getDeterminismReport } from "./lib/determinism.mjs";
+import { createProvenanceChain } from "./lib/provenance.mjs";
+import { createAttestation } from "./lib/attestation.mjs";
+import { generateCompileReport } from "./lib/report-generator.mjs";
+import { resolveRuntimePath } from "./lib/runtime-paths.mjs";
 
 const VERSION = "1.0.0";
 const SOURCE_EXTS = /\.(ts|tsx|js|jsx|mjs|cjs)$/;
@@ -29,7 +36,8 @@ export async function compile() {
   }
 
   const root = repoRoot();
-  const featureDir = join(root, `docs/vault/04_Features/${slug}`);
+  const featureDir = resolveFeatureDir(root, slug);
+  const featurePath = (file) => join(featureDir, file);
 
   if (!existsSync(featureDir)) {
     console.error(`  \u2716 OGU0003: Feature ${slug} not found`);
@@ -49,7 +57,7 @@ export async function compile() {
   const phase1 = await runPhase("Phase 1: IR Load", verbose, () => {
     const ir = loadIR(root, slug);
     if (!ir) {
-      allErrors.push(oguError("OGU0001", { path: `docs/vault/04_Features/${slug}/Plan.json` }));
+      allErrors.push(oguError("OGU0001", { path: featurePath("Plan.json") }));
       return { ok: false, summary: "Plan.json not found or empty" };
     }
 
@@ -76,7 +84,7 @@ export async function compile() {
   const phase2 = await runPhase("Phase 2: Spec Consistency", verbose, () => {
     const specPath = join(featureDir, "Spec.md");
     if (!existsSync(specPath)) {
-      allErrors.push(oguError("OGU0001", { path: `docs/vault/04_Features/${slug}/Spec.md` }));
+      allErrors.push(oguError("OGU0001", { path: featurePath("Spec.md") }));
       return { ok: false, summary: "Spec.md not found" };
     }
 
@@ -84,7 +92,7 @@ export async function compile() {
     const actualHash = createHash("sha256").update(specContent).digest("hex");
 
     // Check lock
-    const lockPath = join(root, ".ogu/CONTEXT_LOCK.json");
+    const lockPath = resolveRuntimePath(root, "CONTEXT_LOCK.json");
     let hashChainValid = true;
     let chainDetail = "no lock found (skipped)";
 
@@ -239,6 +247,31 @@ export async function compile() {
 
   if (shouldStop(4, maxGate)) return printSummary(slug, allErrors);
 
+  // ─── Phase 4b: Determinism Check ───
+  await runPhase("Phase 4b: Determinism Check", verbose, () => {
+    const report = getDeterminismReport(root, { featureSlug: slug });
+    if (report.total > 0) {
+      const highImpact = report.byImpact?.high || 0;
+      const medImpact = report.byImpact?.medium || 0;
+      if (highImpact > 0) {
+        allErrors.push(oguError("OGU0401", {
+          file: "determinism",
+          line: "0",
+          text: `${highImpact} high-impact non-determinism event(s) detected`,
+        }));
+      }
+      if (medImpact > 0 || highImpact > 0) {
+        return {
+          ok: highImpact === 0,
+          summary: `${report.total} event(s): ${highImpact} high, ${medImpact} medium`,
+          warnings: true,
+        };
+      }
+      return { ok: true, summary: `${report.total} event(s) (low impact)`, warnings: true };
+    }
+    return { ok: true, summary: "no violations" };
+  }, compileContext);
+
   // ─── Phase 5: Design Verification ───
   const designPath = join(featureDir, "DESIGN.md");
   const hasDesign = existsSync(designPath);
@@ -246,7 +279,7 @@ export async function compile() {
   const phase5 = await runPhase("Phase 5: Design Verification", verbose, () => {
     if (!hasDesign) {
       if (strict) {
-        allErrors.push(oguError("OGU0601", { path: `docs/vault/04_Features/${slug}/DESIGN.md` }));
+        allErrors.push(oguError("OGU0601", { path: featurePath("DESIGN.md") }));
         return { ok: false, summary: "DESIGN.md required in strict mode" };
       }
       return { ok: true, summary: "skipped (no DESIGN.md)", skipped: true };
@@ -318,6 +351,54 @@ export async function compile() {
     warnings: allErrors.filter((e) => e.severity === "warn").length,
     durationMs: compileDurationMs,
   });
+
+  // ─── Provenance Tracking ───
+  const provenance = createProvenanceChain();
+  provenance.record({
+    input: `feature:${slug}`,
+    process: `ogu-compile-v${VERSION}`,
+    output: errorCount === 0 ? `compiled:${slug}` : `failed:${slug}`,
+  });
+  if (verbose) {
+    const chain = provenance.getChain();
+    console.log(`\nProvenance: ${chain.length} record(s), chain valid: ${provenance.verify()}`);
+  }
+
+  // ─── Attestation (Phase 3C) ───
+  const attestation = createAttestation({
+    subject: `feature:${slug}`,
+    result: errorCount === 0 ? 'passed' : 'failed',
+    signer: 'ogu-compile',
+    metadata: {
+      version: VERSION,
+      errors: errorCount,
+      durationMs: compileDurationMs,
+    },
+  });
+  if (verbose) {
+    console.log(`Attestation: ${attestation.id} (${attestation.result})`);
+  }
+
+  // ─── Compile Report (Phase 4E) ───
+  if (verbose) {
+    try {
+      const report = generateCompileReport({ root, featureSlug: slug });
+      console.log('\n' + report);
+    } catch { /* best-effort */ }
+  }
+
+  // ─── Post-Compile: Agent Trainer Hook (Slice 392) ───
+  if (errorCount === 0) {
+    try {
+      const { trainAll } = await import("./lib/agent-trainer.mjs");
+      const trainerResult = await trainAll(root, {
+        playbooksDir: join(root, "tools/ogu/playbooks"),
+      });
+      if (trainerResult.trained > 0 && verbose) {
+        console.log(`\nAgent Trainer: trained ${trainerResult.trained} agent(s)`);
+      }
+    } catch { /* best-effort — trainer failures never break compile */ }
+  }
 
   return printSummary(slug, allErrors);
 }
@@ -474,7 +555,7 @@ function extractDesignRules(invariantsContent) {
 
 function scanTodos(root, slug) {
   const violations = [];
-  const planPath = join(root, `docs/vault/04_Features/${slug}/Plan.json`);
+  const planPath = join(resolveFeatureDir(root, slug), "Plan.json");
   const plan = readJsonSafe(planPath);
   const dirsToScan = new Set();
   const todoPattern = /\b(TODO|FIXME|HACK|XXX|PLACEHOLDER)\b/;
@@ -525,7 +606,7 @@ function scanDirForTodos(dir, root, pattern, violations) {
 
 function checkInlineStyles(root, slug) {
   const violations = [];
-  const planPath = join(root, `docs/vault/04_Features/${slug}/Plan.json`);
+  const planPath = join(resolveFeatureDir(root, slug), "Plan.json");
   const plan = readJsonSafe(planPath);
   const dirsToScan = new Set();
   const inlinePattern = /style\s*=\s*["'][^"']*(?:color\s*:|font-|margin\s*:|padding\s*:)/gi;
