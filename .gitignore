@@ -22,3 +22,31 @@ build/
 
 # Logs
 *.log
+
+# Ogu runtime state (generated, not source)
+.ogu/CONTEXT.md
+.ogu/CONTEXT_LOCK.json
+.ogu/STATE.json
+.ogu/SESSION.md
+.ogu/MEMORY.md
+.ogu/GRAPH.json
+.ogu/OBSERVE.json
+.ogu/OBSERVATION_REPORT.md
+.ogu/model-log.jsonl
+.ogu/BUDGET.json
+.ogu/agents/sessions/
+.ogu/agents/*.state.json
+.ogu/projects/
+
+# Generated output
+output/
+
+# Vite build (nested)
+tools/studio/dist/
+tools/*/dist/
+
+# Runtime / temp
+*.jsonl
+
+# Kadima daemon state
+tools/kadima/.ogu/
