@@ -1,1 +1,0 @@
-{"timestamp":"2026-02-28T16:23:45.000Z","scheduler":{"total":3,"pending":1,"dispatched":1,"completed":1,"throughput":0},"runners":{"maxConcurrent":4,"active":0,"utilization":0},"budget":{"dailySpent":0,"dailyLimit":100,"burnRate":0},"health":{"status":"critical"}}

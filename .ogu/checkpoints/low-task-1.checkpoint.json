@@ -1,8 +1,0 @@
-{
-  "taskId": "low-task-1",
-  "featureSlug": "preempt-test",
-  "preemptedAt": "2026-02-28T15:44:53.571Z",
-  "preemptedBy": "critical-task-1",
-  "previousStatus": "scheduled",
-  "scheduledAt": "2026-02-28T15:44:53.569Z"
-}
