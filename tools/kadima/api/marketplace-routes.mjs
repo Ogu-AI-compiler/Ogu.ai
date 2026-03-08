@@ -20,8 +20,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = resolve(__dirname, '..', '..', 'ogu', 'commands', 'lib');
 
 /** Marketplace is global — always points to the main Ogu repo, never to a project sub-directory */
-function getMarketplaceRoot() {
-  return process.env.OGU_MARKETPLACE_ROOT || process.env.OGU_ROOT || process.cwd();
+function getMarketplaceRoot(root) {
+  return process.env.OGU_MARKETPLACE_ROOT || root || process.env.OGU_ROOT || process.cwd();
 }
 
 // Lazy-loaded lib modules
@@ -63,7 +63,7 @@ export async function handleMarketplaceRoutes(url, method, readBody, res, root, 
 
   // GET /api/marketplace/agents
   if (method === 'GET' && path === '/api/marketplace/agents') {
-    const mroot = getMarketplaceRoot();
+    const mroot = getMarketplaceRoot(root);
     const { listAgents, loadAgent } = await store();
     const { computeFinalPrice } = await pricing();
 
@@ -89,7 +89,7 @@ export async function handleMarketplaceRoutes(url, method, readBody, res, root, 
   // GET /api/marketplace/agents/:id  (must come before /agents/generate check below)
   const agentIdMatch = path.match(/^\/api\/marketplace\/agents\/([^/]+)$/);
   if (method === 'GET' && agentIdMatch && agentIdMatch[1] !== 'generate' && agentIdMatch[1] !== 'populate') {
-    const mroot   = getMarketplaceRoot();
+    const mroot   = getMarketplaceRoot(root);
     const agentId = agentIdMatch[1];
     const { loadAgent } = await store();
     const { computeFinalPrice } = await pricing();
@@ -106,7 +106,7 @@ export async function handleMarketplaceRoutes(url, method, readBody, res, root, 
 
   // POST /api/marketplace/agents/generate
   if (method === 'POST' && path === '/api/marketplace/agents/generate') {
-    const mroot = getMarketplaceRoot();
+    const mroot = getMarketplaceRoot(root);
     const body = await readBody();
     const { role, specialty, tier, seed } = body;
 
@@ -128,7 +128,7 @@ export async function handleMarketplaceRoutes(url, method, readBody, res, root, 
 
   // POST /api/marketplace/agents/populate
   if (method === 'POST' && path === '/api/marketplace/agents/populate') {
-    const mroot = getMarketplaceRoot();
+    const mroot = getMarketplaceRoot(root);
     const body = await readBody().catch(() => ({}));
     const count = body.count || 30;
 
@@ -152,7 +152,7 @@ export async function handleMarketplaceRoutes(url, method, readBody, res, root, 
 
   // POST /api/marketplace/hire
   if (method === 'POST' && path === '/api/marketplace/hire') {
-    const mroot = getMarketplaceRoot();
+    const mroot = getMarketplaceRoot(root);
     const body = await readBody();
     const { projectId, agentId, roleSlot, allocationUnits, priorityLevel } = body;
 
@@ -174,7 +174,7 @@ export async function handleMarketplaceRoutes(url, method, readBody, res, root, 
   // DELETE /api/marketplace/allocations/:id
   const allocIdMatch = path.match(/^\/api\/marketplace\/allocations\/([^/]+)$/);
   if (method === 'DELETE' && allocIdMatch) {
-    const mroot        = getMarketplaceRoot();
+    const mroot        = getMarketplaceRoot(root);
     const allocationId = allocIdMatch[1];
     const { releaseAgent } = await allocator();
     try {
@@ -188,7 +188,7 @@ export async function handleMarketplaceRoutes(url, method, readBody, res, root, 
 
   // GET /api/marketplace/allocations
   if (method === 'GET' && path === '/api/marketplace/allocations') {
-    const mroot     = getMarketplaceRoot();
+    const mroot     = getMarketplaceRoot(root);
     const projectId = url.searchParams.get('projectId');
     const agentId   = url.searchParams.get('agentId');
     const { listProjectAllocations, listAgentAllocations } = await allocator();
@@ -201,7 +201,7 @@ export async function handleMarketplaceRoutes(url, method, readBody, res, root, 
 
   // GET /api/marketplace/patterns
   if (method === 'GET' && path === '/api/marketplace/patterns') {
-    const mroot = getMarketplaceRoot();
+    const mroot = getMarketplaceRoot(root);
     const { listPatterns } = await patterns();
     json(res, 200, { patterns: listPatterns(mroot) });
     return true;

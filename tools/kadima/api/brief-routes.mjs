@@ -15,6 +15,7 @@ import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 import { callLLM, parseJSON, computeCost, recordChatSpend } from './wizard-routes.mjs';
+import { createPipelineSession } from '../lib/session-manager.mjs';
 import { dispatchProject } from '../execution/dispatch.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -331,6 +332,23 @@ ${priorityFlags.length > 0 ? priorityFlags.map((f) => `- ${f}`).join('\n') : '_S
         progress(slug, 'setup', 'complete');
         progress(slug, 'cto', 'active');
 
+        // ── Open one shared session for the entire compiler pipeline ──
+        // PRD → Spec → Plan all run in the same claude session.
+        // Steps 2 and 3 send tiny prompts (~20 tokens) instead of
+        // re-sending the full accumulated context (was 4k → 15k tokens).
+        const ctoSession = createPipelineSession();
+
+        const ctoSessionSystem = `You are a senior CTO and software architect. You will compile a product in 3 sequential phases for this project:
+
+Project Brief:
+${briefMd}
+
+Archetype: ${archetypeTitle} (${archetypeId})
+Mode: ${mode}
+
+You will be asked to produce: PRD → Technical Specification → Implementation Plan.
+Each phase builds on the previous. Be thorough and concrete.`;
+
         // ── Compiler pass 1/3: PRD ──
         ctoThink(slug, 'Compiler pass 1/3 — analyzing product requirements...');
         broadcaster.broadcast({ type: 'compiler:started', slug, stages: 3 });
@@ -338,11 +356,12 @@ ${priorityFlags.length > 0 ? priorityFlags.map((f) => `- ${f}`).join('\n') : '_S
 
         let prdMd = '';
         try {
-          const prdSystem = `You are a senior product manager. Given a project brief, write a comprehensive PRD.
-Write the PRD directly in markdown. Do NOT wrap in JSON or code fences.
+          const prdPrompt = `Phase 1 — Product Requirements Document.
+
+Write a comprehensive PRD in markdown. Do NOT wrap in JSON or code fences.
 
 Required sections:
-# {project name} — Product Requirements
+# ${slug} — Product Requirements
 
 ## Problem
 ## User Personas
@@ -352,11 +371,10 @@ Required sections:
 ## Open Questions
 ## Out of Scope
 
-Be thorough and specific. Every requirement must trace back to the user's actual description and choices.`;
-          const { text, inputTokens, outputTokens } = await callLLM('sonnet', prdSystem, `Project Brief:\n${briefMd}`, 4096);
-          prdMd = text.trim();
-          const cost = computeCost('sonnet', inputTokens, outputTokens);
-          await recordChatSpend(currentRoot, { timestamp: new Date().toISOString(), model: 'sonnet', inputTokens, outputTokens, cost, phase: 'discovery', roleId: 'pm' });
+Be thorough and specific. Every requirement must trace back to the project brief above.`;
+
+          // First call in session — sends brief via system prompt, no re-send needed later
+          prdMd = (await ctoSession.call(prdPrompt, { model: 'sonnet', system: ctoSessionSystem, isFirst: true })).trim();
           writeFileSync(join(featureDir, 'PRD.md'), prdMd, 'utf8');
           ctoThink(slug, 'PRD.md locked — product requirements verified');
           broadcaster.broadcast({ type: 'compiler:artifact', slug, stage: 1, artifact: 'PRD.md' });
@@ -370,11 +388,13 @@ Be thorough and specific. Every requirement must trace back to the user's actual
 
         let specMd = '';
         try {
-          const specSystem = `You are a senior software architect. Given a project brief AND its PRD, write a comprehensive Technical Specification.
-Write the spec directly in markdown. Do NOT wrap in JSON or code fences.
+          // Session already has brief + PRD in context — tiny prompt only
+          const specPrompt = `Phase 2 — Technical Specification.
+
+Based on the PRD you just wrote, produce the Technical Specification in markdown. Do NOT wrap in JSON or code fences.
 
 Required sections:
-# {project name} — Technical Specification
+# ${slug} — Technical Specification
 
 ## Overview
 ## User Personas & Permissions
@@ -385,12 +405,9 @@ Required sections:
 ## Mock API
 ## UI Components
 
-Every section must contain real, concrete content derived from the PRD. No placeholders.`;
-          const specInput = `Project Brief:\n${briefMd}\n\n---\n\nPRD:\n${prdMd}`;
-          const { text, inputTokens, outputTokens } = await callLLM('sonnet', specSystem, specInput, 8192);
-          specMd = text.trim();
-          const cost = computeCost('sonnet', inputTokens, outputTokens);
-          await recordChatSpend(currentRoot, { timestamp: new Date().toISOString(), model: 'sonnet', inputTokens, outputTokens, cost, phase: 'discovery', roleId: 'architect' });
+Every section must contain real, concrete content. No placeholders.`;
+
+          specMd = (await ctoSession.call(specPrompt, { model: 'sonnet' })).trim();
           writeFileSync(join(featureDir, 'Spec.md'), specMd, 'utf8');
           ctoThink(slug, 'Spec.md locked — data model, API, and components defined');
           broadcaster.broadcast({ type: 'compiler:artifact', slug, stage: 2, artifact: 'Spec.md' });
@@ -425,9 +442,12 @@ Every section must contain real, concrete content derived from the PRD. No place
           required_decisions: [],
         };
 
-        const archSystem = `You are a CTO. You receive three compiler artifacts: ProjectBrief, PRD, and Technical Spec. Your job is the final compilation pass — produce the implementation plan.
+        // Session already has brief + PRD + Spec in context — no need to re-send them
+        const archPrompt = `Phase 3 — Implementation Plan.
 
-Return ONLY valid JSON:
+Based on the PRD and Technical Specification you just wrote, produce the final compilation output.
+
+Return ONLY valid JSON (no markdown, no code fences):
 {
   "cto_brief_md": "Markdown CTO brief with sections: ## Scope, ## Core Flows, ## Risk Assessment, ## Technical Direction, ## Out of Scope",
   "plan": {
@@ -451,14 +471,10 @@ Return ONLY valid JSON:
 Model selection: haiku=simple/mechanical, sonnet=standard code, opus=complex architecture. Prefer cheapest that works.
 Always include setup + smoke test (tests/smoke/${slug}.test.ts) + contracts tasks. Break into many small focused tasks.`;
 
-        const archInput = `Project Brief:\n${briefMd}\n\n---\n\nPRD:\n${prdMd}\n\n---\n\nTechnical Specification:\n${specMd}`;
-
         const planWritePromise = (async () => {
-          const { text, inputTokens, outputTokens } = await callLLM('sonnet', archSystem, archInput, 8192);
+          const text = await ctoSession.call(archPrompt, { model: 'sonnet' });
           ctoThink(slug, 'Architecture analysis complete — structuring deliverables...');
           const parsed = parseJSON(text);
-          const cost = computeCost('sonnet', inputTokens, outputTokens);
-          await recordChatSpend(currentRoot, { timestamp: new Date().toISOString(), model: 'sonnet', inputTokens, outputTokens, cost, phase: 'discovery', roleId: 'cto' });
 
           if (parsed.plan?.tasks?.length > 0) {
             plan = parsed.plan;

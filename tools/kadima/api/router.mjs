@@ -22,7 +22,7 @@
  *   POST /api/scheduler/force-tick   — trigger immediate scheduler tick
  */
 
-import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fork } from 'node:child_process';
 import { getAuditDir, getBudgetDir, getReportsDir, getStateDir, resolveOguPath } from '../../ogu/commands/lib/runtime-paths.mjs';
@@ -45,10 +45,33 @@ import { handleProjectRoutes } from './project-routes.mjs';
 // Track running CLI commands
 const activeCommands = new Map();
 
+// ── HTTP Request Logger ──────────────────────────────────────────────────────
+let _logDir = null;
+function httpLog(root, method, pathname, status, durationMs, error) {
+  try {
+    if (!_logDir) {
+      _logDir = join(root, '.ogu', 'logs');
+      if (!existsSync(_logDir)) mkdirSync(_logDir, { recursive: true });
+    }
+    const entry = { ts: new Date().toISOString(), method, path: pathname, status, durationMs };
+    if (error) entry.error = error;
+    appendFileSync(join(_logDir, 'http.jsonl'), JSON.stringify(entry) + '\n', 'utf8');
+  } catch { /* non-fatal */ }
+}
+
 export function createApiRouter({ root, runnerPool, loops, emitAudit, config, broadcaster, healthAggregator, healthProbe, healthDashboard }) {
   return async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const method = req.method;
+    const _reqStart = Date.now();
+
+    // Patch writeHead to capture status for logging
+    const _origWriteHead = res.writeHead.bind(res);
+    res.writeHead = (statusCode, ...args) => {
+      httpLog(root, method, url.pathname, statusCode, Date.now() - _reqStart);
+      res.writeHead = _origWriteHead; // restore to avoid double-log
+      return _origWriteHead(statusCode, ...args);
+    };
 
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -76,6 +99,69 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
       // GET /api/dashboard — aggregated system snapshot
       if (url.pathname === '/api/dashboard' && method === 'GET') {
         return json(res, 200, buildDashboard(root, runnerPool, loops));
+      }
+
+      // ── Kadima UI aliases (/api/kadima/*) ──
+      // These are the paths the Kadima UI frontend expects.
+
+      // GET /api/kadima/health
+      if (url.pathname === '/api/kadima/health' && method === 'GET') {
+        const mem = process.memoryUsage();
+        return json(res, 200, {
+          status: 'healthy',
+          uptimeMs: Math.floor(process.uptime() * 1000),
+          pid: process.pid,
+          loops: loops.map(l => ({ name: l.name, running: l.isRunning, tickCount: l.tickCount })),
+          memory: {
+            heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024 * 100) / 100,
+            heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024 * 100) / 100,
+          },
+        });
+      }
+
+      // GET /api/kadima/dashboard
+      if (url.pathname === '/api/kadima/dashboard' && method === 'GET') {
+        return json(res, 200, buildDashboard(root, runnerPool, loops));
+      }
+
+      // GET /api/kadima/scheduler
+      if (url.pathname === '/api/kadima/scheduler' && method === 'GET') {
+        const statePath = join(getStateDir(root), 'scheduler-state.json');
+        if (!existsSync(statePath)) return json(res, 200, { queue: [], total: 0 });
+        const state = JSON.parse(readFileSync(statePath, 'utf8'));
+        return json(res, 200, { ...state });
+      }
+
+      // GET /api/kadima/runners
+      if (url.pathname === '/api/kadima/runners' && method === 'GET') {
+        return json(res, 200, runnerPool.status());
+      }
+
+      // POST /api/kadima/start — daemon is already running if this endpoint is reachable
+      if (url.pathname === '/api/kadima/start' && method === 'POST') {
+        return json(res, 200, { ok: true, pid: process.pid, message: 'Daemon is already running' });
+      }
+
+      // POST /api/kadima/stop — graceful shutdown
+      if (url.pathname === '/api/kadima/stop' && method === 'POST') {
+        json(res, 200, { ok: true, message: 'Shutting down...' });
+        setTimeout(() => process.exit(0), 200);
+        return;
+      }
+
+      // GET /api/kadima/status
+      if (url.pathname === '/api/kadima/status' && method === 'GET') {
+        return json(res, 200, { running: true, pid: process.pid, uptime: process.uptime() });
+      }
+
+      // GET /api/kadima/standups — alias for standup data
+      if (url.pathname === '/api/kadima/standups' && method === 'GET') {
+        return json(res, 200, { entries: [] });
+      }
+
+      // GET /api/kadima/allocations
+      if (url.pathname === '/api/kadima/allocations' && method === 'GET') {
+        return json(res, 200, { allocations: [] });
       }
 
       // Health check — extended with circuit breakers, freeze, org health
@@ -697,6 +783,7 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
       return json(res, 404, { error: 'Not found', path: url.pathname });
 
     } catch (err) {
+      httpLog(root, method, url.pathname, 500, Date.now() - _reqStart, err.message);
       return json(res, 500, { error: err.message });
     }
   };

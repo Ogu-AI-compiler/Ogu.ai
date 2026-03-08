@@ -11,10 +11,20 @@
  *   POST /api/wizard/personalize     — personalize step questions
  */
 
-import { spawn } from 'node:child_process';
+import { query } from '@anthropic-ai/claude-agent-sdk';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
+import { cacheGet, cacheSet, prefetchAfterClassify } from '../lib/wizard-prefetch.mjs';
 import { fileURLToPath } from 'node:url';
+
+// Strip auth env vars so the Agent SDK uses Claude's own stored OAT credentials
+const AGENT_ENV = (() => {
+  const env = { ...process.env };
+  delete env.CLAUDECODE;
+  delete env.ANTHROPIC_API_KEY;
+  delete env.ANTHROPIC_AUTH_TOKEN;
+  return env;
+})();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = resolve(__dirname, '..', '..', 'ogu', 'commands', 'lib');
@@ -51,39 +61,28 @@ export async function recordChatSpend(root, entry) {
 
 export async function callLLM(model, system, userMessage, maxTokens = 1024) {
   const modelId = MODEL_IDS[model] || MODEL_IDS.sonnet;
-  const fullSystem = system + LANG_RULE;
+  const fullPrompt = system + LANG_RULE + '\n\n---\n\n' + userMessage;
 
-  const raw = await new Promise((resolve_, reject) => {
-    const args = [
-      '-p', userMessage,
-      '--system', fullSystem,
-      '--model', modelId,
-      '--max-tokens', String(maxTokens),
-      '--output-format', 'json',
-    ];
-    const spawnEnv = { ...process.env };
-    delete spawnEnv.CLAUDECODE;
-    const proc = spawn('claude', args, { env: spawnEnv });
-    const chunks = [];
-    const errChunks = [];
-    proc.stdout.on('data', (chunk) => chunks.push(chunk));
-    proc.stderr.on('data', (chunk) => errChunks.push(chunk));
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`claude CLI exited ${code}: ${Buffer.concat(errChunks).toString()}`));
-      } else {
-        resolve_(Buffer.concat(chunks).toString('utf8'));
-      }
-    });
-    proc.on('error', reject);
+  const result = query({
+    prompt: fullPrompt,
+    options: {
+      model: modelId,
+      maxTurns: 1,
+      allowedTools: [],
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
+      env: AGENT_ENV,
+    },
   });
 
-  const cliData = JSON.parse(raw);
-  return {
-    text:         cliData.result ?? cliData.text ?? '',
-    inputTokens:  cliData.usage?.input_tokens  || 0,
-    outputTokens: cliData.usage?.output_tokens || 0,
-  };
+  for await (const msg of result) {
+    if (msg.type === 'result') {
+      if (msg.is_error) throw new Error(`Agent SDK error: ${msg.result}`);
+      return { text: msg.result ?? '', inputTokens: 0, outputTokens: 0 };
+    }
+  }
+
+  throw new Error('Agent SDK: no result received');
 }
 
 function repairJSON(text) {
@@ -140,6 +139,166 @@ function normalizeHex(color) {
   }
   if (!/^#[0-9a-fA-F]{6}$/.test(c)) return null;
   return c.toUpperCase();
+}
+
+// ── Standalone generators (used by handlers + prefetch) ───────────────────────
+
+const CATCHALL = /^(mix of|all of the above|combination|multiple|various|hybrid|any|whatever)/i;
+
+const FALLBACK_DESIGN_QUESTIONS = [
+  { id: 'clarify_design_feel', type: 'select', prompt: 'What visual feel should it have?', options: ['Clean and minimal', 'Warm and cozy', 'Editorial and elegant', 'Bold and modern'], default: null, required: true },
+  { id: 'clarify_layout_density', type: 'select', prompt: 'How dense should the layout be?', options: ['Spacious and airy', 'Balanced', 'Information-dense'], default: null, required: true },
+];
+
+const FOCUS_BY_ARCHETYPE = {
+  'website.content.v1':   { id: 'clarify_content_focus',     type: 'short_text', prompt: 'Which content categories or topics should it focus on?', default: null, required: true },
+  'website.ecommerce.v1': { id: 'clarify_product_focus',     type: 'short_text', prompt: 'What product categories are you selling?', default: null, required: true },
+  'app.marketplace.v1':   { id: 'clarify_marketplace_focus', type: 'short_text', prompt: 'What is being listed or exchanged in the marketplace?', default: null, required: true },
+  'app.tracker.v1':       { id: 'clarify_tracker_focus',     type: 'short_text', prompt: 'What exactly should the product track?', default: null, required: true },
+  'app.scheduling.v1':    { id: 'clarify_scheduling_focus',  type: 'short_text', prompt: 'What is being scheduled or booked?', default: null, required: true },
+};
+
+const FALLBACK_PALETTES = [
+  { name: 'Warm Sesame',        colors: ['#F5E6CC', '#D9B98C', '#B77A4A', '#4B3621', '#FFFFFF'], notes: 'Earthy warmth and comfort.' },
+  { name: 'Fresh Green',        colors: ['#F2F7F2', '#B8E0C9', '#5FB47A', '#1F4D36', '#0F1F17'], notes: 'Clean, fresh, and modern.' },
+  { name: 'Mediterranean Blue', colors: ['#F2F6FA', '#A8C7E6', '#2E6AA5', '#0F2A3A', '#FFFFFF'], notes: 'Coastal clarity with strong contrast.' },
+  { name: 'Bold Contrast',      colors: ['#F7F1E8', '#E07A5F', '#3D405B', '#1B1D2A', '#FFFFFF'], notes: 'High contrast with a premium edge.' },
+];
+
+/**
+ * Generate clarify questions — shared by route handler and prefetch.
+ * Returns the response payload { questions, model, cost }.
+ */
+export async function generateClarify(description, archetypeId, detailLevel, previousAnswers = {}) {
+  const system = `You are a product discovery interviewer.
+
+The user gave a brief description and selected archetype "${archetypeId}".
+Your job is to ask the missing questions that materially affect the product scope, UX, and visual direction.
+
+Rules:
+- Ask ONLY the most important gaps; no generic or redundant questions.
+- For detail level:
+  - minimal: ask 3-5 questions
+  - moderate: ask 2-3 questions
+  - comprehensive: ask 0-1 questions (or return empty array)
+- Questions must be concrete and domain-specific.
+- If the description is vague, always include at least ONE question that narrows the product's primary focus.
+- Use "multiselect" for category/type questions.
+- Do NOT include catch-all options like "Mix", "All of the above", "Various", "Combination".
+- Always include at least ONE design question unless it is already clearly answered.
+- IDs must be stable: clarify_1, clarify_2, clarify_3...
+
+Return ONLY valid JSON:
+{
+  "questions": [
+    {
+      "id": "clarify_1",
+      "type": "select|multiselect|short_text",
+      "prompt": "question text",
+      "options": ["option 1", "option 2"],
+      "default": null,
+      "required": true
+    }
+  ]
+}`;
+
+  const userMsg = `User description: "${description.trim()}"
+Detail level: ${detailLevel || 'minimal'}
+Previous answers: ${JSON.stringify(previousAnswers)}`;
+
+  const { text, inputTokens, outputTokens } = await callLLM('haiku', system, userMsg, 900);
+  const parsed = parseJSON(text);
+  const cost = computeCost('haiku', inputTokens, outputTokens);
+
+  const detail = detailLevel || 'minimal';
+  const maxQuestions = detail === 'comprehensive' ? 3 : detail === 'moderate' ? 5 : 6;
+  const minQuestions = detail === 'comprehensive' ? 3 : detail === 'moderate' ? 3 : 4;
+
+  const rawQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
+  const cleaned = rawQuestions.map((q, idx) => {
+    const options = Array.isArray(q.options) ? q.options.filter((o) => !CATCHALL.test(o.trim())) : undefined;
+    return { id: q.id || `clarify_${idx + 1}`, type: q.type || 'select', prompt: q.prompt || 'Clarify requirement', options, default: q.default ?? null, required: q.required !== false };
+  });
+
+  const hasDesign = cleaned.some((q) => /design|visual|look|feel|style|layout|typography|color|imagery|photos|illustration|video/i.test(q.prompt || ''));
+  const hasFocus  = cleaned.some((q) => /type|category|categories|focus|topic|cuisine|product|service|marketplace|track|schedule/i.test(q.prompt || ''));
+
+  const desc     = (description || '').toLowerCase();
+  const prevText = JSON.stringify(previousAnswers).toLowerCase();
+  const hasLanguage = /language|lang|hebrew|עברית|english|arabic|rtl|ltr/i.test(desc) || /language|lang|hebrew|עברית|english|arabic|rtl|ltr/i.test(prevText) || cleaned.some((q) => /language|lang|rtl|ltr/i.test(q.prompt || ''));
+  const hasFont     = /font|typography|typeface/i.test(desc) || /font|typography|typeface/i.test(prevText) || cleaned.some((q) => /font|typography|typeface/i.test(q.prompt || ''));
+
+  const mandatoryQuestions = [
+    !hasLanguage && { id: 'clarify_language', type: 'select', prompt: 'What language should the site be built in?', options: ['Hebrew (RTL)', 'English', 'Arabic (RTL)', 'Hebrew + English', 'Arabic + English'], default: null, required: true },
+    !hasFont     && { id: 'clarify_font_style', type: 'select', prompt: 'What primary font style should lead the design?', options: ['Modern sans (clean)', 'Classic serif (editorial)', 'Geometric sans (bold)', 'Humanist sans (warm)', 'Display (distinctive)'], default: null, required: true },
+  ].filter(Boolean);
+
+  let questions = cleaned;
+  const focusFallback = FOCUS_BY_ARCHETYPE[archetypeId];
+  if (!hasFocus && focusFallback && questions.length < maxQuestions) questions = [...questions, focusFallback];
+  if (!hasDesign && questions.length < maxQuestions) questions = [...questions, FALLBACK_DESIGN_QUESTIONS[0]];
+  if (!hasDesign && detail === 'minimal' && questions.length < maxQuestions) questions = [...questions, FALLBACK_DESIGN_QUESTIONS[1]];
+
+  if (mandatoryQuestions.length > 0) {
+    const seenPrompts = new Set(questions.map((q) => (q.prompt || '').toLowerCase()));
+    const prepended = mandatoryQuestions.filter((q) => !seenPrompts.has((q.prompt || '').toLowerCase()));
+    questions = [...prepended, ...questions];
+  }
+
+  if (questions.length < minQuestions) {
+    const needed = Math.min(FALLBACK_DESIGN_QUESTIONS.length, minQuestions - questions.length);
+    for (let i = 0; i < needed; i++) {
+      if (!questions.find((q) => q.id === FALLBACK_DESIGN_QUESTIONS[i].id)) questions.push(FALLBACK_DESIGN_QUESTIONS[i]);
+    }
+  }
+
+  questions = questions.slice(0, maxQuestions).map((q, idx) => ({ ...q, id: `clarify_${idx + 1}` }));
+  return { questions, model: MODEL_IDS.haiku, cost };
+}
+
+/**
+ * Generate brand palettes — shared by route handler and prefetch.
+ * Returns the response payload { palettes, model, cost }.
+ */
+export async function generatePalette(description, archetypeId, detailLevel = 'minimal', previousAnswers = {}) {
+  const system = `You are a brand color palette generator for product websites.
+
+Generate 3 distinct palettes that fit the product and audience.
+Rules:
+- Each palette must include 4–6 HEX colors (#RRGGBB)
+- Colors should be usable for UI: include background, primary, accent, text
+- Keep names short and evocative
+- Provide a 1-sentence rationale
+- Return ONLY valid JSON
+
+{
+  "palettes": [
+    { "name": "Warm Sesame", "colors": ["#F3E2C7", "#D8B48A", "#B5794A", "#3C2E25", "#FFFFFF"], "notes": "..." }
+  ]
+}`;
+
+  const userMsg = `Product: ${description.trim()}
+Archetype: ${archetypeId || 'unknown'}
+Detail level: ${detailLevel || 'minimal'}
+Previous answers: ${JSON.stringify(previousAnswers)}`;
+
+  const { text, inputTokens, outputTokens } = await callLLM('haiku', system, userMsg, 900);
+  const parsed = parseJSON(text);
+  const cost = computeCost('haiku', inputTokens, outputTokens);
+
+  const raw = Array.isArray(parsed?.palettes) ? parsed.palettes : [];
+  const palettes = raw.map((p, idx) => {
+    const colors = Array.isArray(p?.colors) ? p.colors.map(normalizeHex).filter(Boolean) : [];
+    if (colors.length < 3) return null;
+    return {
+      id:     `palette_${idx + 1}`,
+      name:   (p?.name || `Palette ${idx + 1}`).toString().slice(0, 40),
+      colors: colors.slice(0, 6),
+      notes:  (p?.notes || p?.rationale || '').toString().slice(0, 120),
+    };
+  }).filter(Boolean);
+
+  return { palettes: palettes.length > 0 ? palettes : FALLBACK_PALETTES, model: MODEL_IDS.haiku, cost };
 }
 
 // ── Route handler ─────────────────────────────────────────────────────────────
@@ -209,14 +368,28 @@ Return ONLY valid JSON:
       const cost = computeCost('haiku', inputTokens, outputTokens);
       await recordChatSpend(root, { timestamp: new Date().toISOString(), model: 'haiku', inputTokens, outputTokens, cost, phase: 'discovery' });
 
-      json(res, 200, {
+      const result = {
         archetypes:      parsed.archetypes     || [],
         suggested_mode:  parsed.suggested_mode || null,
         disambiguation:  parsed.disambiguation || null,
         detail_level:    parsed.detail_level   || 'minimal',
         model: MODEL_IDS.haiku,
         cost,
-      });
+      };
+      json(res, 200, result);
+
+      // Prefetch next steps while user reads the classify result (~5-10s human time).
+      // clarify and palette don't depend on user answers → safe to start immediately.
+      const topArchetype = result.archetypes[0];
+      if (topArchetype?.id) {
+        prefetchAfterClassify({
+          description:      description.trim(),
+          archetypeId:      topArchetype.id,
+          detailLevel:      result.detail_level,
+          generateClarify,
+          generatePalette,
+        });
+      }
     } catch (err) {
       json(res, 500, { error: err.message || 'Classification failed' });
     }
@@ -246,9 +419,9 @@ Rules:
 }`;
 
     try {
-      const { text, inputTokens, outputTokens } = await callLLM('opus', system, description.trim(), 600);
-      const cost = computeCost('opus', inputTokens, outputTokens);
-      await recordChatSpend(root, { timestamp: new Date().toISOString(), model: 'opus', inputTokens, outputTokens, cost, phase: 'discovery' });
+      const { text, inputTokens, outputTokens } = await callLLM('sonnet', system, description.trim(), 600);
+      const cost = computeCost('sonnet', inputTokens, outputTokens);
+      await recordChatSpend(root, { timestamp: new Date().toISOString(), model: 'sonnet', inputTokens, outputTokens, cost, phase: 'discovery' });
 
       let brief = null;
       try { brief = parseJSON(text); } catch {}
@@ -271,107 +444,17 @@ Rules:
     if (!description?.trim()) { json(res, 400, { error: 'description is required' }); return true; }
     if (!archetypeId)         { json(res, 400, { error: 'archetypeId is required' }); return true; }
 
-    const system = `You are a product discovery interviewer.
-
-The user gave a brief description and selected archetype "${archetypeId}".
-Your job is to ask the missing questions that materially affect the product scope, UX, and visual direction.
-
-Rules:
-- Ask ONLY the most important gaps; no generic or redundant questions.
-- For detail level:
-  - minimal: ask 3-5 questions
-  - moderate: ask 2-3 questions
-  - comprehensive: ask 0-1 questions (or return empty array)
-- Questions must be concrete and domain-specific.
-- If the description is vague, always include at least ONE question that narrows the product's primary focus.
-- Use "multiselect" for category/type questions.
-- Do NOT include catch-all options like "Mix", "All of the above", "Various", "Combination".
-- Always include at least ONE design question unless it is already clearly answered.
-- IDs must be stable: clarify_1, clarify_2, clarify_3...
-
-Return ONLY valid JSON:
-{
-  "questions": [
-    {
-      "id": "clarify_1",
-      "type": "select|multiselect|short_text",
-      "prompt": "question text",
-      "options": ["option 1", "option 2"],
-      "default": null,
-      "required": true
+    // Cache hit: prefetch ran while user was reading classify result
+    const hasAnswers = previousAnswers && Object.keys(previousAnswers).length > 0;
+    if (!hasAnswers) {
+      const cached = cacheGet('clarify', description.trim(), archetypeId, detailLevel || 'minimal');
+      if (cached) { json(res, 200, cached); return true; }
     }
-  ]
-}`;
-
-    const userMsg = `User description: "${description.trim()}"
-Detail level: ${detailLevel || 'minimal'}
-Previous answers: ${JSON.stringify(previousAnswers || {})}`;
 
     try {
-      const { text, inputTokens, outputTokens } = await callLLM('haiku', system, userMsg, 900);
-      const parsed = parseJSON(text);
-      const cost = computeCost('haiku', inputTokens, outputTokens);
-      await recordChatSpend(root, { timestamp: new Date().toISOString(), model: 'haiku', inputTokens, outputTokens, cost, phase: 'discovery' });
-
-      const CATCHALL = /^(mix of|all of the above|combination|multiple|various|hybrid|any|whatever)/i;
-      const rawQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
-      const detail = detailLevel || 'minimal';
-      const maxQuestions = detail === 'comprehensive' ? 3 : detail === 'moderate' ? 5 : 6;
-      const minQuestions = detail === 'comprehensive' ? 3 : detail === 'moderate' ? 3 : 4;
-
-      const cleaned = rawQuestions.map((q, idx) => {
-        const options = Array.isArray(q.options) ? q.options.filter((o) => !CATCHALL.test(o.trim())) : undefined;
-        return { id: q.id || `clarify_${idx + 1}`, type: q.type || 'select', prompt: q.prompt || 'Clarify requirement', options, default: q.default ?? null, required: q.required !== false };
-      });
-
-      const hasDesign = cleaned.some((q) => /design|visual|look|feel|style|layout|typography|color|imagery|photos|illustration|video/i.test(q.prompt || ''));
-      const hasFocus  = cleaned.some((q) => /type|category|categories|focus|topic|cuisine|product|service|marketplace|track|schedule/i.test(q.prompt || ''));
-
-      const desc = (description || '').toLowerCase();
-      const prevText = JSON.stringify(previousAnswers || {}).toLowerCase();
-      const hasLanguage = /language|lang|hebrew|עברית|english|arabic|rtl|ltr/i.test(desc) || /language|lang|hebrew|עברית|english|arabic|rtl|ltr/i.test(prevText) || cleaned.some((q) => /language|lang|rtl|ltr/i.test(q.prompt || ''));
-      const hasFont = /font|typography|typeface/i.test(desc) || /font|typography|typeface/i.test(prevText) || cleaned.some((q) => /font|typography|typeface/i.test(q.prompt || ''));
-
-      const mandatoryQuestions = [
-        !hasLanguage && { id: 'clarify_language', type: 'select', prompt: 'What language should the site be built in?', options: ['Hebrew (RTL)', 'English', 'Arabic (RTL)', 'Hebrew + English', 'Arabic + English'], default: null, required: true },
-        !hasFont && { id: 'clarify_font_style', type: 'select', prompt: 'What primary font style should lead the design?', options: ['Modern sans (clean)', 'Classic serif (editorial)', 'Geometric sans (bold)', 'Humanist sans (warm)', 'Display (distinctive)'], default: null, required: true },
-      ].filter(Boolean);
-
-      const fallbackDesignQuestions = [
-        { id: 'clarify_design_feel', type: 'select', prompt: 'What visual feel should it have?', options: ['Clean and minimal', 'Warm and cozy', 'Editorial and elegant', 'Bold and modern'], default: null, required: true },
-        { id: 'clarify_layout_density', type: 'select', prompt: 'How dense should the layout be?', options: ['Spacious and airy', 'Balanced', 'Information-dense'], default: null, required: true },
-      ];
-
-      const focusByArchetype = {
-        'website.content.v1':   { id: 'clarify_content_focus',     type: 'short_text', prompt: 'Which content categories or topics should it focus on?', default: null, required: true },
-        'website.ecommerce.v1': { id: 'clarify_product_focus',     type: 'short_text', prompt: 'What product categories are you selling?', default: null, required: true },
-        'app.marketplace.v1':   { id: 'clarify_marketplace_focus', type: 'short_text', prompt: 'What is being listed or exchanged in the marketplace?', default: null, required: true },
-        'app.tracker.v1':       { id: 'clarify_tracker_focus',     type: 'short_text', prompt: 'What exactly should the product track?', default: null, required: true },
-        'app.scheduling.v1':    { id: 'clarify_scheduling_focus',  type: 'short_text', prompt: 'What is being scheduled or booked?', default: null, required: true },
-      };
-
-      let questions = cleaned;
-      const focusFallback = focusByArchetype[archetypeId];
-      if (!hasFocus && focusFallback && questions.length < maxQuestions) questions = [...questions, focusFallback];
-      if (!hasDesign && questions.length < maxQuestions) questions = [...questions, fallbackDesignQuestions[0]];
-      if (!hasDesign && detail === 'minimal' && questions.length < maxQuestions) questions = [...questions, fallbackDesignQuestions[1]];
-
-      if (mandatoryQuestions.length > 0) {
-        const seenPrompts = new Set(questions.map((q) => (q.prompt || '').toLowerCase()));
-        const prepended = mandatoryQuestions.filter((q) => !seenPrompts.has((q.prompt || '').toLowerCase()));
-        questions = [...prepended, ...questions];
-      }
-
-      if (questions.length < minQuestions) {
-        const needed = Math.min(fallbackDesignQuestions.length, minQuestions - questions.length);
-        for (let i = 0; i < needed; i++) {
-          if (!questions.find((q) => q.id === fallbackDesignQuestions[i].id)) questions.push(fallbackDesignQuestions[i]);
-        }
-      }
-
-      questions = questions.slice(0, maxQuestions).map((q, idx) => ({ ...q, id: `clarify_${idx + 1}` }));
-
-      json(res, 200, { questions, model: MODEL_IDS.haiku, cost });
+      const result = await generateClarify(description, archetypeId, detailLevel, previousAnswers || {});
+      await recordChatSpend(root, { timestamp: new Date().toISOString(), model: 'haiku', inputTokens: 0, outputTokens: 0, cost: result.cost, phase: 'discovery' });
+      json(res, 200, result);
     } catch (err) {
       json(res, 500, { error: err.message || 'Clarification failed' });
     }
@@ -384,55 +467,16 @@ Previous answers: ${JSON.stringify(previousAnswers || {})}`;
     const { description, archetypeId, detailLevel, previousAnswers } = body;
     if (!description?.trim()) { json(res, 400, { error: 'description is required' }); return true; }
 
-    const system = `You are a brand color palette generator for product websites.
-
-Generate 4 distinct palettes that fit the product and audience.
-Rules:
-- Each palette must include 4–6 HEX colors (#RRGGBB)
-- Colors should be usable for UI: include background, primary, accent, text
-- Keep names short and evocative
-- Provide a 1-sentence rationale
-- Return ONLY valid JSON
-
-{
-  "palettes": [
-    { "name": "Warm Sesame", "colors": ["#F3E2C7", "#D8B48A", "#B5794A", "#3C2E25", "#FFFFFF"], "notes": "..." }
-  ]
-}`;
-
-    const userMsg = `Product: ${description.trim()}
-Archetype: ${archetypeId || 'unknown'}
-Detail level: ${detailLevel || 'minimal'}
-Previous answers: ${JSON.stringify(previousAnswers || {})}`;
-
-    const fallbackPalettes = [
-      { name: 'Warm Sesame',       colors: ['#F5E6CC', '#D9B98C', '#B77A4A', '#4B3621', '#FFFFFF'], notes: 'Earthy warmth and comfort.' },
-      { name: 'Fresh Green',       colors: ['#F2F7F2', '#B8E0C9', '#5FB47A', '#1F4D36', '#0F1F17'], notes: 'Clean, fresh, and modern.' },
-      { name: 'Mediterranean Blue', colors: ['#F2F6FA', '#A8C7E6', '#2E6AA5', '#0F2A3A', '#FFFFFF'], notes: 'Coastal clarity with strong contrast.' },
-      { name: 'Bold Contrast',     colors: ['#F7F1E8', '#E07A5F', '#3D405B', '#1B1D2A', '#FFFFFF'], notes: 'High contrast with a premium edge.' },
-    ];
+    // Cache hit: palette doesn't depend on user answers — prefetch is always valid
+    const cached = cacheGet('palette', description.trim(), archetypeId || '');
+    if (cached) { json(res, 200, cached); return true; }
 
     try {
-      const { text, inputTokens, outputTokens } = await callLLM('haiku', system, userMsg, 900);
-      const parsed = parseJSON(text);
-      const cost = computeCost('haiku', inputTokens, outputTokens);
-      await recordChatSpend(root, { timestamp: new Date().toISOString(), model: 'haiku', inputTokens, outputTokens, cost, phase: 'discovery' });
-
-      const raw = Array.isArray(parsed?.palettes) ? parsed.palettes : [];
-      const palettes = raw.map((p, idx) => {
-        const colors = Array.isArray(p?.colors) ? p.colors.map(normalizeHex).filter(Boolean) : [];
-        if (colors.length < 3) return null;
-        return {
-          id:     `palette_${idx + 1}`,
-          name:   (p?.name || `Palette ${idx + 1}`).toString().slice(0, 40),
-          colors: colors.slice(0, 6),
-          notes:  (p?.notes || p?.rationale || '').toString().slice(0, 120),
-        };
-      }).filter(Boolean);
-
-      json(res, 200, { palettes: palettes.length > 0 ? palettes : fallbackPalettes, model: MODEL_IDS.haiku, cost });
+      const result = await generatePalette(description, archetypeId, detailLevel, previousAnswers || {});
+      await recordChatSpend(root, { timestamp: new Date().toISOString(), model: 'haiku', inputTokens: 0, outputTokens: 0, cost: result.cost, phase: 'discovery' });
+      json(res, 200, result);
     } catch (err) {
-      json(res, 200, { palettes: fallbackPalettes, model: 'fallback', cost: 0, error: err.message });
+      json(res, 200, { palettes: FALLBACK_PALETTES, model: 'fallback', cost: 0, error: err.message });
     }
     return true;
   }

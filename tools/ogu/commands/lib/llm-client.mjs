@@ -123,41 +123,46 @@ function simulateResponse(messages, system, simulateFiles) {
   };
 }
 
-// ── Claude CLI ──
+// ── Agent SDK ──
+
+const _agentEnv = (() => {
+  const e = { ...process.env };
+  delete e.CLAUDECODE;
+  delete e.ANTHROPIC_API_KEY;
+  delete e.ANTHROPIC_AUTH_TOKEN;
+  return e;
+})();
 
 async function callViaCLI({ model, messages, system, maxTokens }) {
-  const { execFileSync } = await import('node:child_process');
+  const { query } = await import('@anthropic-ai/claude-agent-sdk');
 
-  // Convert messages array → single prompt string for CLI
-  const prompt = messages
-    .map(m => `${m.role === 'user' ? 'Human' : 'Assistant'}: ${m.content}`)
-    .join('\n\n');
+  const prompt = (system ? system + '\n\n---\n\n' : '') +
+    messages.map(m => `${m.role === 'user' ? 'Human' : 'Assistant'}: ${m.content}`).join('\n\n');
 
-  const args = ['-p', prompt, '--output-format', 'json'];
-  if (system) args.push('--system', system);
-  if (model)  args.push('--model', model);
-  if (maxTokens) args.push('--max-tokens', String(maxTokens));
-
-  const spawnEnv = { ...process.env };
-  delete spawnEnv.CLAUDECODE;
-
-  const raw = execFileSync('claude', args, {
-    encoding: 'utf8',
-    maxBuffer: 10 * 1024 * 1024,
-    env: spawnEnv,
+  const result = query({
+    prompt,
+    options: {
+      model: model || undefined,
+      maxTurns: 1,
+      allowedTools: [],
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
+      env: _agentEnv,
+    },
   });
 
-  const data = JSON.parse(raw);
-  const content = data.result ?? data.text ?? '';
+  for await (const msg of result) {
+    if (msg.type === 'result') {
+      if (msg.is_error) throw new Error(`Agent SDK error: ${msg.result}`);
+      return {
+        content: msg.result ?? '',
+        files: [],
+        usage: { inputTokens: 0, outputTokens: 0 },
+      };
+    }
+  }
 
-  return {
-    content,
-    files: [],
-    usage: {
-      inputTokens:  data.usage?.input_tokens  || 0,
-      outputTokens: data.usage?.output_tokens || 0,
-    },
-  };
+  throw new Error('Agent SDK: no result received');
 }
 
 // ── Anthropic API ──

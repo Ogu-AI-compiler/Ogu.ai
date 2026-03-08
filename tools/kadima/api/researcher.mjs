@@ -6,24 +6,26 @@
  *   runResearch(description, mode, candidateSlug, onProgress) → ResearchReport
  *   loadReportFromStaging(slug) → ResearchReport | null
  *
- * LLM calls use the claude CLI directly via execFileSync / spawn.
- * Web search uses claude CLI with --allowedTools web_search.
+ * LLM calls use the Anthropic SDK directly (ANTHROPIC_API_KEY env var required).
+ * Web search uses the web_search_20250305 built-in tool via the API.
  * Reports are saved to ~/.ogu/research-staging/{slug}.json.
  *
  * Timeout: 240_000ms (4 minutes).
- *
- * ─── DEPLOY NOTE ─────────────────────────────────────────────────────────────
- * Currently uses `claude` CLI + --allowedTools web_search (no API key needed).
- * Before deployment, switch to Anthropic API + web_search tool:
- *   tools: [{ type: "web_search_20250305", name: "web_search" }]
- * Set ANTHROPIC_API_KEY env var — replace callWebSearchAsync() accordingly.
- * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { execFileSync, spawn } from 'node:child_process';
+import { query } from '@anthropic-ai/claude-agent-sdk';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+
+// Strip auth env vars so the Agent SDK uses Claude's own stored OAT credentials
+const AGENT_ENV = (() => {
+  const env = { ...process.env };
+  delete env.CLAUDECODE;
+  delete env.ANTHROPIC_API_KEY;
+  delete env.ANTHROPIC_AUTH_TOKEN;
+  return env;
+})();
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -78,101 +80,65 @@ function repairJSON(text) {
 
 // ── LLM helpers ───────────────────────────────────────────────────────────
 
-function callLLMSync(model, system, userMessage, maxTokens = 1000) {
-  const modelId = MODEL_IDS[model];
-  const fullSystem = system + LANG_RULE;
+async function callLLM(model, system, userMessage, maxTokens = 1000) {
+  const modelId = MODEL_IDS[model] || MODEL_IDS.sonnet;
+  const fullPrompt = system + LANG_RULE + '\n\n---\n\n' + userMessage;
 
-  let raw;
-  try {
-    raw = execFileSync(
-      'claude',
-      [
-        '-p', userMessage,
-        '--system', fullSystem,
-        '--model', modelId,
-        '--max-tokens', String(maxTokens),
-        '--output-format', 'json',
-      ],
-      { encoding: 'utf-8', maxBuffer: 5 * 1024 * 1024, timeout: 120_000, env: { ...process.env, CLAUDECODE: undefined } }
-    );
-  } catch (err) {
-    throw new Error(`claude CLI failed (${model}): ${err.message}`);
+  const result = query({
+    prompt: fullPrompt,
+    options: {
+      model: modelId,
+      maxTurns: 1,
+      allowedTools: [],
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
+      env: AGENT_ENV,
+    },
+  });
+
+  for await (const msg of result) {
+    if (msg.type === 'result') {
+      if (msg.is_error) throw new Error(`Agent SDK error: ${msg.result}`);
+      return msg.result ?? '';
+    }
   }
 
-  const parsed = JSON.parse(raw);
-  return parsed.result ?? parsed.text ?? parsed.content ?? '';
+  throw new Error('Agent SDK: no result received');
 }
 
 async function callWebSearchAsync(searchPrompt) {
-  return new Promise((resolve) => {
-    const spawnEnv = { ...process.env };
-    delete spawnEnv.CLAUDECODE;
-    const proc = spawn('claude', [
-      '-p', searchPrompt,
-      '--allowedTools', 'web_search',
-      '--output-format', 'json',
-      '--max-tokens', '2000',
-    ], { env: spawnEnv });
-
-    const chunks = [];
-    proc.stdout.on('data', (chunk) => chunks.push(chunk));
-
-    const timeout = setTimeout(() => {
-      proc.kill();
-      try {
-        const fallback = callLLMSync(
-          'sonnet',
-          'You are a research assistant. Answer based on your training knowledge. Be specific and factual.',
-          searchPrompt,
-          1500
-        );
-        resolve({ text: fallback, source: 'llm_knowledge' });
-      } catch {
-        resolve({ text: `Search timed out for: ${searchPrompt}`, source: 'error' });
-      }
-    }, 60_000);
-
-    proc.on('close', (code) => {
-      clearTimeout(timeout);
-      if (code !== 0) {
-        try {
-          const fallback = callLLMSync(
-            'sonnet',
-            'You are a research assistant. Answer based on your training knowledge. Be specific and factual.',
-            searchPrompt,
-            1500
-          );
-          resolve({ text: fallback, source: 'llm_knowledge' });
-        } catch (fallbackErr) {
-          resolve({ text: `Search failed and fallback failed: ${fallbackErr.message}`, source: 'error' });
-        }
-        return;
-      }
-      try {
-        const raw = Buffer.concat(chunks).toString('utf8');
-        const parsed = JSON.parse(raw);
-        const text = parsed.result ?? parsed.text ?? parsed.content ?? '';
-        resolve({ text, source: 'web_search' });
-      } catch {
-        resolve({ text: 'Failed to parse search result', source: 'error' });
-      }
+  try {
+    const result = query({
+      prompt: searchPrompt,
+      options: {
+        model: MODEL_IDS.sonnet,
+        maxTurns: 3,
+        allowedTools: ['WebSearch'],
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
+        env: AGENT_ENV,
+      },
     });
 
-    proc.on('error', () => {
-      clearTimeout(timeout);
-      try {
-        const fallback = callLLMSync(
-          'sonnet',
-          'You are a research assistant. Answer based on your training knowledge. Be specific and factual.',
-          searchPrompt,
-          1500
-        );
-        resolve({ text: fallback, source: 'llm_knowledge' });
-      } catch {
-        resolve({ text: `Spawn error for: ${searchPrompt}`, source: 'error' });
+    for await (const msg of result) {
+      if (msg.type === 'result' && !msg.is_error) {
+        return { text: msg.result || 'No results found', source: 'web_search' };
       }
-    });
-  });
+    }
+    return { text: 'No results found', source: 'web_search' };
+  } catch {
+    try {
+      const text = await callLLM(
+        'sonnet',
+        'You are a research assistant. Answer based on your training knowledge. Be specific and factual.',
+        searchPrompt,
+        1500,
+      );
+      return { text, source: 'llm_knowledge' };
+    } catch (fallbackErr) {
+      return { text: `Search failed: ${fallbackErr.message}`, source: 'error' };
+    }
+  }
 }
 
 // ── Step 1: Infer Search Plan ─────────────────────────────────────────────
@@ -201,7 +167,7 @@ Return ONLY valid JSON, no preamble:
 }`;
 
   const userMsg = `Product description: "${description}"\nMode: ${mode}`;
-  const text = callLLMSync('haiku', system, userMsg, 800);
+  const text = await callLLM('haiku', system, userMsg, 800);
   const parsed = parseJSON(text);
 
   if (!parsed) {
@@ -403,7 +369,7 @@ Mode: ${mode}
 
 Synthesize a complete ResearchReport JSON from this data.`;
 
-  const text = callLLMSync('sonnet', system, userMsg, 2500);
+  const text = await callLLM('sonnet', system, userMsg, 2500);
   const parsed = parseJSON(text);
   if (!parsed) throw new Error('synthesizeReport: failed to parse Sonnet response as JSON');
   return parsed;

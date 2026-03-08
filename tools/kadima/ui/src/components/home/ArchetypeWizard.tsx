@@ -789,6 +789,8 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
 
   // ── Render stages ──
 
+  const cleanOpt = (s: string) => s.replace(/\s*—\s*/g, ': ');
+
   // Header with back button
   const header = (
     <div className="flex items-center gap-2 mb-6">
@@ -796,6 +798,9 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
         <Icon d={icons.arrowLeft} size={16} />
       </IconBtn>
       <span className="text-lg font-semibold text-text capitalize">{activeMode === "venture" ? "Startup" : activeMode}</span>
+      {loadingClarify && (
+        <Icon d={icons.loader} size={14} style={{ color: "var(--color-accent)", animation: "spin 1s linear infinite", marginLeft: "auto" }} />
+      )}
     </div>
   );
 
@@ -803,7 +808,7 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
   if (stage === "input" || stage === "classifying") {
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-6">
-        <div key={stage} className="w-full max-w-[880px] stage-enter">
+        <div key={stage} className="w-full max-w-[680px] stage-enter">
           <IconBtn onClick={onBack} size={32} style={{ color: "rgba(255,255,255,0.7)", marginBottom: 24 }}>
             <Icon d={icons.arrowLeft} size={16} />
           </IconBtn>
@@ -920,7 +925,7 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
   if (stage === "researching") {
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-6">
-        <div key="researching" className="w-full max-w-[880px] stage-enter">
+        <div key="researching" className="w-full max-w-[680px] stage-enter">
           <IconBtn onClick={() => setStage("input")} size={32} style={{ color: "rgba(255,255,255,0.7)", marginBottom: 24 }}>
             <Icon d={icons.arrowLeft} size={16} />
           </IconBtn>
@@ -984,7 +989,7 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
     const { question, options } = classifyResult.disambiguation;
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-6">
-        <div key={stage} className="w-full max-w-[880px] stage-enter">
+        <div key={stage} className="w-full max-w-[680px] stage-enter">
           {header}
           <div className="wizard-card rounded-[28px] p-6 flex flex-col gap-5">
             <p className="text-sm text-text-muted">Help us understand better:</p>
@@ -1002,7 +1007,7 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
                     boxShadow: "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
                   }}
                 >
-                  {opt}
+                  {cleanOpt(opt)}
                 </button>
               ))}
             </div>
@@ -1029,7 +1034,7 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
 
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-6">
-        <div key={stage} className="w-full max-w-[880px] stage-enter">
+        <div key={stage} className="w-full max-w-[680px] stage-enter">
           {header}
           <div className="wizard-card rounded-[28px] p-6 flex flex-col gap-4">
             <p className="text-sm text-text-muted">
@@ -1037,31 +1042,37 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
             </p>
 
             <div className="flex flex-col gap-4">
-              {displayArchetypes.map((a, i) => (
-                <button
-                  key={a.id}
-                  onClick={() => handleSelectArchetype(a.id)}
-                  className="w-full text-left px-4 py-3.5 rounded-xl border transition-all cursor-pointer"
-                  style={{
-                    background: preselect && i === 0
-                      ? "linear-gradient(0deg, rgba(99,241,157,0) 0%, rgba(99,241,157,0.08) 2.45%, rgba(99,241,157,0) 126.14%)"
-                      : "transparent",
-                    borderColor: preselect && i === 0 ? "rgba(99,241,157,0.35)" : "var(--color-border)",
-                    boxShadow: preselect && i === 0
-                      ? "1.1px 2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, -1px -2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset, 0 0 20px rgba(99,241,157,0.1)"
-                      : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.18) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.18) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: preselect && i === 0 ? "var(--color-accent)" : "var(--color-text-muted)" }} />
-                    <span className="font-medium text-sm text-text">
-                      {a.title}
-                    </span>
-                  </div>
-                  <p className="text-xs text-text-muted mb-2">{a.description}</p>
-                  {a.confidence > 0 && <ConfidenceBar value={a.confidence} />}
-                </button>
-              ))}
+              {displayArchetypes.map((a, i) => {
+                const isSelected = selectedArchetype?.id === a.id;
+                const isHighlighted = isSelected || (preselect && i === 0 && !selectedArchetype);
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => handleSelectArchetype(a.id)}
+                    disabled={loadingClarify}
+                    className="w-full text-left px-4 py-3.5 rounded-xl border transition-all cursor-pointer"
+                    style={{
+                      background: isHighlighted
+                        ? "linear-gradient(0deg, rgba(99,241,157,0) 0%, rgba(99,241,157,0.08) 2.45%, rgba(99,241,157,0) 126.14%)"
+                        : "transparent",
+                      borderColor: isHighlighted ? "rgba(99,241,157,0.35)" : "var(--color-border)",
+                      boxShadow: isHighlighted
+                        ? "1.1px 2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, -1px -2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset, 0 0 20px rgba(99,241,157,0.1)"
+                        : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.18) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.18) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
+                      opacity: loadingClarify && !isSelected ? 0.45 : 1,
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: isHighlighted ? "var(--color-accent)" : "var(--color-text-muted)" }} />
+                        <span className="font-medium text-sm text-text">{a.title}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-text-muted mb-2">{a.description}</p>
+                    {a.confidence > 0 && <ConfidenceBar value={a.confidence} />}
+                  </button>
+                );
+              })}
             </div>
 
             {!showAllArchetypes && (
@@ -1127,12 +1138,12 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
 
     return (
       <div className="flex flex-col flex-1 items-center justify-start px-6 py-10">
-        <div key={stage} className="w-full max-w-[880px] stage-enter">
+        <div key={stage} className="w-full max-w-[680px] stage-enter">
           {header}
 
           <StepIndicator steps={CLARIFY_STEPS as any} currentIndex={stepIndex} />
 
-          <div className="wizard-card wizard-scroll rounded-[28px] p-6 flex flex-col gap-5">
+          <div className="wizard-card rounded-[28px] p-6 flex flex-col gap-5">
             {/* Research context badge */}
             {researchReport && (
               <div style={{
@@ -1162,6 +1173,85 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
               <span className="text-xs text-text-muted">Step {stepIndex + 1} of {CLARIFY_STEPS.length}</span>
             </div>
 
+            {loadingClarify ? (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <span className="letter-shimmer text-sm font-medium">Generating clarifying questions...</span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-5">
+                {stepQuestions.length === 0 && (
+                  <div className="text-xs text-text-muted">No questions in this step — continue.</div>
+                )}
+                {stepQuestions.map((q) => (
+                  <div key={q.id} className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-text">{q.prompt}</label>
+
+                    {q.type === "select" && q.options && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {q.options.map((opt) => (
+                          <button
+                            key={opt}
+                            onClick={() => handleAnswer(q.id, opt)}
+                            className="px-3 py-2 rounded-lg text-sm transition-all cursor-pointer text-left"
+                            style={{
+                              background: answers[q.id] === opt
+                                ? "linear-gradient(0deg, rgba(99,241,157,0) 0%, rgba(99,241,157,0.08) 2.45%, rgba(99,241,157,0) 126.14%)"
+                                : "linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 2.45%, rgba(255,255,255,0) 126.14%)",
+                              border: answers[q.id] === opt ? "1px solid rgba(99,241,157,0.35)" : "1px solid rgba(255,255,255,0.1)",
+                              color: answers[q.id] === opt ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.65)",
+                              boxShadow: answers[q.id] === opt
+                                ? "1.1px 2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, -1px -2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset, 0 0 16px rgba(99,241,157,0.1)"
+                                : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
+                            }}
+                          >
+                            {cleanOpt(opt)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {q.type === "multiselect" && q.options && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {q.options.map((opt) => {
+                          const selected = (answers[q.id] || []).includes(opt);
+                          return (
+                            <button
+                              key={opt}
+                              onClick={() => handleMultiAnswer(q.id, opt)}
+                              className="px-3 py-2 rounded-lg text-sm transition-all cursor-pointer text-left"
+                              style={{
+                                background: selected
+                                  ? "linear-gradient(0deg, rgba(99,241,157,0) 0%, rgba(99,241,157,0.08) 2.45%, rgba(99,241,157,0) 126.14%)"
+                                  : "linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 2.45%, rgba(255,255,255,0) 126.14%)",
+                                border: selected ? "1px solid rgba(99,241,157,0.35)" : "1px solid rgba(255,255,255,0.1)",
+                                color: selected ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.65)",
+                                boxShadow: selected
+                                  ? "1.1px 2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, -1px -2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset, 0 0 16px rgba(99,241,157,0.1)"
+                                  : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
+                              }}
+                            >
+                              {cleanOpt(opt)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {q.type === "short_text" && (
+                      <input
+                        type="text"
+                        value={answers[q.id] || ""}
+                        onChange={(e) => handleAnswer(q.id, e.target.value)}
+                        placeholder={q.default || ""}
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-transparent text-sm text-text placeholder:text-text-muted outline-none focus:border-accent transition-colors"
+                        style={{ fontFamily: "var(--font-sans)" }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Palette widget — Foundation step only */}
             {stepKey === "foundation" && (
               <div className="flex flex-col gap-3">
@@ -1189,8 +1279,8 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
                 ) : paletteOptions.length === 0 ? (
                   <div className="text-xs text-text-muted">No palettes yet — click regenerate.</div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                    {paletteOptions.map((p, idx) => {
+                  <div className="flex gap-2.5">
+                    {paletteOptions.slice(0, 3).map((p, idx) => {
                       const selected = selectedPalette?.name === p.name;
                       return (
                         <button
@@ -1208,106 +1298,26 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
                               : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.35) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.35) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
                           }}
                         >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1">
-                                {p.colors.slice(0, 5).map((c: string, i: number) => (
-                                  <span
-                                    key={`${c}-${i}`}
-                                    className="w-5 h-5 rounded-full border"
-                                    style={{ backgroundColor: c, borderColor: "rgba(255,255,255,0.15)" }}
-                                  />
-                                ))}
-                              </div>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between">
                               <span className="text-sm font-medium">{p.name}</span>
+                              {selected && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="rgba(99,241,157,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,6 5,9 10,3"/></svg>}
                             </div>
-                            {selected && <span className="text-xs text-accent">Selected</span>}
+                            <div className="flex items-center gap-1">
+                              {p.colors.slice(0, 5).map((c: string, i: number) => (
+                                <span
+                                  key={`${c}-${i}`}
+                                  className="rounded-full shrink-0"
+                                  style={{ backgroundColor: c, display: "inline-block", width: 28, height: 28 }}
+                                />
+                              ))}
+                            </div>
                           </div>
-                          {p.notes && <p className="text-xs text-text-muted mt-1">{p.notes}</p>}
                         </button>
                       );
                     })}
                   </div>
                 )}
-              </div>
-            )}
-
-            {loadingClarify ? (
-              <div className="flex flex-col items-center gap-3 py-6">
-                <span className="letter-shimmer text-sm font-medium">Generating clarifying questions...</span>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-5">
-                {stepQuestions.length === 0 && (
-                  <div className="text-xs text-text-muted">No questions in this step — continue.</div>
-                )}
-                {stepQuestions.map((q) => (
-                  <div key={q.id} className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-text">{q.prompt}</label>
-
-                    {q.type === "select" && q.options && (
-                      <div className="flex flex-col gap-2.5">
-                        {q.options.map((opt) => (
-                          <button
-                            key={opt}
-                            onClick={() => handleAnswer(q.id, opt)}
-                            className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm transition-all cursor-pointer"
-                            style={{
-                              background: answers[q.id] === opt
-                                ? "linear-gradient(0deg, rgba(99,241,157,0) 0%, rgba(99,241,157,0.08) 2.45%, rgba(99,241,157,0) 126.14%)"
-                                : "linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 2.45%, rgba(255,255,255,0) 126.14%)",
-                              border: answers[q.id] === opt ? "1px solid rgba(99,241,157,0.35)" : "1px solid rgba(255,255,255,0.1)",
-                              color: answers[q.id] === opt ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.65)",
-                              boxShadow: answers[q.id] === opt
-                                ? "1.1px 2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, -1px -2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset, 0 0 16px rgba(99,241,157,0.1)"
-                                : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
-                            }}
-                          >
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {q.type === "multiselect" && q.options && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {q.options.map((opt) => {
-                          const selected = (answers[q.id] || []).includes(opt);
-                          return (
-                            <button
-                              key={opt}
-                              onClick={() => handleMultiAnswer(q.id, opt)}
-                              className="px-3 py-2 rounded-lg text-sm transition-all cursor-pointer"
-                              style={{
-                                background: selected
-                                  ? "linear-gradient(0deg, rgba(99,241,157,0) 0%, rgba(99,241,157,0.08) 2.45%, rgba(99,241,157,0) 126.14%)"
-                                  : "linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 2.45%, rgba(255,255,255,0) 126.14%)",
-                                border: selected ? "1px solid rgba(99,241,157,0.35)" : "1px solid rgba(255,255,255,0.1)",
-                                color: selected ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.65)",
-                                boxShadow: selected
-                                  ? "1.1px 2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, -1px -2.2px 0.5px -1.8px rgba(99,241,157,0.9) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset, 0 0 16px rgba(99,241,157,0.1)"
-                                  : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
-                              }}
-                            >
-                              {opt}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {q.type === "short_text" && (
-                      <input
-                        type="text"
-                        value={answers[q.id] || ""}
-                        onChange={(e) => handleAnswer(q.id, e.target.value)}
-                        placeholder={q.default || ""}
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-transparent text-sm text-text placeholder:text-text-muted outline-none focus:border-accent transition-colors"
-                        style={{ fontFamily: "var(--font-sans)" }}
-                      />
-                    )}
-                  </div>
-                ))}
               </div>
             )}
 
@@ -1392,12 +1402,12 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
 
     return (
       <div className="flex flex-col flex-1 items-center justify-start px-6 py-10">
-        <div key={stage} className="w-full max-w-[880px] stage-enter">
+        <div key={stage} className="w-full max-w-[680px] stage-enter">
           {header}
 
           <StepIndicator steps={selectedArchetype.steps} currentIndex={currentStepIndex} />
 
-          <div className="wizard-card wizard-scroll rounded-[28px] p-6 flex flex-col gap-5">
+          <div className="wizard-card rounded-[28px] p-6 flex flex-col gap-5">
             <h3 className="text-lg font-semibold text-text">{currentStep.title}</h3>
 
             {loadingPersonalize ? (
@@ -1411,12 +1421,12 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
                     <label className="text-sm font-medium text-text">{q.prompt}</label>
 
                     {q.type === "select" && q.options && (
-                      <div className="flex flex-col gap-2.5">
+                      <div className="flex flex-wrap gap-1.5">
                         {q.options.map((opt) => (
                           <button
                             key={opt}
                             onClick={() => handleAnswer(q.id, opt)}
-                            className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm transition-all cursor-pointer"
+                            className="px-3 py-2 rounded-lg text-sm transition-all cursor-pointer text-left"
                             style={{
                               background: answers[q.id] === opt
                                 ? "linear-gradient(0deg, rgba(99,241,157,0) 0%, rgba(99,241,157,0.08) 2.45%, rgba(99,241,157,0) 126.14%)"
@@ -1428,7 +1438,7 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
                                 : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
                             }}
                           >
-                            {opt}
+                            {cleanOpt(opt)}
                           </button>
                         ))}
                       </div>
@@ -1442,7 +1452,7 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
                             <button
                               key={opt}
                               onClick={() => handleMultiAnswer(q.id, opt)}
-                              className="px-3 py-2 rounded-lg text-sm transition-all cursor-pointer"
+                              className="px-3 py-2 rounded-lg text-sm transition-all cursor-pointer text-left"
                               style={{
                                 background: selected
                                   ? "linear-gradient(0deg, rgba(99,241,157,0) 0%, rgba(99,241,157,0.08) 2.45%, rgba(99,241,157,0) 126.14%)"
@@ -1454,7 +1464,7 @@ export function ArchetypeWizard({ mode: initialMode, onBack }: { mode: WizardMod
                                   : "1.1px 2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, -1px -2.2px 0.5px -1.8px rgba(255,255,255,0.45) inset, 2px 3px 2px 0px rgba(0,0,0,0.1) inset",
                               }}
                             >
-                                                            {opt}
+                                                            {cleanOpt(opt)}
                             </button>
                           );
                         })}

@@ -140,6 +140,12 @@ export function KadimaView() {
   }, []);
 
   useEffect(() => {
+    // Auto-start daemon on page load if not running
+    api.getKadimaHealth().catch(() => null).then((h) => {
+      if (!h || h.error) {
+        api.startKadima().catch(() => {});
+      }
+    });
     fetchAll();
     const interval = setInterval(fetchAll, 8000);
     return () => clearInterval(interval);
