@@ -61,7 +61,9 @@ export async function callLLM(model, system, userMessage, maxTokens = 1024) {
       '--max-tokens', String(maxTokens),
       '--output-format', 'json',
     ];
-    const proc = spawn('claude', args);
+    const spawnEnv = { ...process.env };
+    delete spawnEnv.CLAUDECODE;
+    const proc = spawn('claude', args, { env: spawnEnv });
     const chunks = [];
     const errChunks = [];
     proc.stdout.on('data', (chunk) => chunks.push(chunk));

@@ -66,11 +66,12 @@ export async function callLLM({
     // Build CLI arguments
     const args = buildCLIArgs({ prompt, systemPrompt, model, maxTokens, tools, outputFormat: 'stream-json' });
 
-    // Build env
+    // Build env — strip CLAUDECODE to allow nested claude CLI invocations
     const procEnv = {
       ...process.env,
       ...extraEnv,
     };
+    delete procEnv.CLAUDECODE;
 
     const child = spawn('claude', args, {
       cwd: cwd || process.cwd(),

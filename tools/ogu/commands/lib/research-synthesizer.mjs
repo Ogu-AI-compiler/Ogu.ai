@@ -104,7 +104,7 @@ function callLLMSync(model, system, userMessage, maxTokens = 1000) {
         "--max-tokens", String(maxTokens),
         "--output-format", "json",
       ],
-      { encoding: "utf-8", maxBuffer: 5 * 1024 * 1024, timeout: 120_000 }
+      { encoding: "utf-8", maxBuffer: 5 * 1024 * 1024, timeout: 120_000, env: { ...process.env, CLAUDECODE: undefined } }
     );
   } catch (err) {
     throw new Error(`claude CLI failed (${model}): ${err.message}`);

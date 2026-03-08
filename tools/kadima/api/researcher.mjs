@@ -93,7 +93,7 @@ function callLLMSync(model, system, userMessage, maxTokens = 1000) {
         '--max-tokens', String(maxTokens),
         '--output-format', 'json',
       ],
-      { encoding: 'utf-8', maxBuffer: 5 * 1024 * 1024, timeout: 120_000 }
+      { encoding: 'utf-8', maxBuffer: 5 * 1024 * 1024, timeout: 120_000, env: { ...process.env, CLAUDECODE: undefined } }
     );
   } catch (err) {
     throw new Error(`claude CLI failed (${model}): ${err.message}`);
@@ -105,12 +105,14 @@ function callLLMSync(model, system, userMessage, maxTokens = 1000) {
 
 async function callWebSearchAsync(searchPrompt) {
   return new Promise((resolve) => {
+    const spawnEnv = { ...process.env };
+    delete spawnEnv.CLAUDECODE;
     const proc = spawn('claude', [
       '-p', searchPrompt,
       '--allowedTools', 'web_search',
       '--output-format', 'json',
       '--max-tokens', '2000',
-    ]);
+    ], { env: spawnEnv });
 
     const chunks = [];
     proc.stdout.on('data', (chunk) => chunks.push(chunk));

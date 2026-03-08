@@ -138,9 +138,13 @@ async function callViaCLI({ model, messages, system, maxTokens }) {
   if (model)  args.push('--model', model);
   if (maxTokens) args.push('--max-tokens', String(maxTokens));
 
+  const spawnEnv = { ...process.env };
+  delete spawnEnv.CLAUDECODE;
+
   const raw = execFileSync('claude', args, {
     encoding: 'utf8',
     maxBuffer: 10 * 1024 * 1024,
+    env: spawnEnv,
   });
 
   const data = JSON.parse(raw);
