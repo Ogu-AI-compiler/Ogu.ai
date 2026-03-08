@@ -34,6 +34,8 @@ import { buildPrompt } from './prompt-builder.mjs';
 import { parseResponse } from './response-parser.mjs';
 import { createSession, endSession } from './agent-identity.mjs';
 import { resolveMarketplaceAgent, searchRelevantPatterns, postExecutionHooks, injectSkillsIntoSystemPrompt } from './marketplace-bridge.mjs';
+import { dispatchArtifactCompiler, buildArtifactCompilerError } from './artifact-compiler-dispatcher.mjs';
+import { resolveSkills, defaultSkillsDir } from './skill-loader.mjs';
 import { searchMemory } from './semantic-memory.mjs';
 import { preflightTaskSpec, runTaskGates, buildTaskFixNote, formatGateErrorsForFix } from './task-gates.mjs';
 import { getRunnersDir, resolveOguPath } from './runtime-paths.mjs';
@@ -402,6 +404,13 @@ export async function executeAgentTaskCore(root, options) {
     role.capabilities = marketplace.skills;
     role._marketplaceSystemPrompt = marketplace.systemPrompt;
     role._marketplaceDNA = marketplace.dna;
+
+    // Populate skill_definitions from skills array so injectSkillsIntoSystemPrompt
+    // can route tasks to the correct SKILL.md bodies (Level 2 lazy loading).
+    if (!marketplace.agent.skill_definitions?.length && marketplace.skills.length) {
+      const skillsDir = defaultSkillsDir();
+      marketplace.agent.skill_definitions = resolveSkills(skillsDir, marketplace.skills);
+    }
   }
 
   // 3. Find model
@@ -803,6 +812,40 @@ export async function executeAgentTaskCore(root, options) {
       tokensUsed = parsed.tokensUsed;
       cost = parsed.cost;
       filesProduced = parsed.files;
+
+      // Run artifact compiler for the produced files (post-LLM verification).
+      // Best-effort: if no compiler matches or it throws, continue to task gates.
+      if (filesProduced.length > 0 && marketplace.found && marketplace.skills.length > 0) {
+        try {
+          const artifactResult = await dispatchArtifactCompiler(root, {
+            agentSkills: marketplace.skills,
+            filesProduced,
+            taskDescription,
+            skipTests: true,
+          });
+
+          if (artifactResult && !artifactResult.success && !artifactResult.skipped) {
+            const compilerError = buildArtifactCompilerError(artifactResult);
+            emitAudit('agent.artifact_compiler_failed', {
+              taskId, featureSlug, attempt,
+              skill: artifactResult.skill,
+              failures: (artifactResult.failures || []).length,
+              error: compilerError.slice(0, 400),
+            });
+
+            // Treat compiler gate failures like task gate failures — trigger retry
+            if (attempt <= maxRetries) {
+              activeFixNote = `${activeFixNote ? activeFixNote + '\n\n' : ''}${compilerError}`;
+              continue;
+            }
+          } else if (artifactResult?.success) {
+            emitAudit('agent.artifact_compiler_passed', {
+              taskId, featureSlug, skill: artifactResult.skill,
+              gates: artifactResult.gates?.length ?? 0,
+            });
+          }
+        } catch { /* artifact compiler is best-effort — never block execution */ }
+      }
 
       if (shouldRunGates) {
         const gateCheck = await runTaskGates(root, taskContext, { runTests: true });
