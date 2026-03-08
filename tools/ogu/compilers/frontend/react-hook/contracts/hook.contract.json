@@ -1,0 +1,44 @@
+{
+  "id": "hook",
+  "version": "1.0.0",
+  "title": "React Hook Contract",
+  "description": "Structural requirements for all compiled custom React hooks",
+  "rules": [
+    {
+      "id": "typed-return",
+      "title": "Typed Return Object",
+      "description": "Hook must return a typed object (not `any`, not untyped tuple). Exception: hooks that explicitly document a tuple return with named types.",
+      "severity": "error"
+    },
+    {
+      "id": "async-states",
+      "title": "Async State Tracking",
+      "description": "Hooks that perform async operations (fetch, mutation) must track loading and error states and expose them in the return value.",
+      "severity": "error"
+    },
+    {
+      "id": "stable-callbacks",
+      "title": "Stable Function References",
+      "description": "Functions returned from the hook must be wrapped in useCallback to prevent unnecessary re-renders in consumers.",
+      "severity": "error"
+    },
+    {
+      "id": "no-direct-fetch",
+      "title": "No Direct fetch() in Hook",
+      "description": "Data-fetching hooks must not use raw fetch() without abort controller support, or must use a library (SWR, React Query, axios with cancel token).",
+      "severity": "warning"
+    },
+    {
+      "id": "error-boundary-compatible",
+      "title": "Error Boundary Compatible",
+      "description": "Hooks must not throw unhandled promises — async errors must be caught and stored in error state.",
+      "severity": "error"
+    },
+    {
+      "id": "single-responsibility",
+      "title": "Single Responsibility",
+      "description": "Hook must serve one purpose. A hook that manages both data fetching AND UI state AND form state is a contract violation — split it.",
+      "severity": "warning"
+    }
+  ]
+}

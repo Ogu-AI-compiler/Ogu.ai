@@ -1,0 +1,47 @@
+{
+  "id": "schema",
+  "version": "1.0.0",
+  "description": "Structural rules for all compiled TypeScript schemas",
+  "rules": [
+    {
+      "id": "pascal-case-schemas",
+      "description": "All exported Zod schemas must be named in PascalCase: UserSchema, CreateUserInputSchema",
+      "check": "export const {PascalCase}Schema = z...."
+    },
+    {
+      "id": "infer-types",
+      "description": "Every exported schema must have a corresponding type: export type User = z.infer<typeof UserSchema>",
+      "check": "export type {Name} = z.infer<typeof {Name}Schema>"
+    },
+    {
+      "id": "no-z-object-direct-export",
+      "description": "Never export z.object({}) directly — always assign to a named const first",
+      "check": "absence of 'export const X = z.object' with inline anonymous usage"
+    },
+    {
+      "id": "input-schema-convention",
+      "description": "Schemas for POST/PUT body are named {Entity}InputSchema or Create{Entity}Schema",
+      "check": "naming convention for mutation schemas"
+    },
+    {
+      "id": "partial-convention",
+      "description": "Schemas for PATCH body use .partial() or are named Update{Entity}Schema",
+      "check": ".partial() usage for update schemas"
+    },
+    {
+      "id": "id-field-type",
+      "description": "Entity ID fields must be z.string().uuid() or z.string().cuid() — never z.number() without explicit justification",
+      "check": "id: z.string().uuid() | z.string().cuid()"
+    },
+    {
+      "id": "date-fields",
+      "description": "Date fields must be z.string().datetime() or z.date() — never z.string() alone",
+      "check": "createdAt/updatedAt/deletedAt use z.string().datetime() or z.date()"
+    },
+    {
+      "id": "no-nested-any",
+      "description": "z.record(z.any()) and z.array(z.any()) are forbidden without a comment explaining why",
+      "check": "absence of z.record(z.any()) without justification comment"
+    }
+  ]
+}

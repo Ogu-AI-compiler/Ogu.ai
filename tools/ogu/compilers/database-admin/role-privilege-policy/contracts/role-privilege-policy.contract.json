@@ -1,0 +1,14 @@
+{
+  "id": "role-privilege-policy",
+  "version": "1.0.0",
+  "description": "A role privilege policy declares the minimum necessary database permissions for each service account, enforcing least-privilege, DDL separation, and PII access controls.",
+  "rules": [
+    { "id": "required-fields-present", "description": "Each role must declare name, type, and privileges. Role type must be one of: application, migration, analytics, admin, readonly, replication." },
+    { "id": "no-unauthorized-superuser", "description": "Only admin roles may have superuser: true, and only with a documented justification. Application, analytics, and readonly roles may never be superusers — superuser bypasses all PostgreSQL access controls." },
+    { "id": "no-ddl-on-application-roles", "description": "Application and analytics roles may not have DROP, TRUNCATE, ALTER, or CREATE privileges. Only migration and admin roles may perform DDL operations." },
+    { "id": "no-all-privileges-wildcard", "description": "No role may use ALL or ALL PRIVILEGES as a privilege grant. Every privilege must be enumerated explicitly to prevent unintended access when PostgreSQL adds new privilege types." },
+    { "id": "pii-tables-require-rls", "description": "Any role that accesses PII-classified tables must have row_level_security: required. Without RLS, a single application bug can read all tenants' data." },
+    { "id": "migration-role-has-ddl", "description": "At least one migration role must exist. Migration roles must have CREATE and ALTER privileges so schema migrations can run. No other role type may have these privileges." },
+    { "id": "analytics-roles-are-readonly", "description": "Roles of type analytics or readonly must have SELECT only. Write privileges on analytics roles create uncontrolled data mutation vectors from reporting queries." }
+  ]
+}

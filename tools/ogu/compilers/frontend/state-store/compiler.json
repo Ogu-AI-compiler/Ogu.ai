@@ -1,0 +1,72 @@
+{
+  "id": "state-store",
+  "title": "State Store Compiler",
+  "version": "1.0.0",
+  "description": "Compiles client-side global state stores (Zustand or Redux Toolkit slices) with immutable updates, typed selectors, and no async in reducers.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "ts-schema-artifact.json",
+    "output_artifact": "store-artifact.json",
+    "identifier": "STORE"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid", "naming-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Scaffold",
+      "gates": ["ts-valid", "no-any"]
+    },
+    {
+      "id": 3,
+      "name": "Implement",
+      "gates": ["immutable-updates", "no-async-reducer", "selectors-pure"]
+    },
+    {
+      "id": 4,
+      "name": "Test",
+      "gates": ["no-todos", "tests-pass", "coverage"]
+    },
+    {
+      "id": 5,
+      "name": "Cross-Compiler Verify",
+      "gates": ["cross-schema"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-store"]
+    }
+  ],
+  "gates": [
+    { "id": "SS001", "name": "spec-valid",       "phase": 1 },
+    { "id": "SS002", "name": "naming-valid",      "phase": 1 },
+    { "id": "SS003", "name": "ts-valid",          "phase": 2 },
+    { "id": "SS004", "name": "no-any",            "phase": 2 },
+    { "id": "SS005", "name": "immutable-updates", "phase": 3 },
+    { "id": "SS006", "name": "no-async-reducer",  "phase": 3 },
+    { "id": "SS007", "name": "selectors-pure",    "phase": 3 },
+    { "id": "SS008", "name": "no-todos",          "phase": 4 },
+    { "id": "SS009", "name": "tests-pass",        "phase": 4 },
+    { "id": "SS010", "name": "coverage",          "phase": 4 },
+    { "id": "SS011", "name": "cross-schema",      "phase": 5 },
+    { "id": "SS012", "name": "contract-store",    "phase": 6 }
+  ],
+  "error_codes": {
+    "SS001": "Invalid store spec",
+    "SS002": "Store/slice name invalid",
+    "SS003": "TypeScript compilation failed",
+    "SS004": "Explicit 'any' type found",
+    "SS005": "Mutable state update detected — use spread or Immer",
+    "SS006": "Async logic inside synchronous reducer",
+    "SS007": "Selector is not a pure function or captures mutable closure",
+    "SS008": "TODO/FIXME found",
+    "SS009": "Tests failed",
+    "SS010": "Coverage below threshold",
+    "SS011": "State shape doesn't match ts-schema-artifact",
+    "SS012": "Contract violation"
+  }
+}

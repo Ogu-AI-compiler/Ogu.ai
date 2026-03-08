@@ -1,0 +1,40 @@
+{
+  "id": "iac_stack_definition",
+  "title": "IaC Stack Definition Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Infrastructure-as-Code stacks (Terraform, Pulumi, CDK). Enforces: all required input variables declared and typed, all downstream outputs declared, no unresolved references, only allowed providers, no hardcoded credentials.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "env-schema-artifact.json",
+    "output_artifact": "iac-artifact.json",
+    "identifier": "IAC_STACK"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Variable Declaration",    "gates": ["inputs-declared", "outputs-declared"] },
+    { "id": 3, "name": "Reference Integrity",     "gates": ["no-unresolved-refs"] },
+    { "id": 4, "name": "Security Check",          "gates": ["no-hardcoded-credentials", "provider-allowed"] },
+    { "id": 5, "name": "Quality",                 "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                  "gates": ["contract-iac"] }
+  ],
+  "gates": [
+    { "id": "IAC001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "IAC002", "name": "inputs-declared",             "phase": 2 },
+    { "id": "IAC003", "name": "outputs-declared",            "phase": 2 },
+    { "id": "IAC004", "name": "no-unresolved-refs",          "phase": 3 },
+    { "id": "IAC005", "name": "no-hardcoded-credentials",    "phase": 4 },
+    { "id": "IAC006", "name": "provider-allowed",            "phase": 4 },
+    { "id": "IAC007", "name": "no-todos",                    "phase": 5 },
+    { "id": "IAC008", "name": "contract-iac",                "phase": 6 }
+  ],
+  "error_codes": {
+    "IAC001": "iac-spec.json missing or invalid — required: platform, cloud, environments, stateBackend",
+    "IAC002": "Required input variable not declared or missing type annotation",
+    "IAC003": "Output referenced by downstream artifact not declared",
+    "IAC004": "Unresolved module or resource reference in IaC files",
+    "IAC005": "Hardcoded credential, key, or secret value found in IaC source",
+    "IAC006": "Provider not in allowed provider list for this stack policy",
+    "IAC007": "TODO/FIXME/HACK comment found in IaC files",
+    "IAC008": "IaC stack contract violation"
+  }
+}

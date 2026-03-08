@@ -1,7 +1,7 @@
 /**
  * Kadima HTTP API Router.
  *
- * Handles CLI and Studio requests.
+ * Handles CLI and UI requests.
  * Pure Node.js — no Express/Fastify dependency.
  *
  * Endpoints:
@@ -26,6 +26,21 @@ import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync } from 
 import { join } from 'node:path';
 import { fork } from 'node:child_process';
 import { getAuditDir, getBudgetDir, getReportsDir, getStateDir, resolveOguPath } from '../../ogu/commands/lib/runtime-paths.mjs';
+import {
+  dispatchProject,
+  abortPipeline,
+  pausePipeline,
+  resumePipeline,
+  retryFailedTasks,
+  readDispatchState,
+  isPipelineActive,
+} from '../execution/dispatch.mjs';
+import { handleExecRoutes } from './exec-routes.mjs';
+import { handleOguRoutes } from './ogu-routes.mjs';
+import { handleMarketplaceRoutes } from './marketplace-routes.mjs';
+import { handleWizardRoutes } from './wizard-routes.mjs';
+import { handleBriefRoutes } from './brief-routes.mjs';
+import { handleProjectRoutes } from './project-routes.mjs';
 
 // Track running CLI commands
 const activeCommands = new Map();
@@ -35,9 +50,9 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
     const url = new URL(req.url, `http://${req.headers.host}`);
     const method = req.method;
 
-    // CORS for Studio
+    // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (method === 'OPTIONS') {
@@ -580,6 +595,103 @@ export function createApiRouter({ root, runnerPool, loops, emitAudit, config, br
           return json(res, 500, { error: err.message });
         }
       }
+
+      // ── Project Dispatch API ──
+
+      // POST /api/project/:slug/dispatch — trigger Plan.json execution
+      const dispatchMatch = url.pathname.match(/^\/api\/project\/([^/]+)\/dispatch$/);
+      if (dispatchMatch && method === 'POST') {
+        const slug = dispatchMatch[1];
+        if (isPipelineActive(slug, root)) {
+          return json(res, 409, { error: 'Pipeline already running', slug });
+        }
+        // Fire-and-forget — dispatch runs in background
+        dispatchProject(root, slug).catch((err) => {
+          emitAudit('dispatch.error', { slug, error: err.message });
+        });
+        emitAudit('dispatch.started', { slug });
+        return json(res, 202, { accepted: true, slug, message: `Dispatch started for ${slug}` });
+      }
+
+      // POST /api/project/:slug/abort — abort running pipeline
+      const abortMatch = url.pathname.match(/^\/api\/project\/([^/]+)\/abort$/);
+      if (abortMatch && method === 'POST') {
+        const slug = abortMatch[1];
+        abortPipeline(slug, root);
+        emitAudit('dispatch.aborted', { slug });
+        broadcaster.broadcast({ type: 'dispatch:aborted', payload: { slug }, feature: slug });
+        return json(res, 200, { ok: true, aborted: slug });
+      }
+
+      // POST /api/project/:slug/pause — pause running pipeline
+      const pauseMatch = url.pathname.match(/^\/api\/project\/([^/]+)\/pause$/);
+      if (pauseMatch && method === 'POST') {
+        const slug = pauseMatch[1];
+        pausePipeline(slug, root);
+        emitAudit('dispatch.paused', { slug });
+        broadcaster.broadcast({ type: 'dispatch:paused', payload: { slug }, feature: slug });
+        return json(res, 200, { ok: true, paused: slug });
+      }
+
+      // POST /api/project/:slug/resume — resume + retry failed tasks
+      const resumeMatch = url.pathname.match(/^\/api\/project\/([^/]+)\/resume$/);
+      if (resumeMatch && method === 'POST') {
+        const slug = resumeMatch[1];
+        // Retry failed tasks then resume
+        retryFailedTasks(root, slug).then((result) => {
+          if (result.retried.length > 0 || result.errors.length > 0) {
+            broadcaster.broadcast({ type: 'dispatch:retry_done', payload: { slug, retried: result.retried.length, errors: result.errors }, feature: slug });
+          }
+          resumePipeline(slug, root);
+          broadcaster.broadcast({ type: 'dispatch:resumed', payload: { slug }, feature: slug });
+        }).catch(() => {
+          resumePipeline(slug, root);
+          broadcaster.broadcast({ type: 'dispatch:resumed', payload: { slug }, feature: slug });
+        });
+        return json(res, 200, { ok: true, resumed: slug });
+      }
+
+      // GET /api/project/:slug/dispatch-state — read current dispatch state
+      const dispatchStateMatch = url.pathname.match(/^\/api\/project\/([^/]+)\/dispatch-state$/);
+      if (dispatchStateMatch && method === 'GET') {
+        const slug = dispatchStateMatch[1];
+        const state = readDispatchState(root, slug);
+        if (!state) return json(res, 404, { error: 'No dispatch state found', slug });
+        return json(res, 200, { slug, state, pipelineActive: isPipelineActive(slug, root) });
+      }
+
+      // ── Sub-router delegation ──
+      // Build a lazy readBody bound to the current request
+      const readBodyOnce = () => readBody(req);
+
+      if (url.pathname.startsWith('/api/exec/')) {
+        if (await handleExecRoutes(url, method, readBodyOnce, res, root, broadcaster, json)) return;
+      }
+
+      if (url.pathname.startsWith('/api/ogu/') || url.pathname.startsWith('/api/org') ||
+          url.pathname.startsWith('/api/agents') || url.pathname.startsWith('/api/budget/') ||
+          url.pathname.startsWith('/api/audit/') || url.pathname.startsWith('/api/governance/') ||
+          url.pathname.startsWith('/api/model/') || url.pathname.startsWith('/api/determinism/') ||
+          url.pathname.startsWith('/api/dag/') || url.pathname.startsWith('/api/orchestrate/') ||
+          url.pathname.startsWith('/api/artifacts/') || url.pathname.startsWith('/api/worktrees/') ||
+          url.pathname.startsWith('/api/compile/')) {
+        if (await handleOguRoutes(url, method, readBodyOnce, res, root, broadcaster, json)) return;
+      }
+
+      if (url.pathname.startsWith('/api/marketplace/')) {
+        if (await handleMarketplaceRoutes(url, method, readBodyOnce, res, root, broadcaster, json)) return;
+      }
+
+      if (url.pathname.startsWith('/api/wizard/')) {
+        if (await handleWizardRoutes(url, method, readBodyOnce, res, root, broadcaster, json)) return;
+      }
+
+      if (url.pathname.startsWith('/api/brief/')) {
+        if (await handleBriefRoutes(url, method, readBodyOnce, res, root, broadcaster, json)) return;
+      }
+
+      // Project routes — broad catch-all for state, features, project management, etc.
+      if (await handleProjectRoutes(url, method, readBodyOnce, res, root, broadcaster, json)) return;
 
       // 404
       return json(res, 404, { error: 'Not found', path: url.pathname });

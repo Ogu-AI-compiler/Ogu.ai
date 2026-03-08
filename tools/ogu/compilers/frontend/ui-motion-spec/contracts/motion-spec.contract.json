@@ -1,0 +1,19 @@
+{
+  "id": "motion-spec",
+  "version": "1.0.0",
+  "description": "A valid motion spec declares a standard easing, unique animation IDs, symmetric enter/exit types, and layout/move transitions for dynamic content.",
+  "rules": [
+    {
+      "id": "standard-easing-declared",
+      "description": "A named standard, default, or base easing must exist. Without a canonical fallback, components that don't declare a specific easing have no safe default."
+    },
+    {
+      "id": "animation-ids-unique",
+      "description": "Every animation must have a unique id. Duplicate IDs make animations unreferable by downstream component compilers."
+    },
+    {
+      "id": "move-type-declared",
+      "description": "At least one animation with type move, layout, reorder, or transition must exist. Dynamic UI (sorted lists, tab panels, accordion) requires layout animations."
+    }
+  ]
+}

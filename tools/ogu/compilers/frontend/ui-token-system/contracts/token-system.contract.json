@@ -1,0 +1,27 @@
+{
+  "id": "token-system",
+  "version": "1.0.0",
+  "description": "A valid design token system has a primitive foundation, semantic aliases on top, and component tokens that never skip tiers.",
+  "rules": [
+    {
+      "id": "has-primitives",
+      "description": "At least one primitive-tier token must exist. Primitives hold raw values (hex, px, rem) and are the source of truth for all other tiers."
+    },
+    {
+      "id": "has-semantics",
+      "description": "At least one semantic-tier token must exist. Semantics give intent-based names (action-primary, surface-default) to primitive values, enabling theming."
+    },
+    {
+      "id": "valid-types",
+      "description": "Every token type must be one of the allowed set: color, spacing, sizing, typography, border-radius, border-width, shadow, motion, z-index, opacity, font-family, font-size, font-weight, line-height, letter-spacing, duration, easing."
+    },
+    {
+      "id": "valid-tiers",
+      "description": "Every token tier must be one of: primitive, semantic, component. Unknown tiers indicate a taxonomy error."
+    },
+    {
+      "id": "primitives-have-raw-values",
+      "description": "Primitive tokens must hold raw values, not alias references. An aliased primitive is a tier violation — it means the true primitive is hidden behind indirection."
+    }
+  ]
+}

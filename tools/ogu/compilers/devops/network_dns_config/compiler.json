@@ -1,0 +1,36 @@
+{
+  "id": "network_dns_config",
+  "title": "Network DNS Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles DNS zone config and TLS record metadata. Enforces: all hostnames are valid FQDNs and unique, every DNS target resolves to an existing load balancer/ingress, TTL values are positive integers within policy bounds, TLS host list matches exposed host rules.",
+  "tier": "devops",
+  "ir": { "input_artifact": "k8s-ingress-artifact.json", "output_artifact": "dns-config-artifact.json", "identifier": "DNS_CONFIG" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Hostname Integrity",     "gates": ["hostnames-fqdn", "hostnames-unique"] },
+    { "id": 3, "name": "Target Resolution",      "gates": ["targets-resolve"] },
+    { "id": 4, "name": "TTL & TLS Policy",       "gates": ["ttl-valid", "tls-host-match"] },
+    { "id": 5, "name": "Quality",                "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                 "gates": ["contract-dns-config"] }
+  ],
+  "gates": [
+    { "id": "DNS001", "name": "spec-valid",          "phase": 1 },
+    { "id": "DNS002", "name": "hostnames-fqdn",      "phase": 2 },
+    { "id": "DNS003", "name": "hostnames-unique",    "phase": 2 },
+    { "id": "DNS004", "name": "targets-resolve",     "phase": 3 },
+    { "id": "DNS005", "name": "ttl-valid",           "phase": 4 },
+    { "id": "DNS006", "name": "tls-host-match",      "phase": 4 },
+    { "id": "DNS007", "name": "no-todos",            "phase": 5 },
+    { "id": "DNS008", "name": "contract-dns-config", "phase": 6 }
+  ],
+  "error_codes": {
+    "DNS001": "dns-config-spec.json missing or invalid — required: records[]",
+    "DNS002": "Hostname is not a valid FQDN",
+    "DNS003": "Duplicate hostname detected",
+    "DNS004": "DNS target does not resolve to a known load balancer, ingress, or static IP",
+    "DNS005": "TTL value is not a positive integer or exceeds policy bounds",
+    "DNS006": "TLS host list does not match exposed host rules",
+    "DNS007": "TODO/FIXME found",
+    "DNS008": "DNS config contract violation"
+  }
+}

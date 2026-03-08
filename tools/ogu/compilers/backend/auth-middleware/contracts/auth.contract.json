@@ -1,0 +1,47 @@
+{
+  "id": "auth",
+  "version": "1.0.0",
+  "description": "Structural and security requirements for all compiled auth middleware",
+  "rules": [
+    {
+      "id": "require-auth-signature",
+      "description": "requireAuth must be an async function accepting (req, res?, next?) and returning the authenticated user or throwing AuthError",
+      "check": "export async function requireAuth(req, res?, next?)"
+    },
+    {
+      "id": "optional-auth-signature",
+      "description": "optionalAuth must accept the same signature as requireAuth but return null instead of throwing when no token",
+      "check": "export async function optionalAuth(req, res?, next?)"
+    },
+    {
+      "id": "bearer-extraction",
+      "description": "Token must be extracted from Authorization header using 'Bearer ' prefix — not cookies or query params (unless spec says otherwise)",
+      "check": "req.headers.authorization?.split('Bearer ')"
+    },
+    {
+      "id": "verify-not-decode",
+      "description": "jwt.verify() must be used — never jwt.decode() alone (decode skips signature verification)",
+      "check": "absence of jwt.decode() without accompanying jwt.verify()"
+    },
+    {
+      "id": "error-classes",
+      "description": "Must export: AuthError (base), TokenExpiredError, InvalidTokenError, MissingTokenError",
+      "check": "export class AuthError, TokenExpiredError, InvalidTokenError, MissingTokenError"
+    },
+    {
+      "id": "error-envelope",
+      "description": "When used as Express middleware, errors must be passed to next() or set res.status(401).json({ error: string })",
+      "check": "next(err) or res.status(401).json({ error: ... })"
+    },
+    {
+      "id": "no-token-in-logs",
+      "description": "console.log, console.error, logger.* must never include token values or raw credentials",
+      "check": "absence of console.log(token) or logger.error(err, { token })"
+    },
+    {
+      "id": "env-secrets",
+      "description": "JWT_SECRET, API_KEY_SECRET and similar must be loaded from process.env — never hardcoded",
+      "check": "process.env.JWT_SECRET or equivalent secret broker call"
+    }
+  ]
+}

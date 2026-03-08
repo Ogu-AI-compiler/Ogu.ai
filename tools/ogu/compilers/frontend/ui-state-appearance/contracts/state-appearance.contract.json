@@ -1,0 +1,23 @@
+{
+  "id": "state-appearance",
+  "version": "1.0.0",
+  "description": "A valid state appearance spec has unique component IDs, non-empty default states, no empty state objects, and at least one component declared.",
+  "rules": [
+    {
+      "id": "component-ids-unique",
+      "description": "Every component must have a unique id. Duplicate component IDs cause ambiguous state lookups in the component library."
+    },
+    {
+      "id": "default-state-has-tokens",
+      "description": "Every component's default state must declare at least one visual property. An empty default means the component has no styled baseline."
+    },
+    {
+      "id": "no-empty-states",
+      "description": "No state object can be completely empty. Either the state has visual properties or it should be removed from the spec. An empty state deceives reviewers into thinking coverage exists."
+    },
+    {
+      "id": "minimum-one-component",
+      "description": "The spec must contain at least one component. An empty spec is a structural error."
+    }
+  ]
+}

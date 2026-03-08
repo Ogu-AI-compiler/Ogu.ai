@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_data-scientist",
+  "role": "data-scientist",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "data",
+    "display_name": "Data Scientist",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "problem-framing",
+      "exploratory-data-analysis",
+      "modeling",
+      "model-evaluation",
+      "deployment-and-monitoring"
+    ],
+    "consumes": ["business question", "data assets", "success metrics"],
+    "produces": ["model-card.md", "experiment-report.md", "monitoring-config", "ab-test-design.md"]
+  },
+
+  "gates": [
+    {
+      "id": "business-question-defined",
+      "description": "Business question and success metric must be agreed with stakeholders before modeling",
+      "type": "file_contains",
+      "required_string": "success metric",
+      "severity": "error"
+    },
+    {
+      "id": "baseline-established",
+      "description": "Baseline must be established — model must beat simple heuristics to justify complexity",
+      "type": "file_contains",
+      "required_string": "baseline",
+      "severity": "error"
+    },
+    {
+      "id": "fairness-analysis-completed",
+      "description": "Fairness analysis must be completed for models that affect people",
+      "type": "file_contains",
+      "required_string": "fairness",
+      "severity": "error"
+    },
+    {
+      "id": "model-card-documented",
+      "description": "Model card must be documented (what, why, how, limitations, fairness)",
+      "type": "file_exists",
+      "pattern": "model-card",
+      "severity": "error"
+    },
+    {
+      "id": "no-data-leakage",
+      "description": "Feature availability at prediction time must be audited — no leakage from future data",
+      "type": "file_contains",
+      "required_string": "leakage",
+      "severity": "error"
+    },
+    {
+      "id": "monitoring-configured",
+      "description": "Model monitoring must be configured (drift detection, performance tracking, retraining schedule)",
+      "type": "file_contains",
+      "required_string": "monitoring",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "solution-in-search-of-a-problem",
+      "description": "Building a model because the technique is interesting — no validated business need"
+    },
+    {
+      "id": "leakage-blindness",
+      "description": "Training with features not available at prediction time — model looks great in dev, fails in production"
+    },
+    {
+      "id": "overfit-to-offline-metrics",
+      "description": "Great cross-validation scores but no improvement on business metric in A/B testing"
+    },
+    {
+      "id": "the-black-box",
+      "description": "Complex model deployed with no explainability — stakeholders can't trust it, bugs can't be debugged"
+    },
+    {
+      "id": "one-shot-analysis",
+      "description": "Analysis delivered, model forgotten — no monitoring, no maintenance, no retraining schedule"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Model shows significant bias against a demographic group",
+    "A/B test reveals unexpected negative impact on a business metric",
+    "Data quality issues make reliable modeling impossible",
+    "Stakeholder wants to deploy model for a use case it was not designed for",
+    "Model monitoring detects significant drift with no obvious cause",
+    "Privacy-sensitive data required for modeling needs legal/compliance review"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with business question, success metrics, and data availability",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Business question and success metric agreed with stakeholders",
+      "Baseline established (model beats simple heuristics)",
+      "Fairness analysis completed for models that affect people",
+      "Model card documented (what, why, how, limitations, fairness)",
+      "No data leakage — feature availability at prediction time audited",
+      "Monitoring configured (drift detection, performance tracking, retraining schedule)"
+    ]
+  }
+}

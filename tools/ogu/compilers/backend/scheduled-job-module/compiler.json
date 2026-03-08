@@ -1,0 +1,39 @@
+{
+  "id": "scheduled-job-module",
+  "title": "Scheduled Job Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a cron/scheduled job. Enforces: cron expression valid, stable registration ID (not random), single execution guard (distributed lock), job body idempotent (same result on re-run), errors logged and non-fatal to scheduler.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "scheduled-job-artifact.json",
+    "identifier": "SCHEDULED_JOB"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Schedule Contract", "gates": ["cron-valid", "stable-registration-id"] },
+    { "id": 3, "name": "Execution Safety", "gates": ["distributed-lock", "errors-non-fatal"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-scheduled-job"] }
+  ],
+  "gates": [
+    { "id": "SJ001", "name": "spec-valid",              "phase": 1 },
+    { "id": "SJ002", "name": "cron-valid",              "phase": 2 },
+    { "id": "SJ003", "name": "stable-registration-id",  "phase": 2 },
+    { "id": "SJ004", "name": "distributed-lock",        "phase": 3 },
+    { "id": "SJ005", "name": "errors-non-fatal",        "phase": 3 },
+    { "id": "SJ006", "name": "no-todos",                "phase": 4 },
+    { "id": "SJ007", "name": "tests-pass",              "phase": 4 },
+    { "id": "SJ008", "name": "contract-scheduled-job",  "phase": 5 }
+  ],
+  "error_codes": {
+    "SJ001": "scheduled-job-spec.json missing or invalid",
+    "SJ002": "Cron expression is invalid (fails validation)",
+    "SJ003": "Job registration ID uses dynamic value (Date, random) — must be stable constant",
+    "SJ004": "No distributed lock — concurrent scheduler nodes will double-execute",
+    "SJ005": "Job error propagates to scheduler process (unhandled throw causes crash)",
+    "SJ006": "TODO/FIXME/HACK comment found",
+    "SJ007": "Tests failed",
+    "SJ008": "Scheduled job contract violation"
+  }
+}

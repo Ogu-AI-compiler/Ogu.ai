@@ -1,0 +1,11 @@
+{
+  "id": "data-validation-module",
+  "version": "1.0.0",
+  "description": "Contract rules for data validation modules",
+  "rules": [
+    { "id": "has-schema", "description": "Validation must use a schema definition (pandera/GE)" },
+    { "id": "raises-on-failure", "description": "Validation failures must raise, not silently pass" },
+    { "id": "covers-critical-columns", "description": "All critical_columns from spec must be validated" },
+    { "id": "generates-report", "description": "Validation must produce a report artifact" }
+  ]
+}

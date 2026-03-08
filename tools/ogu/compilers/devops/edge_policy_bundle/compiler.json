@@ -1,0 +1,97 @@
+{
+  "id": "edge_policy_bundle",
+  "title": "Edge Policy Bundle Compiler",
+  "version": "1.0.0",
+  "description": "Compiles API gateway/ingress edge policies: rate limiting, IP allowlists, webhook signature verification. Enforces: config validates for target controller, backends resolve, rate limits numeric and positive, webhook routes reference declared secrets.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "k8s-service-artifact.json",
+    "output_artifact": "edge-policy-artifact.json",
+    "identifier": "EDGE_POLICY"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "backends-resolve",
+        "rate-limits-positive"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "webhook-secrets-declared",
+        "allowed-methods-explicit"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-edge-policy"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "EP001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "EP002",
+      "name": "backends-resolve",
+      "phase": 2
+    },
+    {
+      "id": "EP003",
+      "name": "rate-limits-positive",
+      "phase": 2
+    },
+    {
+      "id": "EP004",
+      "name": "webhook-secrets-declared",
+      "phase": 3
+    },
+    {
+      "id": "EP005",
+      "name": "allowed-methods-explicit",
+      "phase": 3
+    },
+    {
+      "id": "EP006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "EP007",
+      "name": "contract-edge-policy",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "EP001": "edge-policy-spec.json missing — required: controller, rules[]",
+    "EP002": "Backend reference does not resolve to a declared Service",
+    "EP003": "Rate limit value is not a positive number",
+    "EP004": "Webhook route requires signature verification but secret not declared",
+    "EP005": "Allowed HTTP methods not explicitly enumerated for restricted route",
+    "EP006": "TODO/FIXME found",
+    "EP007": "Edge policy contract violation"
+  }
+}

@@ -46,7 +46,7 @@ This classification determines your approach. Do NOT tell the user which categor
 
 ## Step 1: Ask about involvement level
 
-Before diving into the idea, ask the user how involved they want to be. Output exactly this text — the Studio chat will render it as an interactive slider:
+Before diving into the idea, ask the user how involved they want to be. Output exactly this text — the Kadima UI will render it as an interactive slider:
 
 ```
 How involved do you want to be in the process?
@@ -57,7 +57,7 @@ Product Focused|I define what I want as a product, Ogu handles all technical dec
 Deep Collaboration|Ogu asks me about everything — product, priorities, edge cases. Maximum control, nothing gets decided without me.|hands-on
 ```
 
-**Important:** Output the `?involvement` block exactly as shown above (with the pipe-separated format). The Studio chat UI will automatically render this as an interactive slider. Do NOT use AskUserQuestion for this — the slider provides a better experience.
+**Important:** Output the `?involvement` block exactly as shown above (with the pipe-separated format). The Kadima UI will automatically render this as an interactive slider. Do NOT use AskUserQuestion for this — the slider provides a better experience.
 
 Save the answer — it goes into IDEA.md and affects all downstream pipeline steps.
 

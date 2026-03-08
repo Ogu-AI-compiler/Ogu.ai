@@ -1,0 +1,139 @@
+{
+  "id": "ux-responsive-structure",
+  "version": "1.0.0",
+  "title": "UX Responsive Structure Compiler",
+  "description": "Validates responsive structure specs: breakpoint coverage, content disclosure, navigation mode declarations, breakpoint conflict detection, collapsible region definitions, and contract attestation. Produces responsive-structure-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "URS",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract responsive-spec.json from feature brief and breakpoint definitions",
+      "model": "haiku",
+      "outputs": ["responsive-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and detect breakpoint conflicts",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "no-breakpoint-conflicts"]
+    },
+    {
+      "phase": 2,
+      "id": "coverage",
+      "title": "Coverage",
+      "description": "Validate breakpoint tier coverage, content disclosure, and navigation mode declarations",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["all-breakpoints-defined", "no-content-loss", "nav-mode-declared"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate collapsible region declarations",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["hierarchy-collapse"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["responsive-structure-artifact.json"],
+      "gates": ["contract-responsive-structure"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "responsive-spec.json exists with breakpoints(array); each breakpoint has name, minWidth, layout; must include mobile and desktop",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-breakpoint-conflicts",
+      "title": "No Breakpoint Conflicts",
+      "description": "No two breakpoints may have the same minWidth value",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "all-breakpoints-defined",
+      "title": "All Breakpoints Defined",
+      "description": "Spec must cover mobile (<=480), tablet (481-1023), and desktop (>=1024); escape hatch: mobileOnly or desktopOnly",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-content-loss",
+      "title": "No Content Loss",
+      "description": "Any region with hidden:true must declare disclosureTarget or hiddenIntentional:true",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "nav-mode-declared",
+      "title": "Nav Mode Declared",
+      "description": "If spec has navigation object, each breakpoint must declare navMode",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "hierarchy-collapse",
+      "title": "Hierarchy Collapse",
+      "description": "Any region in spec.collapsibleRegions must declare collapsedAt(array) and collapseType",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-responsive-structure",
+      "title": "Responsive Structure Contract",
+      "description": "Version, unique breakpoint names, breakpoints sorted by minWidth ascending",
+      "phase": 4,
+      "required": true,
+      "contract": "responsive-structure"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "responsive-structure",
+      "file": "contracts/responsive-structure.contract.json",
+      "description": "Structural requirements for all compiled responsive structure specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["URS:{specId}", "URS:{specId}:{breakpointName}"],
+    "output_artifact": "responsive-structure-artifact.json",
+    "artifact_schema": "responsive-structure-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "responsive-structure-artifact-v1",
+    "fields": ["version", "breakpoint_count", "has_mobile", "has_tablet", "has_desktop", "mobile_only", "desktop_only", "has_navigation", "collapsible_region_count", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "URS001": "responsive-spec.json missing or invalid — breakpoints array with name, minWidth, layout required; mobile and desktop breakpoints required",
+    "URS002": "Missing breakpoint tier — mobile (<=480), tablet (481-1023), or desktop (>=1024) not covered",
+    "URS003": "Hidden region missing disclosure mechanism — declare disclosureTarget or hiddenIntentional:true",
+    "URS004": "Navigation breakpoint missing navMode — must be topbar, sidebar, hamburger, tabs, or bottom-bar",
+    "URS005": "Duplicate breakpoint minWidth — no two breakpoints may share the same boundary",
+    "URS006": "Collapsible region missing collapsedAt or collapseType declaration",
+    "URS007": "Responsive structure contract violation — version, unique breakpoint names, or sort order invalid"
+  }
+}

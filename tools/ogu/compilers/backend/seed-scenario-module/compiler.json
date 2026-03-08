@@ -1,0 +1,39 @@
+{
+  "id": "seed-scenario-module",
+  "title": "Seed Scenario Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a deterministic, idempotent database seed scenario. Enforces: seeds use upsert/createOrUpdate (not bare insert), no random data unless spec.allowRandom declared, seed order declared explicitly (foreign key order), scenario has a cleanup function, no production data hardcoded.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "seed-scenario-artifact.json",
+    "identifier": "SEED_SCENARIO"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Idempotency", "gates": ["upsert-only", "no-random-data"] },
+    { "id": 3, "name": "Safety", "gates": ["cleanup-declared", "no-prod-data"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-seed-scenario"] }
+  ],
+  "gates": [
+    { "id": "SS001", "name": "spec-valid",             "phase": 1 },
+    { "id": "SS002", "name": "upsert-only",            "phase": 2 },
+    { "id": "SS003", "name": "no-random-data",         "phase": 2 },
+    { "id": "SS004", "name": "cleanup-declared",       "phase": 3 },
+    { "id": "SS005", "name": "no-prod-data",           "phase": 3 },
+    { "id": "SS006", "name": "no-todos",               "phase": 4 },
+    { "id": "SS007", "name": "tests-pass",             "phase": 4 },
+    { "id": "SS008", "name": "contract-seed-scenario", "phase": 5 }
+  ],
+  "error_codes": {
+    "SS001": "seed-scenario-spec.json missing or invalid",
+    "SS002": "Seed uses bare insert/create without upsert (not idempotent)",
+    "SS003": "Random data (Math.random, uuid) in seed without spec.allowRandom declaration",
+    "SS004": "No cleanup/teardown function declared (test seeds must be reversible)",
+    "SS005": "Production data detected (real email/phone/SSN pattern in seed values)",
+    "SS006": "TODO/FIXME/HACK comment found",
+    "SS007": "Tests failed",
+    "SS008": "Seed scenario contract violation"
+  }
+}

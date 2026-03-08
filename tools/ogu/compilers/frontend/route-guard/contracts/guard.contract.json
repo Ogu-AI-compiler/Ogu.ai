@@ -1,0 +1,11 @@
+{
+  "id": "route-guard",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "redirect-on-unauth", "description": "Unauthenticated users must be redirected, never see protected content", "severity": "error" },
+    { "id": "no-flash", "description": "Children must not render before auth state is resolved", "severity": "error" },
+    { "id": "loading-state", "description": "A loading spinner/skeleton must render while auth is pending", "severity": "error" },
+    { "id": "replace-on-redirect", "description": "Redirect must use replace:true to prevent back-button returning to protected route", "severity": "error" },
+    { "id": "renders-outlet-or-children", "description": "Authenticated users must see children or <Outlet /> — not null", "severity": "error" }
+  ]
+}

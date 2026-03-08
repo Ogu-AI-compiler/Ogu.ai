@@ -1,0 +1,13 @@
+{
+  "id": "model-card",
+  "version": "1.0.0",
+  "description": "Contract rules for model cards",
+  "rules": [
+    { "id": "model-card-exists", "description": "MODEL_CARD.md must exist" },
+    { "id": "has-numeric-metrics", "description": "Numeric performance metrics must be present" },
+    { "id": "has-limitations", "description": "Model limitations must be documented" },
+    { "id": "has-intended-use", "description": "Intended use must be documented" },
+    { "id": "has-training-data-section", "description": "Training data section must be present" },
+    { "id": "bias-fairness-documented", "description": "Bias/fairness section required" }
+  ]
+}

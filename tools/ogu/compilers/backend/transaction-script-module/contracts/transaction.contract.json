@@ -1,0 +1,37 @@
+{
+  "id": "transaction-contract",
+  "version": "1.0.0",
+  "description": "Contract for transaction-script-module output artifacts",
+  "rules": [
+    {
+      "id": "TRANSACTION-001",
+      "description": "Transaction must wrap ≥2 write operations in a single atomic boundary",
+      "enforcement": "gate:writes-in-transaction"
+    },
+    {
+      "id": "TRANSACTION-002",
+      "description": "No HTTP calls (fetch, axios, http.request) inside transaction callbacks",
+      "enforcement": "gate:no-http-in-transaction"
+    },
+    {
+      "id": "TRANSACTION-003",
+      "description": "Manual transactions must call .rollback() in catch blocks; Prisma $transaction auto-handles rollback",
+      "enforcement": "gate:rollback-on-failure"
+    },
+    {
+      "id": "TRANSACTION-004",
+      "description": "Non-default isolation level declared in spec must appear verbatim in code",
+      "enforcement": "gate:isolation-declared"
+    },
+    {
+      "id": "TRANSACTION-005",
+      "description": "No TODO/FIXME/HACK comments in transaction scripts",
+      "enforcement": "gate:no-todos"
+    },
+    {
+      "id": "TRANSACTION-006",
+      "description": "All tests must pass",
+      "enforcement": "gate:tests-pass"
+    }
+  ]
+}

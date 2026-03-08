@@ -1,0 +1,92 @@
+{
+  "id": "dockerfile_image",
+  "version": "1.0.0",
+  "description": "Validates Dockerfile safety, structure, and spec compliance before producing a build artifact",
+  "rules": [
+    {
+      "id": "DF001",
+      "gate": "spec-valid",
+      "description": "dockerfile-spec.json must exist, be valid JSON, and declare runtime, entrypoint, and ports",
+      "required": true,
+      "fields": {
+        "runtime": {
+          "type": "string",
+          "enum": ["node", "python", "go", "java", "ruby", "rust", "dotnet", "php", "bun", "deno"]
+        },
+        "entrypoint": { "type": "string", "required": true },
+        "ports": {
+          "type": "array",
+          "items": { "type": "integer", "min": 1, "max": 65535 }
+        }
+      }
+    },
+    {
+      "id": "DF002",
+      "gate": "dockerfile-exists",
+      "description": "A Dockerfile must be present in the build context. Accepted names: Dockerfile, Dockerfile.prod, Dockerfile.production",
+      "required": true
+    },
+    {
+      "id": "DF003",
+      "gate": "single-entrypoint",
+      "description": "The final Dockerfile stage must declare exactly one CMD or ENTRYPOINT instruction — duplicates are silently collapsed and make intent unreadable",
+      "required": true,
+      "count": { "min": 1, "max": 1 }
+    },
+    {
+      "id": "DF004",
+      "gate": "base-image-pinned",
+      "description": "Every FROM instruction must use a pinned version tag or SHA digest. Tags :latest, :dev, :main, :master, :edge and bare image names (no tag) are forbidden",
+      "required": true,
+      "forbiddenTags": [":latest", ":dev", ":main", ":master", ":edge", "(implicit — no tag or digest)"]
+    },
+    {
+      "id": "DF005",
+      "gate": "non-root",
+      "description": "The container must run as a non-root user. A USER instruction is required in the final stage and must not specify root or uid 0",
+      "required": true,
+      "forbidden": ["root", "0"]
+    },
+    {
+      "id": "DF006",
+      "gate": "no-secrets-in-build",
+      "description": "ARG/ENV instructions must not embed secret-looking values. Detection: name matches password|secret|token|api_key|credentials AND value is non-placeholder (≥4 non-whitespace chars)",
+      "required": true,
+      "triggeredBy": ["PASSWORD=", "SECRET=", "TOKEN=", "API_KEY=", "CREDENTIALS=", "AUTH_TOKEN="]
+    },
+    {
+      "id": "DF007",
+      "gate": "dockerignore-present",
+      "description": "A .dockerignore file must exist at the build context root to prevent .git, node_modules, and .env files from entering the image layer",
+      "required": true,
+      "recommended": [".git", "node_modules", ".env", "*.log"]
+    },
+    {
+      "id": "DF008",
+      "gate": "ports-match-spec",
+      "description": "Every port in dockerfile-spec.json[ports] must have a corresponding EXPOSE instruction. Skipped when spec.ports is empty",
+      "required": false,
+      "note": "Conditional — skipped when spec.ports is empty or Dockerfile is absent"
+    },
+    {
+      "id": "DF009",
+      "gate": "no-todos",
+      "description": "dockerfile-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers — a spec with placeholders is not production-ready",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "DF010",
+      "gate": "contract-dockerfile",
+      "description": "Dockerfile must declare HEALTHCHECK (orchestrators detect stuck containers) and WORKDIR (prevents writes to /). Local file copies must use COPY not ADD (ADD silently unpacks archives)",
+      "required": true,
+      "mandatoryInstructions": ["HEALTHCHECK", "WORKDIR"],
+      "forbidden": ["ADD (for local files — use COPY instead)"]
+    }
+  ],
+  "artifact": {
+    "file": "dockerfile-artifact.json",
+    "ir_id_prefix": "DOCKERFILE:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

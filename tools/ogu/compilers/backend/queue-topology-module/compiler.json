@@ -1,0 +1,59 @@
+{
+  "id": "queue-topology-module",
+  "title": "Queue Topology Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the project-wide queue registry: unique queue names, explicit retry and retention policies, no ad hoc queue literals anywhere outside the topology module.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "config-artifact.json",
+    "output_artifact": "queue-topology-artifact.json",
+    "identifier": "QUEUE_TOPOLOGY"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Topology Check",
+      "gates": ["unique-names", "retry-declared", "retention-declared"]
+    },
+    {
+      "id": 3,
+      "name": "Leak Check",
+      "gates": ["no-undeclared-queues"]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": ["contract-queue-topology"]
+    }
+  ],
+  "gates": [
+    { "id": "QT001", "name": "spec-valid",            "phase": 1 },
+    { "id": "QT002", "name": "unique-names",          "phase": 2 },
+    { "id": "QT003", "name": "retry-declared",        "phase": 2 },
+    { "id": "QT004", "name": "retention-declared",    "phase": 2 },
+    { "id": "QT005", "name": "no-undeclared-queues",  "phase": 3 },
+    { "id": "QT006", "name": "no-todos",              "phase": 4 },
+    { "id": "QT007", "name": "tests-pass",            "phase": 4 },
+    { "id": "QT008", "name": "contract-queue-topology", "phase": 5 }
+  ],
+  "error_codes": {
+    "QT001": "queue-topology-spec.json missing or invalid",
+    "QT002": "Duplicate queue name detected",
+    "QT003": "Queue missing retry policy or explicit no-retry declaration",
+    "QT004": "Queue missing retention policy for completed and failed jobs",
+    "QT005": "Queue name literal found outside the queue topology module",
+    "QT006": "TODO/FIXME/HACK comment found",
+    "QT007": "Tests failed",
+    "QT008": "Queue topology contract violation"
+  }
+}

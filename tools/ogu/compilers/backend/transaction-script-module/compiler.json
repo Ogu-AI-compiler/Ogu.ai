@@ -1,0 +1,59 @@
+{
+  "id": "transaction-script-module",
+  "title": "Transaction Script Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles multi-write transactional workflows. Enforces: all writes inside single ORM transaction boundary, no HTTP calls inside transaction, failure path rolls back, isolation level explicit if required, idempotency key atomic read-write.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "repository-artifact.json",
+    "output_artifact": "transaction-artifact.json",
+    "identifier": "TRANSACTION"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Transaction Boundary",
+      "gates": ["writes-in-transaction", "no-http-in-transaction"]
+    },
+    {
+      "id": 3,
+      "name": "Rollback Check",
+      "gates": ["rollback-on-failure", "isolation-declared"]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": ["contract-transaction"]
+    }
+  ],
+  "gates": [
+    { "id": "TX001", "name": "spec-valid",           "phase": 1 },
+    { "id": "TX002", "name": "writes-in-transaction","phase": 2 },
+    { "id": "TX003", "name": "no-http-in-transaction","phase": 2 },
+    { "id": "TX004", "name": "rollback-on-failure",  "phase": 3 },
+    { "id": "TX005", "name": "isolation-declared",   "phase": 3 },
+    { "id": "TX006", "name": "no-todos",             "phase": 4 },
+    { "id": "TX007", "name": "tests-pass",           "phase": 4 },
+    { "id": "TX008", "name": "contract-transaction", "phase": 5 }
+  ],
+  "error_codes": {
+    "TX001": "transaction-spec.json missing or invalid",
+    "TX002": "DB write operations found outside transaction boundary",
+    "TX003": "HTTP/network call found inside transaction block — violates transaction isolation",
+    "TX004": "Failure path does not roll back all writes",
+    "TX005": "Transaction requires explicit isolation level but none declared",
+    "TX006": "TODO/FIXME/HACK comment found",
+    "TX007": "Tests failed",
+    "TX008": "Transaction script contract violation"
+  }
+}

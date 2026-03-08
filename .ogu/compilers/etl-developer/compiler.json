@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_etl-developer",
+  "role": "etl-developer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "data",
+    "display_name": "ETL Developer",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "extraction-design",
+      "transformation-implementation",
+      "loading-strategy",
+      "error-handling",
+      "pipeline-operations"
+    ],
+    "consumes": ["source system specs", "target schema", "business transformation rules"],
+    "produces": ["ETL pipeline code", "data-quality-checks", "pipeline-runbook.md", "dead-letter-queue config"]
+  },
+
+  "gates": [
+    {
+      "id": "pipeline-idempotent",
+      "description": "Every pipeline must be idempotent — re-running produces same result without duplicates",
+      "type": "file_contains",
+      "required_string": "idempotent",
+      "severity": "error"
+    },
+    {
+      "id": "dead-letter-queue-configured",
+      "description": "Dead letter queue must be configured for records that cannot be processed",
+      "type": "file_contains",
+      "required_string": "dead letter",
+      "severity": "error"
+    },
+    {
+      "id": "data-quality-at-ingestion",
+      "description": "Data quality validations must run at extraction and load stages (schema, nulls, row count)",
+      "type": "file_contains",
+      "required_string": "validation",
+      "severity": "error"
+    },
+    {
+      "id": "backfill-capability-tested",
+      "description": "Backfill capability must be implemented and tested before going to production",
+      "type": "file_contains",
+      "required_string": "backfill",
+      "severity": "error"
+    },
+    {
+      "id": "alerting-within-5-minutes",
+      "description": "Pipeline failure alerts must fire within 5 minutes — not discovered when users ask about missing data",
+      "type": "file_contains",
+      "required_string": "alert",
+      "severity": "error"
+    },
+    {
+      "id": "row-count-reconciliation",
+      "description": "Row count reconciliation must be performed: extracted = transformed + rejected = loaded",
+      "type": "file_contains",
+      "required_string": "row count",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "fragile-pipeline",
+      "description": "Pipeline that works perfectly when everything is perfect — one unexpected null and it crashes with no recovery"
+    },
+    {
+      "id": "midnight-mystery",
+      "description": "Pipeline runs at 2am with no monitoring — failures discovered when users ask where today's data is at 10am"
+    },
+    {
+      "id": "copy-paste-pipelines",
+      "description": "Every new pipeline copy-pasted from old ones — bugs in the template propagate across all pipelines"
+    },
+    {
+      "id": "monolith-pipeline",
+      "description": "One giant pipeline from 20 sources to 15 targets — if one source fails, everything fails"
+    },
+    {
+      "id": "silent-data-loss",
+      "description": "Pipeline encounters an error and silently drops records — row count slowly decreases for weeks unnoticed"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Source system change breaks multiple pipelines simultaneously",
+    "Data quality issue propagated to downstream consumers before detection",
+    "Pipeline SLA consistently missed with no clear optimization path",
+    "Dead letter queue growing faster than it is being resolved",
+    "Source system requires access that has not been granted",
+    "Business rule change requires coordinated transformation update across multiple pipelines"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with source system specs and transformation requirements",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "All pipelines are idempotent (re-run produces same result without duplicates)",
+      "Dead letter queue configured for unprocessable records",
+      "Data quality validations at extraction and load stages",
+      "Backfill capability implemented and tested",
+      "Pipeline failure alerts fire within 5 minutes",
+      "Row count reconciliation performed (extracted = transformed + rejected = loaded)"
+    ]
+  }
+}

@@ -5,7 +5,7 @@
  *
  * Proves: Kadima can push real-time events to connected clients
  *   via Server-Sent Events (SSE), and a dashboard snapshot endpoint
- *   aggregates all system state for Studio rendering.
+ *   aggregates all system state for the UI.
  *
  * Tests hit the live daemon:
  *   GET /api/events          — SSE stream of real-time events

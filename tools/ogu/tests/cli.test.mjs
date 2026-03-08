@@ -81,7 +81,7 @@ test("CLI help lists all 35 commands", () => {
     "vision", "vision:baseline", "remember", "learn", "recall", "trends",
     "orchestrate", "wip", "switch", "status", "observe:setup", "observe",
     "theme set", "theme show", "theme apply", "theme presets",
-    "studio",
+    "ui",
     "init", "validate", "log", "repo-map", "clean", "migrate",
   ];
   for (const cmd of expected) {

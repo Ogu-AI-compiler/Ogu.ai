@@ -1,0 +1,46 @@
+{
+  "id": "loading-skeleton",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "aria-busy",
+      "description": "Skeleton container must have aria-busy=\"true\" to signal loading state to screen readers",
+      "severity": "error"
+    },
+    {
+      "id": "no-text-content",
+      "description": "Skeleton must not contain readable text — only structural placeholder shapes",
+      "severity": "error"
+    },
+    {
+      "id": "fixed-dimensions",
+      "description": "Skeleton elements must have explicit width/height to match the target component's layout",
+      "severity": "error"
+    },
+    {
+      "id": "bg-muted",
+      "description": "Skeleton fill must use muted/neutral colors (bg-muted, bg-gray, bg-slate) — never primary colors",
+      "severity": "error"
+    },
+    {
+      "id": "reduced-motion",
+      "description": "Shimmer/pulse animations must respect prefers-reduced-motion via CSS media query or Tailwind motion-reduce:",
+      "severity": "error"
+    },
+    {
+      "id": "no-real-data",
+      "description": "Skeleton must contain zero data fetching, API calls, or prop-driven data rendering",
+      "severity": "error"
+    },
+    {
+      "id": "shape-fidelity",
+      "description": "DOM structure of skeleton must mirror the target component (list → rows, card → image+text blocks, table → rows+cols)",
+      "severity": "warning"
+    },
+    {
+      "id": "role-status",
+      "description": "Container should have role=\"status\" or role=\"alert\" alongside aria-busy for full screen-reader compatibility",
+      "severity": "warning"
+    }
+  ]
+}

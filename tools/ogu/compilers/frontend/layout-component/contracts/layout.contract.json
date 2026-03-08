@@ -1,0 +1,13 @@
+{
+  "id": "layout-component",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "main-slot-required", "description": "Layout must render a 'main' slot as primary content area", "severity": "error" },
+    { "id": "semantic-html", "description": "Use <header>, <nav>, <main>, <aside>, <footer> — not generic divs for layout regions", "severity": "error" },
+    { "id": "slot-typed-reactnode", "description": "Every slot prop must be typed as React.ReactNode", "severity": "error" },
+    { "id": "responsive", "description": "Layout must define responsive behavior for mobile, tablet, and desktop breakpoints", "severity": "error" },
+    { "id": "skip-to-main", "description": "Include a visually-hidden skip-to-main-content link for keyboard users", "severity": "warning" },
+    { "id": "no-fixed-px-width", "description": "Use max-w-* or container — never fixed pixel widths on layout shells", "severity": "error" },
+    { "id": "no-inline-styles", "description": "Use Tailwind utility classes — not inline style={{}} objects", "severity": "error" }
+  ]
+}

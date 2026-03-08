@@ -1,0 +1,34 @@
+{
+  "id": "rate-limit-policy",
+  "title": "Rate Limit Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles rate limiting configuration for API endpoints. Enforces: all public endpoints have rate limits, auth endpoints have stricter limits than regular endpoints, both burst and sustained rates are defined.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "authz-policy.compiled.json",
+    "output_artifact": "rate-limit-policy.compiled.json",
+    "identifier": "RATE_LIMIT_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Endpoint Coverage",     "gates": ["public-endpoints-have-limits", "auth-endpoints-stricter"] },
+    { "id": 3, "name": "Rate Definitions",      "gates": ["burst-and-sustained-defined", "retry-after-header-defined"] },
+    { "id": 4, "name": "Quality",               "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "RL001", "name": "spec-valid",                   "phase": 1 },
+    { "id": "RL002", "name": "public-endpoints-have-limits", "phase": 2 },
+    { "id": "RL003", "name": "auth-endpoints-stricter",      "phase": 2 },
+    { "id": "RL004", "name": "burst-and-sustained-defined",  "phase": 3 },
+    { "id": "RL005", "name": "no-todos",                     "phase": 4 },
+    { "id": "RL006", "name": "retry-after-header-defined",   "phase": 3 }
+  ],
+  "error_codes": {
+    "RL001": "rate-limit-spec.json missing or invalid — required fields: endpoints[], defaultLimits{burst, sustained}",
+    "RL002": "Public endpoint has no rate limit — all public endpoints must have explicit request limits",
+    "RL003": "Auth endpoints (login, token, password reset) do not have stricter limits than general endpoints",
+    "RL004": "Rate limit definition missing burst or sustained rate — both must be defined per endpoint or globally",
+    "RL005": "TODO/FIXME/HACK comment found",
+    "RL006": "429 responses do not declare Retry-After header — clients need Retry-After to implement correct backoff; set retry_after_header: true"
+  }
+}

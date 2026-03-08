@@ -1,0 +1,11 @@
+{
+  "id": "experiment-config",
+  "version": "1.0.0",
+  "description": "Contract rules for experiment configuration",
+  "rules": [
+    { "id": "has-config-file", "description": "Config file (YAML/JSON) must exist" },
+    { "id": "has-seed", "description": "random_state/seed must be in config" },
+    { "id": "all-params-documented", "description": "All hyperparameters have inline comments" },
+    { "id": "no-hardcoded-params", "description": "No hardcoded hyperparameters in training code" }
+  ]
+}

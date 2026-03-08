@@ -1,0 +1,12 @@
+{
+  "id": "serving-api-module",
+  "version": "1.0.0",
+  "description": "Contract rules for model serving API modules",
+  "rules": [
+    { "id": "pydantic-schema", "description": "Input validated with Pydantic/marshmallow" },
+    { "id": "health-endpoint", "description": "/health or /ping endpoint required" },
+    { "id": "structured-logging", "description": "logging module used, not print()" },
+    { "id": "no-bare-except", "description": "No bare except: blocks" },
+    { "id": "model-loaded-once", "description": "Model loaded at startup, not per-request" }
+  ]
+}

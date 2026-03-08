@@ -1,0 +1,97 @@
+{
+  "id": "security_scan_pipeline",
+  "title": "Security Scan Pipeline Compiler",
+  "version": "1.0.0",
+  "description": "Compiles security scan CI jobs (SAST, DAST, image scan, dependency audit). Enforces: pipeline config validates, each scan emits a report artifact, fail thresholds explicit and machine-readable, blocking vs non-blocking declared per stage.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "ci-cd-artifact.json",
+    "output_artifact": "security-scan-artifact.json",
+    "identifier": "SECURITY_SCAN"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "scan-types-valid",
+        "report-artifacts-declared"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "thresholds-machine-readable",
+        "blocking-declared"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-security-scan"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "SS001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "SS002",
+      "name": "scan-types-valid",
+      "phase": 2
+    },
+    {
+      "id": "SS003",
+      "name": "report-artifacts-declared",
+      "phase": 2
+    },
+    {
+      "id": "SS004",
+      "name": "thresholds-machine-readable",
+      "phase": 3
+    },
+    {
+      "id": "SS005",
+      "name": "blocking-declared",
+      "phase": 3
+    },
+    {
+      "id": "SS006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "SS007",
+      "name": "contract-security-scan",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "SS001": "security-scan-spec.json missing — required: scans[{type, threshold}]",
+    "SS002": "Invalid scan type — must be: sast, dast, image-scan, dependency-audit, secret-scan",
+    "SS003": "Scan does not declare a report output artifact path",
+    "SS004": "Fail threshold is not machine-readable (must be a number, not a string like \"high\")",
+    "SS005": "blocking/nonBlocking not declared for scan stage",
+    "SS006": "TODO/FIXME found",
+    "SS007": "Security scan pipeline contract violation"
+  }
+}

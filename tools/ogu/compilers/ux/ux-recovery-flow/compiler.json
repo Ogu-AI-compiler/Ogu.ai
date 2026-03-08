@@ -1,0 +1,147 @@
+{
+  "id": "ux-recovery-flow",
+  "version": "1.0.0",
+  "title": "UX Recovery Flow Compiler",
+  "description": "Validates recovery flow specs: all failure states have declared recovery actions, retry counts are bounded, critical failures have escape hatches, offline failures have fallbacks, error messages are specific, and backoff is declared for multi-retry recoveries. Produces recovery-flow-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "URF",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract recovery-flow-spec.json from feature brief and error taxonomy",
+      "model": "haiku",
+      "outputs": ["recovery-flow-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and failure structure",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "coverage",
+      "title": "Coverage",
+      "description": "Validate that all failures have recovery actions, escape hatches, and offline fallbacks",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["all-failures-covered", "escape-hatch", "offline-fallback"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate retry limits, backoff strategies, and error message quality",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["retry-limits", "backoff-declared", "error-message-quality"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["recovery-flow-artifact.json"],
+      "gates": ["contract-recovery-flow"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "recovery-flow-spec.json exists with failures array, each failure has id, trigger, recovery",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "all-failures-covered",
+      "title": "All Failures Covered",
+      "description": "Every failure has a recovery object with at least one of: retry, redirect, fallback, contactSupport",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "escape-hatch",
+      "title": "Escape Hatch",
+      "description": "Critical and fatal failures declare an escapeHatch action",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "offline-fallback",
+      "title": "Offline Fallback",
+      "description": "Failures triggered by offline/network conditions declare a fallback",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "retry-limits",
+      "title": "Retry Limits",
+      "description": "All retry recoveries have maxRetries between 1 and 10; retry:true without maxRetries is forbidden",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "backoff-declared",
+      "title": "Backoff Declared",
+      "description": "Multi-retry recoveries (maxRetries > 1) declare backoff: linear|exponential|fixed",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "error-message-quality",
+      "title": "Error Message Quality",
+      "description": "All failures declare a specific userMessage — generic placeholders are violations",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-recovery-flow",
+      "title": "Recovery Flow Contract",
+      "description": "Version, unique failure ids, at least one failure declared",
+      "phase": 4,
+      "required": true,
+      "contract": "recovery-flow"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "recovery-flow",
+      "file": "contracts/recovery-flow.contract.json",
+      "description": "Structural requirements for all compiled recovery flow specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["URF:{failureId}"],
+    "output_artifact": "recovery-flow-artifact.json",
+    "artifact_schema": "recovery-flow-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "recovery-flow-artifact-v1",
+    "fields": ["version", "failure_count", "critical_count", "retry_count", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "URF001": "recovery-flow-spec.json missing or invalid — failures array with id, trigger, recovery required",
+    "URF002": "Failure has empty or actionless recovery object",
+    "URF003": "Retry limit violation — maxRetries out of range 1–10 or retry:true without maxRetries",
+    "URF004": "Critical/fatal failure missing escapeHatch declaration",
+    "URF005": "Offline/network failure missing fallback declaration",
+    "URF006": "Failure missing userMessage or using generic placeholder text",
+    "URF007": "Multi-retry recovery missing backoff strategy declaration",
+    "URF008": "Recovery flow contract violation — version, unique ids, or failure count missing"
+  }
+}

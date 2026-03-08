@@ -1,0 +1,97 @@
+{
+  "id": "kustomize_overlay",
+  "title": "Kustomize Overlay Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Kustomize overlays. Enforces: kustomization.yaml valid, every patch target resolves, rendered manifests pass schema, no duplicate resource IDs.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "k8s-workload-artifact.json",
+    "output_artifact": "kustomize-artifact.json",
+    "identifier": "KUSTOMIZE"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "kustomization-valid",
+        "patches-resolve"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "no-duplicate-resources",
+        "namespace-matches-env"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-kustomize"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "KO001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "KO002",
+      "name": "kustomization-valid",
+      "phase": 2
+    },
+    {
+      "id": "KO003",
+      "name": "patches-resolve",
+      "phase": 2
+    },
+    {
+      "id": "KO004",
+      "name": "no-duplicate-resources",
+      "phase": 3
+    },
+    {
+      "id": "KO005",
+      "name": "namespace-matches-env",
+      "phase": 3
+    },
+    {
+      "id": "KO006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "KO007",
+      "name": "contract-kustomize",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "KO001": "kustomize-spec.json missing — required: base, environment, overlays[]",
+    "KO002": "kustomization.yaml is invalid or missing required fields",
+    "KO003": "Patch target does not resolve to a resource in base",
+    "KO004": "Duplicate resource kind/name in rendered output",
+    "KO005": "Namespace override does not match declared environment",
+    "KO006": "TODO/FIXME found",
+    "KO007": "Kustomize overlay contract violation"
+  }
+}

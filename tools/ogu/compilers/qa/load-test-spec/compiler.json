@@ -1,0 +1,44 @@
+{
+  "id": "load-test-spec",
+  "name": "Load Test Spec Compiler",
+  "tier": "qa",
+  "version": "1.0.0",
+  "description": "Validates load and stress test specifications — scenarios, thresholds, error budgets, and environment constraints",
+  "spec_file": "load-test-spec.json",
+  "artifact": "load-test-artifact.json",
+  "ir_id_prefix": "LOAD_TEST_SPEC:",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Spec Foundation",
+      "gates": ["spec-valid", "tool-declared"]
+    },
+    {
+      "phase": 2,
+      "name": "Scenario Quality",
+      "gates": ["smoke-required", "thresholds-per-scenario", "error-rate-defined"]
+    },
+    {
+      "phase": 3,
+      "name": "Safety & Environment",
+      "gates": ["staging-only-for-stress", "output-artifacts-defined"]
+    },
+    {
+      "phase": 4,
+      "name": "Baseline & Contract",
+      "gates": ["baseline-comparison", "no-todos", "contract-load-test"]
+    }
+  ],
+  "gates": [
+    { "code": "QA040", "name": "spec-valid",              "phase": 1 },
+    { "code": "QA041", "name": "tool-declared",           "phase": 1 },
+    { "code": "QA042", "name": "smoke-required",          "phase": 2 },
+    { "code": "QA043", "name": "thresholds-per-scenario", "phase": 2 },
+    { "code": "QA044", "name": "error-rate-defined",      "phase": 2 },
+    { "code": "QA045", "name": "staging-only-for-stress", "phase": 3 },
+    { "code": "QA046", "name": "output-artifacts-defined","phase": 3 },
+    { "code": "QA047", "name": "baseline-comparison",     "phase": 4 },
+    { "code": "QA048", "name": "no-todos",                "phase": 4 },
+    { "code": "QA049", "name": "contract-load-test",      "phase": 4 }
+  ]
+}

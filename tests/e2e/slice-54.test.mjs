@@ -1,8 +1,8 @@
 /**
- * Slice 54 — Policy AST Enhancement + Studio API Data Layer
+ * Slice 54 — Policy AST Enhancement + Kadima API Data Layer
  *
  * Policy AST: expanded condition operators, effect aggregation, complex rules.
- * Studio Data Layer: audit search, budget summary, agent listing backend functions.
+ * Data Layer: audit search, budget summary, agent listing backend functions.
  */
 
 import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
@@ -45,7 +45,7 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 54 — Policy AST Enhancement + Studio Data Layer\x1b[0m\n");
+console.log("\n\x1b[1mSlice 54 — Policy AST Enhancement + Data Layer\x1b[0m\n");
 console.log("  Expanded policy operators, audit/budget/agent data\n");
 
 // ── Part 1: Policy AST Enhancement ──────────────────────────────
@@ -142,42 +142,42 @@ assert("evaluatePolicy returns effect and matched rules", () => {
   if (!result.matchedRules.includes("r1")) throw new Error("should include r1");
 });
 
-// ── Part 2: Studio Data Layer ──────────────────────────────
+// ── Part 2: Data Layer ──────────────────────────────
 
-console.log("\n\x1b[36m  Part 2: Studio Data Layer\x1b[0m");
+console.log("\n\x1b[36m  Part 2: Data Layer\x1b[0m");
 
-const studioDataLib = join(process.cwd(), "tools/ogu/commands/lib/studio-data-layer.mjs");
-assert("studio-data-layer.mjs exists", () => {
-  if (!existsSync(studioDataLib)) throw new Error("file missing");
+const dataLayerLib = join(process.cwd(), "tools/ogu/commands/lib/data-layer.mjs");
+assert("data-layer.mjs exists", () => {
+  if (!existsSync(dataLayerLib)) throw new Error("file missing");
 });
 
-const studioMod = await import(studioDataLib);
+const dataLayerMod = await import(dataLayerLib);
 
 assert("searchAudit filters by feature", () => {
-  if (typeof studioMod.searchAudit !== "function") throw new Error("missing");
-  const results = studioMod.searchAudit({ root: tmp, feature: "auth" });
+  if (typeof dataLayerMod.searchAudit !== "function") throw new Error("missing");
+  const results = dataLayerMod.searchAudit({ root: tmp, feature: "auth" });
   if (!Array.isArray(results)) throw new Error("should return array");
   if (results.length !== 3) throw new Error(`expected 3 auth events, got ${results.length}`);
 });
 
 assert("searchAudit filters by type", () => {
-  const results = studioMod.searchAudit({ root: tmp, type: "gate.passed" });
+  const results = dataLayerMod.searchAudit({ root: tmp, type: "gate.passed" });
   if (results.length !== 2) throw new Error(`expected 2 gate.passed, got ${results.length}`);
 });
 
 assert("searchAudit filters by severity", () => {
-  const results = studioMod.searchAudit({ root: tmp, severity: "error" });
+  const results = dataLayerMod.searchAudit({ root: tmp, severity: "error" });
   if (results.length !== 1) throw new Error(`expected 1 error, got ${results.length}`);
 });
 
 assert("searchAudit supports limit", () => {
-  const results = studioMod.searchAudit({ root: tmp, limit: 2 });
+  const results = dataLayerMod.searchAudit({ root: tmp, limit: 2 });
   if (results.length !== 2) throw new Error(`expected 2, got ${results.length}`);
 });
 
 assert("getBudgetSummary returns spending data", () => {
-  if (typeof studioMod.getBudgetSummary !== "function") throw new Error("missing");
-  const summary = studioMod.getBudgetSummary({ root: tmp });
+  if (typeof dataLayerMod.getBudgetSummary !== "function") throw new Error("missing");
+  const summary = dataLayerMod.getBudgetSummary({ root: tmp });
   if (typeof summary.dailySpent !== "number") throw new Error("missing dailySpent");
   if (typeof summary.monthlySpent !== "number") throw new Error("missing monthlySpent");
   if (typeof summary.dailyLimit !== "number") throw new Error("missing dailyLimit");
@@ -186,7 +186,7 @@ assert("getBudgetSummary returns spending data", () => {
 });
 
 assert("getBudgetSummary computes alert level", () => {
-  const summary = studioMod.getBudgetSummary({ root: tmp });
+  const summary = dataLayerMod.getBudgetSummary({ root: tmp });
   // 45.50/100 = 45.5% → "normal"
   if (!["normal", "warning", "critical"].includes(summary.alertLevel)) {
     throw new Error(`unexpected alertLevel: ${summary.alertLevel}`);

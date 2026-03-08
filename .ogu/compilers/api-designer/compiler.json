@@ -1,0 +1,120 @@
+{
+  "compiler_id": "compiler_api-designer",
+  "role": "api-designer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "architecture",
+    "display_name": "API Designer",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "resource-identification",
+      "contract-design",
+      "error-design",
+      "versioning",
+      "documentation"
+    ],
+    "consumes": ["Spec.md", "PRD.md", "domain model"],
+    "produces": ["openapi-spec.yaml", "api-contract.md", "error-codes.md", "API documentation"]
+  },
+
+  "gates": [
+    {
+      "id": "api-contract-exists",
+      "description": "OpenAPI or protobuf contract must exist before implementation",
+      "type": "file_exists",
+      "pattern": "openapi",
+      "severity": "error"
+    },
+    {
+      "id": "error-format-defined",
+      "description": "Consistent error response format must be documented",
+      "type": "file_contains",
+      "required_string": "error",
+      "severity": "error"
+    },
+    {
+      "id": "pagination-defined",
+      "description": "Pagination strategy must be defined for list endpoints",
+      "type": "file_contains",
+      "required_string": "pagination",
+      "severity": "error"
+    },
+    {
+      "id": "versioning-strategy",
+      "description": "API versioning strategy must be defined",
+      "type": "file_contains",
+      "required_string": "version",
+      "severity": "error"
+    },
+    {
+      "id": "no-verb-urls",
+      "description": "No verb-based URL patterns (e.g., /getUser, /deleteOrder)",
+      "type": "file_not_contains",
+      "banned_string": "/getUser",
+      "severity": "warn"
+    },
+    {
+      "id": "auth-documented",
+      "description": "Authentication and authorization requirements must be documented",
+      "type": "file_contains",
+      "required_string": "auth",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "rpc-tunnel",
+      "description": "Using HTTP as transport for function calls — every endpoint is POST with verb URL"
+    },
+    {
+      "id": "kitchen-sink-endpoint",
+      "description": "One endpoint that does everything based on parameters"
+    },
+    {
+      "id": "leaky-abstraction",
+      "description": "API responses including database column names and internal implementation details"
+    },
+    {
+      "id": "breaking-changes-without-notice",
+      "description": "Removing a field or changing a type without versioning or consumer notification"
+    },
+    {
+      "id": "documentation-drift",
+      "description": "API documentation says one thing, the actual API does another"
+    }
+  ],
+
+  "escalation_triggers": [
+    "A consumer requires a breaking change to a widely-used endpoint",
+    "Security review reveals the API exposes sensitive data that should be restricted",
+    "Performance requirements cannot be met with current API design",
+    "Two consumer teams have conflicting requirements for the same endpoint",
+    "API needs to support a use case that contradicts its original design philosophy"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with domain model and API requirements",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "OpenAPI or protobuf contract exists before implementation",
+      "Consistent error response format defined across all endpoints",
+      "Pagination strategy defined for all list endpoints",
+      "Versioning strategy chosen and documented",
+      "Authentication and authorization requirements documented",
+      "No verb-based URL patterns (REST resources, not RPC)"
+    ]
+  }
+}

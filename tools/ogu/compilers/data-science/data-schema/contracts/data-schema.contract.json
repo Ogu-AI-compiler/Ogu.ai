@@ -1,0 +1,14 @@
+{
+  "id": "data-schema",
+  "version": "1.0.0",
+  "description": "Contract rules enforced by the Data Schema compiler",
+  "rules": [
+    { "id": "has-dataset", "description": "Spec must declare dataset name" },
+    { "id": "has-columns", "description": "Spec must declare column definitions" },
+    { "id": "all-typed", "description": "Every column must have an explicit dtype" },
+    { "id": "has-version", "description": "Schema must be versioned" },
+    { "id": "has-description", "description": "Schema must have a description" },
+    { "id": "no-pii-unmasked", "description": "PII columns must declare masking strategy" },
+    { "id": "primary-key-defined", "description": "Schema must declare a primary key" }
+  ]
+}

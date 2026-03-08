@@ -1,0 +1,43 @@
+{
+  "id": "load-test-spec",
+  "version": "1.0.0",
+  "description": "Load test spec contract — validates tool, scenarios, thresholds, safety constraints, and output configuration",
+  "rules": [
+    {
+      "id": "LT-C01",
+      "description": "spec.tool must be one of: k6, artillery, locust, gatling, jmeter, autocannon, wrk, vegeta",
+      "required": true,
+      "enum": ["k6", "artillery", "locust", "gatling", "jmeter", "autocannon", "wrk", "vegeta"]
+    },
+    {
+      "id": "LT-C02",
+      "description": "At least one scenario must be of type 'smoke' with vus ≤ 5 and duration ≤ 2m",
+      "required": true
+    },
+    {
+      "id": "LT-C03",
+      "description": "All non-smoke scenarios must declare explicit thresholds",
+      "required": true
+    },
+    {
+      "id": "LT-C04",
+      "description": "At least one scenario must declare errorRate threshold (0.0–1.0)",
+      "required": true
+    },
+    {
+      "id": "LT-C05",
+      "description": "Stress/spike/soak/breakpoint scenarios must not target production environments",
+      "required": true
+    },
+    {
+      "id": "LT-C06",
+      "description": "outputArtifacts must declare at least one output destination",
+      "required": true
+    }
+  ],
+  "artifact": {
+    "file": "load-test-artifact.json",
+    "ir_id_prefix": "LOAD_TEST_SPEC:",
+    "required_fields": ["ir_id", "project", "tool", "scenarios", "attestation"]
+  }
+}

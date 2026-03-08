@@ -1,0 +1,35 @@
+{
+  "id": "webhook-verification-policy",
+  "title": "Webhook Verification Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the webhook signature verification policy. Enforces: constant-time comparison to prevent timing attacks, replay protection window defined, signature verification required on all webhook endpoints.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "secret-handling-policy.compiled.json",
+    "output_artifact": "webhook-verification-policy.compiled.json",
+    "identifier": "WEBHOOK_VERIFICATION_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Signature & Timing",    "gates": ["signature-required", "constant-time-comparison"] },
+    { "id": 3, "name": "Replay Protection",     "gates": ["replay-protection-window"] },
+    { "id": 4, "name": "Transport Security",    "gates": ["tls-required"] },
+    { "id": 5, "name": "Quality",               "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "WV001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "WV002", "name": "constant-time-comparison",    "phase": 2 },
+    { "id": "WV003", "name": "replay-protection-window",    "phase": 3 },
+    { "id": "WV004", "name": "signature-required",          "phase": 2 },
+    { "id": "WV005", "name": "no-todos",                    "phase": 5 },
+    { "id": "WV006", "name": "tls-required",                "phase": 4 }
+  ],
+  "error_codes": {
+    "WV001": "webhook-spec.json missing or invalid — required fields: endpoints[], signatureHeader, algorithm, replayWindow",
+    "WV002": "Webhook signature comparison does not use constant-time equality — use crypto.timingSafeEqual to prevent timing attacks",
+    "WV003": "Replay protection window not defined — set replayWindowSeconds (recommended: 300) to reject replayed requests",
+    "WV004": "Webhook endpoint does not require signature verification — all webhook endpoints must verify HMAC signatures",
+    "WV005": "TODO/FIXME/HACK comment found",
+    "WV006": "Webhook endpoint does not enforce TLS — all webhook receivers must use HTTPS to protect payloads in transit"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "repository-contract-v1",
+  "compiler": "orm-repository-module",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "REPO-001",
+      "description": "Repository must declare a specific entity — no generic multi-entity repositories",
+      "severity": "error"
+    },
+    {
+      "id": "REPO-002",
+      "description": "ORM choice must be declared and must be one of: prisma, drizzle, knex, typeorm",
+      "severity": "error"
+    },
+    {
+      "id": "REPO-003",
+      "description": "Mutating methods (write, delete) must have typed returns — void is not allowed",
+      "severity": "error"
+    },
+    {
+      "id": "REPO-004",
+      "description": "Repository must not import HTTP framework types (express, fastify, Request, Response)",
+      "severity": "error"
+    },
+    {
+      "id": "REPO-005",
+      "description": "Repository must not make external network calls (fetch, axios, http.request)",
+      "severity": "error"
+    },
+    {
+      "id": "REPO-006",
+      "description": "Paginated reads must include stable ordering",
+      "severity": "error"
+    },
+    {
+      "id": "REPO-007",
+      "description": "Raw SQL must be marked with @raw-sql-ok: reason escape hatch comment",
+      "severity": "warning"
+    }
+  ]
+}

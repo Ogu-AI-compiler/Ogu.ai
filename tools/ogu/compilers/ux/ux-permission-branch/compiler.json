@@ -1,0 +1,147 @@
+{
+  "id": "ux-permission-branch",
+  "version": "1.0.0",
+  "title": "UX Permission Branch Compiler",
+  "description": "Validates permission branch specs: role coverage, denied state declarations, unprotected path detection, restriction conflict detection, flow reference validity, and multi-role resolution strategy. Produces permission-branch-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "UPB",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract permission-branch-spec.json from role definitions and access control brief",
+      "model": "haiku",
+      "outputs": ["permission-branch-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and role-to-branch mapping",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "roles-covered"]
+    },
+    {
+      "phase": 2,
+      "id": "coverage",
+      "title": "Coverage",
+      "description": "Validate denied states and unprotected path coverage",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["denied-state", "no-unprotected-paths"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate restriction conflicts, flow references, and multi-role resolution",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["role-conflicts", "valid-flow-references", "multi-role-coverage"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["permission-branch-artifact.json"],
+      "gates": ["contract-permission-branch"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "permission-branch-spec.json exists with roles array and branches array",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "roles-covered",
+      "title": "Roles Covered",
+      "description": "Every role in spec.roles has at least one branch entry",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "denied-state",
+      "title": "Denied State",
+      "description": "All hide/disable restrictions declare deniedMessage or redirectTo (unless silentDeny:true)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-unprotected-paths",
+      "title": "No Unprotected Paths",
+      "description": "All protectedActions are covered by at least one branch restriction",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "role-conflicts",
+      "title": "Role Conflicts",
+      "description": "No two restrictions on the same role+target have contradictory types (hide vs show, enable vs disable)",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "valid-flow-references",
+      "title": "Valid Flow References",
+      "description": "All redirectTo values start with / or are valid named flow ids",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "multi-role-coverage",
+      "title": "Multi-Role Coverage",
+      "description": "When multiRoleResolution is declared, its value must be most-restrictive|least-restrictive|priority-order",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-permission-branch",
+      "title": "Permission Branch Contract",
+      "description": "Version declared, unique role ids, each restriction has targetId and type",
+      "phase": 4,
+      "required": true,
+      "contract": "permission-branch"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "permission-branch",
+      "file": "contracts/permission-branch.contract.json",
+      "description": "Structural requirements for all compiled permission branch specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UPB:{roleId}", "UPB:{roleId}:{targetId}"],
+    "output_artifact": "permission-branch-artifact.json",
+    "artifact_schema": "permission-branch-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "permission-branch-artifact-v1",
+    "fields": ["version", "role_count", "branch_count", "restriction_count", "multi_role_resolution", "has_protected_actions", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UPB001": "permission-branch-spec.json missing or invalid — roles and branches required",
+    "UPB002": "Role has no branch entry — every role must have at least one branch",
+    "UPB003": "hide/disable restriction missing deniedMessage or redirectTo",
+    "UPB004": "Protected action not covered by any branch restriction",
+    "UPB005": "Contradictory restriction types for same role and target",
+    "UPB006": "redirectTo value is invalid — must start with / or be a named flow id",
+    "UPB007": "multiRoleResolution value is invalid",
+    "UPB008": "Permission branch contract violation — version, unique role ids, or restriction fields missing"
+  }
+}

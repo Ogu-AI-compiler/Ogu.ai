@@ -1,0 +1,81 @@
+{
+  "id": "ui-motion-spec",
+  "version": "1.0.0",
+  "title": "UI Motion Spec Compiler",
+  "description": "Verifies motion spec: durations in valid range, reduced-motion override for every animation, valid easing curves, enter/exit transitions defined",
+  "ir_prefix": "UI_MOTION",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract animation types, duration scale, easing functions, reduced-motion policy",
+      "model": "haiku",
+      "outputs": ["motion-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "verify",
+      "title": "Verify Motion Spec",
+      "description": "Run all gates against motion spec",
+      "model": "haiku",
+      "outputs": ["motion-artifact.json"],
+      "gates": [
+        "spec-valid",
+        "duration-range",
+        "reduced-motion-required",
+        "easing-valid",
+        "enter-exit-defined",
+        "no-todos",
+        "contract-motion"
+      ]
+    },
+    {
+      "phase": 2,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed motion artifact for downstream component compilers",
+      "model": "haiku",
+      "outputs": ["motion-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    { "id": "spec-valid",            "title": "Spec Valid",              "description": "motion-spec.json exists with animations array and easings", "phase": 1, "required": true },
+    { "id": "duration-range",        "title": "Duration Range",          "description": "All durations are between 100ms and 500ms for UI feedback animations", "phase": 1, "required": true },
+    { "id": "reduced-motion-required","title": "Reduced Motion Required","description": "Every animation entry has a reducedMotion override (static or opacity-only)", "phase": 1, "required": true },
+    { "id": "easing-valid",          "title": "Easing Valid",            "description": "All easing values are valid cubic-bezier() or named CSS keywords", "phase": 1, "required": true },
+    { "id": "enter-exit-defined",    "title": "Enter/Exit Defined",      "description": "Both enter and exit transition types are defined in the spec", "phase": 1, "required": true },
+    { "id": "no-todos",              "title": "No TODOs",                "description": "No TODO/FIXME/HACK in motion spec files", "phase": 1, "required": true },
+    { "id": "contract-motion",       "title": "Contract: Motion",        "description": "Artifact validates against motion-spec.contract.json", "phase": 1, "required": true }
+  ],
+  "contracts": [
+    { "id": "motion-spec", "file": "contracts/motion-spec.contract.json", "description": "Structural requirements for a valid UI motion spec" }
+  ],
+  "ir": {
+    "identifiers": ["UI_MOTION:motion-spec"],
+    "output_artifact": "motion-artifact.json",
+    "artifact_schema": "ui-motion-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "ui-motion-artifact-v1",
+    "fields": ["animation_count", "easing_count", "has_reduced_motion", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UMO001": "motion-spec.json missing or invalid structure",
+    "UMO002": "Animation duration outside 100ms–500ms range",
+    "UMO003": "Animation missing reducedMotion override",
+    "UMO004": "Invalid easing value (not cubic-bezier or CSS keyword)",
+    "UMO005": "Enter or exit transition type not defined",
+    "UMO006": "TODO/FIXME/HACK found in motion spec files",
+    "UMO007": "Motion spec contract violation"
+  }
+}

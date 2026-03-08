@@ -1,0 +1,197 @@
+{
+  "id": "db-migration",
+  "version": "1.0.0",
+  "title": "Database Migration Compiler",
+  "description": "Formal compiler for database migrations. Reads schema-artifact.json as source of truth, produces verified up/down SQL with rollback guarantee, idempotency, and FK index coverage.",
+  "ir_prefix": "TABLE",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Read schema-artifact.json + description to produce migration-spec.json: table name, columns with SQL types, indexes, foreign keys, version",
+      "model": "haiku",
+      "outputs": ["migration-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "scaffold",
+      "title": "Scaffold",
+      "description": "Generate up.sql and down.sql stubs from migration-spec.json",
+      "model": "haiku",
+      "outputs": ["up.sql", "down.sql"],
+      "gates": ["spec-valid", "cross-schema"]
+    },
+    {
+      "phase": 2,
+      "id": "implement",
+      "title": "Implement",
+      "description": "Write full up.sql (CREATE TABLE / ALTER TABLE) and down.sql (complete rollback)",
+      "model": "sonnet",
+      "outputs": ["up.sql", "down.sql"],
+      "gates": ["up-valid", "down-valid", "no-todos"]
+    },
+    {
+      "phase": 3,
+      "id": "safety",
+      "title": "Safety Check",
+      "description": "Verify rollback completeness, no destructive ops without flag, idempotency guards",
+      "model": "haiku",
+      "outputs": ["safety-check.json"],
+      "gates": ["no-destructive", "idempotent", "rollback-complete"]
+    },
+    {
+      "phase": 4,
+      "id": "verify",
+      "title": "Verify",
+      "description": "Structural checks: PK not nullable, FK columns indexed, version sequential, contract compliance",
+      "model": "haiku",
+      "outputs": ["verification.json"],
+      "gates": ["pk-not-nullable", "fk-indexed", "version-sequential", "contract-migration"]
+    },
+    {
+      "phase": 5,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce migration-artifact.json consumed by api-route cross-migration gate",
+      "model": "haiku",
+      "outputs": ["migration-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "migration-spec.json has required fields: version, name, table, operation, columns[]",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "cross-schema",
+      "title": "Schema Alignment",
+      "description": "Table columns align with schema-artifact.json fields. Schema is the source of truth — no column without a schema field, no schema field without a column.",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "up-valid",
+      "title": "Up Migration Valid",
+      "description": "up.sql is syntactically valid SQL with CREATE TABLE or ALTER TABLE. Has column definitions with explicit types.",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "down-valid",
+      "title": "Down Migration Valid",
+      "description": "down.sql exists and contains the inverse operation of up.sql (DROP TABLE for CREATE TABLE, etc.)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-todos",
+      "title": "No TODOs",
+      "description": "No TODO/FIXME/HACK/PLACEHOLDER in migration SQL files",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-destructive",
+      "title": "No Destructive Ops",
+      "description": "No DROP TABLE, DROP COLUMN, TRUNCATE unless spec.allowDestructive: true. ALTER TABLE ... DROP is always gated.",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "idempotent",
+      "title": "Idempotent",
+      "description": "CREATE TABLE uses IF NOT EXISTS. DROP TABLE uses IF EXISTS. ALTER TABLE checks column existence.",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "rollback-complete",
+      "title": "Rollback Complete",
+      "description": "Every operation in up.sql has a corresponding inverse in down.sql. No orphan operations.",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "pk-not-nullable",
+      "title": "PK Not Nullable",
+      "description": "Primary key column(s) are NOT NULL. Nullable PKs are forbidden.",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "fk-indexed",
+      "title": "FK Columns Indexed",
+      "description": "Every foreign key column has a corresponding CREATE INDEX. Unindexed FKs cause full table scans.",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "version-sequential",
+      "title": "Version Sequential",
+      "description": "Migration version is a zero-padded integer (e.g. 001, 002). Version does not conflict with existing migrations in the feature.",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "contract-migration",
+      "title": "Migration Contract",
+      "description": "Migration matches migration.contract.json: naming convention, timestamp columns, audit columns",
+      "phase": 4,
+      "required": true,
+      "contract": "migration"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "migration",
+      "file": "contracts/migration.contract.json",
+      "description": "Structural requirements for all compiled database migrations"
+    }
+  ],
+  "ir": {
+    "identifiers": [
+      "TABLE:{tableName}",
+      "COLUMN:{tableName}.{columnName}",
+      "INDEX:{indexName}",
+      "MIGRATION:{version}_{name}"
+    ],
+    "output_artifact": "migration-artifact.json",
+    "artifact_schema": "migration-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.30
+  },
+  "attestation": {
+    "schema": "migration-artifact-v1",
+    "fields": [
+      "version", "name", "table", "operation", "columns",
+      "indexes", "foreignKeys", "gates_passed",
+      "schema_aligned", "rollback_complete", "idempotent",
+      "compiled_at", "compiler_version"
+    ]
+  },
+  "error_codes": {
+    "DM001": "migration-spec.json missing or invalid",
+    "DM002": "Migration columns conflict with schema-artifact fields",
+    "DM003": "up.sql missing or syntactically invalid",
+    "DM004": "down.sql missing or incomplete rollback",
+    "DM005": "TODO/FIXME found in migration files",
+    "DM006": "Destructive operation without allowDestructive flag",
+    "DM007": "Migration not idempotent (missing IF NOT EXISTS / IF EXISTS)",
+    "DM008": "up.sql has operations with no inverse in down.sql",
+    "DM009": "Primary key column is nullable",
+    "DM010": "Foreign key column missing index",
+    "DM011": "Migration version invalid or conflicts with existing",
+    "DM012": "Migration contract violation"
+  }
+}

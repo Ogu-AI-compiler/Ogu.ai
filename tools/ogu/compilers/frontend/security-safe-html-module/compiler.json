@@ -1,0 +1,37 @@
+{
+  "id": "security-safe-html-module",
+  "title": "Security Safe HTML Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles HTML sanitization wrappers that prevent XSS. Enforces no unsanitized dangerouslySetInnerHTML, URL allowlist enforcement, and XSS payload tests.",
+  "tier": "frontend",
+  "ir": { "input_artifact": null, "output_artifact": "safe-html-artifact.json", "identifier": "SAFE_HTML" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["no-raw-innerhtml", "url-allowlist", "xss-tests"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-safe-html"] }
+  ],
+  "gates": [
+    { "id": "SH001", "name": "spec-valid",        "phase": 1 },
+    { "id": "SH002", "name": "ts-valid",          "phase": 2 },
+    { "id": "SH003", "name": "no-any",            "phase": 2 },
+    { "id": "SH004", "name": "no-raw-innerhtml",  "phase": 3 },
+    { "id": "SH005", "name": "url-allowlist",     "phase": 3 },
+    { "id": "SH006", "name": "xss-tests",         "phase": 3 },
+    { "id": "SH007", "name": "no-todos",          "phase": 4 },
+    { "id": "SH008", "name": "tests-pass",        "phase": 4 },
+    { "id": "SH009", "name": "contract-safe-html","phase": 5 }
+  ],
+  "error_codes": {
+    "SH001": "Invalid safe-html spec",
+    "SH002": "TypeScript compilation failed",
+    "SH003": "Explicit 'any' found",
+    "SH004": "Raw dangerouslySetInnerHTML without sanitization wrapper",
+    "SH005": "URL attribute not validated against allowlist — javascript: URLs can execute",
+    "SH006": "No XSS payload tests — must verify <script>, onerror, javascript: are blocked",
+    "SH007": "TODO/FIXME found",
+    "SH008": "Tests failed",
+    "SH009": "Contract violation"
+  }
+}

@@ -1,0 +1,7 @@
+{ "id": "safe-html", "version": "1.0.0", "rules": [
+  { "id": "sanitizer-imported", "description": "DOMPurify or sanitizeHtml imported" },
+  { "id": "no-raw-html", "description": "No unsanitized dangerouslySetInnerHTML" },
+  { "id": "url-allowlist", "description": "href/src bindings guarded by allowlist" },
+  { "id": "xss-tests", "description": "XSS attack vector tests present" },
+  { "id": "exported-component", "description": "Component is exported" }
+]}

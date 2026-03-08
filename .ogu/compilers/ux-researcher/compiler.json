@@ -1,0 +1,125 @@
+{
+  "compiler_id": "compiler_ux-researcher",
+  "role": "ux-researcher",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "product",
+    "display_name": "UX Researcher",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "research-planning",
+      "participant-recruitment",
+      "data-collection",
+      "synthesis",
+      "insight-delivery"
+    ],
+    "consumes": ["PRD.md", "product analytics", "stakeholder questions"],
+    "produces": ["research-plan.md", "research-report.md", "personas.md", "journey-map.md"]
+  },
+
+  "gates": [
+    {
+      "id": "research-question-defined",
+      "description": "Research question must be written in canonical format with the decision it informs",
+      "type": "file_contains",
+      "required_string": "research question",
+      "severity": "error"
+    },
+    {
+      "id": "method-justified",
+      "description": "Research method must be selected with justification based on the question type",
+      "type": "file_contains",
+      "required_string": "method",
+      "severity": "error"
+    },
+    {
+      "id": "findings-distinguished-from-insights",
+      "description": "Findings, insights, and recommendations must be clearly distinguished",
+      "type": "file_contains",
+      "required_string": "insight",
+      "severity": "error"
+    },
+    {
+      "id": "patterns-validated",
+      "description": "Patterns must be validated across 3+ participants — single observations are anecdotes",
+      "type": "file_contains",
+      "required_string": "participants",
+      "severity": "error"
+    },
+    {
+      "id": "confidence-level-assigned",
+      "description": "Confidence level must be assigned to each insight (high/medium/low)",
+      "type": "file_contains",
+      "required_string": "confidence",
+      "severity": "warn"
+    },
+    {
+      "id": "recommendations-actionable",
+      "description": "Recommendations must be actionable and specific, linked to product decisions",
+      "type": "file_contains",
+      "required_string": "recommendation",
+      "severity": "error"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "survey-default",
+      "description": "Sending a survey for every research question — surveys measure what you already suspect, not what you don't know to ask"
+    },
+    {
+      "id": "confirmation-research",
+      "description": "Designing research to prove a pre-existing belief — leading questions, biased participant selection, selective reporting"
+    },
+    {
+      "id": "insight-graveyard",
+      "description": "Conducting research, producing a report, and filing it away — if research does not change a decision, it was waste"
+    },
+    {
+      "id": "demographic-personas",
+      "description": "Building personas around age, gender, and job title instead of behavior, motivation, and context"
+    },
+    {
+      "id": "over-recruiting",
+      "description": "Testing with 30 users when 6 would suffice for qualitative insight — more participants dilutes attention per session"
+    },
+    {
+      "id": "usability-lab-trap",
+      "description": "Only conducting research in controlled lab settings — real users work in noisy offices and get interrupted"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Research reveals a fundamental misalignment between product direction and actual user needs",
+    "Stakeholders are making decisions that directly contradict research findings without acknowledging the risk",
+    "Team lacks access to real users and PM is unwilling to pursue recruitment channels",
+    "Ethical concerns arise during research (participant distress, privacy violations, deceptive practices)",
+    "Two research studies produce contradictory findings that cannot be reconciled",
+    "Research timelines are being compressed to the point where data quality is at risk"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "PRD.md",
+        "description": "PRD.md with product questions and hypotheses to validate",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Research question written in canonical format with the decision it informs",
+      "Method selected with justification based on question type",
+      "Findings, insights, and recommendations clearly distinguished",
+      "Patterns validated across 3+ participants",
+      "Confidence level assigned to each insight (high/medium/low)",
+      "Recommendations are actionable, specific, and linked to product decisions"
+    ]
+  }
+}

@@ -60,7 +60,12 @@ export async function callLLM(options) {
   }
 
   if (provider === 'anthropic') {
-    return callAnthropic({ model, messages, system, maxTokens, temperature });
+    // ── MODE SWITCH ──────────────────────────────────────────────────────────
+    // CLI mode (active): no API key required, uses local claude binary.
+    // To restore API mode: swap the two lines below.
+    return callViaCLI({ model, messages, system, maxTokens });
+    // return callAnthropic({ model, messages, system, maxTokens, temperature });
+    // ─────────────────────────────────────────────────────────────────────────
   }
 
   throw new Error(`Unknown provider: ${provider}`);
@@ -114,6 +119,39 @@ function simulateResponse(messages, system, simulateFiles) {
     usage: {
       inputTokens,
       outputTokens,
+    },
+  };
+}
+
+// ── Claude CLI ──
+
+async function callViaCLI({ model, messages, system, maxTokens }) {
+  const { execFileSync } = await import('node:child_process');
+
+  // Convert messages array → single prompt string for CLI
+  const prompt = messages
+    .map(m => `${m.role === 'user' ? 'Human' : 'Assistant'}: ${m.content}`)
+    .join('\n\n');
+
+  const args = ['-p', prompt, '--output-format', 'json'];
+  if (system) args.push('--system', system);
+  if (model)  args.push('--model', model);
+  if (maxTokens) args.push('--max-tokens', String(maxTokens));
+
+  const raw = execFileSync('claude', args, {
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024,
+  });
+
+  const data = JSON.parse(raw);
+  const content = data.result ?? data.text ?? '';
+
+  return {
+    content,
+    files: [],
+    usage: {
+      inputTokens:  data.usage?.input_tokens  || 0,
+      outputTokens: data.usage?.output_tokens || 0,
     },
   };
 }

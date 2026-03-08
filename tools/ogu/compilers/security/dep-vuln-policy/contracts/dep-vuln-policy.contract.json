@@ -1,0 +1,12 @@
+{
+  "id": "dep-vuln-policy",
+  "version": "1.0.0",
+  "description": "A dep-vuln-policy artifact defines blocking thresholds, remediation SLAs, and exception handling rules for dependency vulnerabilities across all project ecosystems.",
+  "rules": [
+    { "id": "spec-has-project-ecosystems-thresholds", "description": "Policy must declare project, ecosystems array, and thresholds with all four severity levels." },
+    { "id": "critical-action-is-block", "description": "thresholds.critical.action must be 'block', 'fail', or 'error' — critical vulnerabilities must prevent deployment." },
+    { "id": "high-has-sla-14-days", "description": "thresholds.high.remediation_sla_days must be declared and must not exceed 14 days." },
+    { "id": "exceptions-have-waiver-ref", "description": "Every exception entry must declare exception_record_ref and a meaningful justification." },
+    { "id": "all-ecosystems-have-scanner", "description": "Every ecosystem object must declare scanner, tool, or audit_command." }
+  ]
+}

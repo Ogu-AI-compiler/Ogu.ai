@@ -1,0 +1,14 @@
+{
+  "id": "utility-fn",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "typed-signature", "description": "All parameters and return type must be explicitly typed", "severity": "error" },
+    { "id": "pure-function", "description": "Function must be deterministic — no Math.random, Date.now, or external state", "severity": "error" },
+    { "id": "no-side-effects", "description": "No DOM, network, storage, timer, or console calls", "severity": "error" },
+    { "id": "no-framework-imports", "description": "No React, Next.js, or browser-specific imports — must run in Node and browser", "severity": "error" },
+    { "id": "no-mutation", "description": "Must not mutate input arguments — return new values", "severity": "error" },
+    { "id": "100-percent-coverage", "description": "Every branch and line must be covered by tests", "severity": "error" },
+    { "id": "jsdoc-present", "description": "JSDoc comment with @param and @returns annotations required", "severity": "warning" },
+    { "id": "exported", "description": "Function must be a named export — no default-only exports", "severity": "error" }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "ux-rtl-structure",
+  "version": "1.0.0",
+  "description": "An RTL structure spec is valid when at least one RTL locale is declared, layout elements have mirroring declarations, navigation has RTL direction reversal, directional icons have RTL variants, left-aligned text has RTL text-align overrides, and all element ids are unique.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "rtl-spec.json must exist with locales (array) and elements (array). RTL specs without these fields cannot be validated."
+    },
+    {
+      "id": "at-least-one-rtl-locale",
+      "description": "The locales array must contain at least one RTL locale string (e.g. ar, he, fa). A spec with no RTL locales has nothing to validate against."
+    },
+    {
+      "id": "at-least-one-element",
+      "description": "The elements array must contain at least one element. An RTL spec with no elements declares RTL support for nothing."
+    },
+    {
+      "id": "elements-have-id-type-direction",
+      "description": "Every element must declare id, type, and currentDirection (ltr, rtl, or auto). Elements without these fields cannot have their RTL behavior validated."
+    },
+    {
+      "id": "ltr-layouts-have-rtl-mirror",
+      "description": "Every element with type=layout and currentDirection=ltr must declare rtlMirror:true or an rtlOverride object. LTR layouts without mirroring create left-to-right visual flow in RTL locales."
+    },
+    {
+      "id": "navigation-has-rtl-reversal",
+      "description": "When navigation is declared, it must have rtlReverseDirection:true and rtlBackIcon unless directionNeutral:true. Navigation without RTL reversal shows forward and back icons in the wrong direction."
+    },
+    {
+      "id": "directional-icons-have-rtl-variant",
+      "description": "Every element with type=icon and directional:true must declare rtlVariant. Directional icons like arrows and chevrons show the wrong direction in RTL without a variant."
+    },
+    {
+      "id": "left-aligned-text-has-rtl-override",
+      "description": "Every element with type=text and textAlign=left must declare rtlTextAlign as right or start. Hard-coded left alignment pushes RTL text to the wrong side."
+    },
+    {
+      "id": "element-ids-unique",
+      "description": "All element ids must be unique within the spec. Duplicate element ids create ambiguous RTL override references."
+    }
+  ]
+}

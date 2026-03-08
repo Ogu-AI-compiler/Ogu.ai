@@ -1,0 +1,97 @@
+{
+  "id": "db_backup_job",
+  "title": "DB Backup Job Compiler",
+  "version": "1.0.0",
+  "description": "Compiles database backup jobs. Enforces: backup command+destination URI present, schedule parses, retention policy set and positive, checksum generation step included, no literal credentials.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "connection-pool-artifact.json",
+    "output_artifact": "db-backup-artifact.json",
+    "identifier": "DB_BACKUP"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "schedule-valid",
+        "retention-set"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "checksum-generation",
+        "no-literal-credentials"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-db-backup"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "DBB001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "DBB002",
+      "name": "schedule-valid",
+      "phase": 2
+    },
+    {
+      "id": "DBB003",
+      "name": "retention-set",
+      "phase": 2
+    },
+    {
+      "id": "DBB004",
+      "name": "checksum-generation",
+      "phase": 3
+    },
+    {
+      "id": "DBB005",
+      "name": "no-literal-credentials",
+      "phase": 3
+    },
+    {
+      "id": "DBB006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "DBB007",
+      "name": "contract-db-backup",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "DBB001": "db-backup-spec.json missing — required: command, destination, schedule, retentionCount",
+    "DBB002": "Backup schedule cron expression is invalid",
+    "DBB003": "Retention count or policy not set, or set to zero",
+    "DBB004": "No checksum or manifest generation step in backup job",
+    "DBB005": "Literal DB credential found in backup config — use env refs",
+    "DBB006": "TODO/FIXME found",
+    "DBB007": "DB backup job contract violation"
+  }
+}

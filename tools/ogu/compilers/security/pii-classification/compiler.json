@@ -1,0 +1,36 @@
+{
+  "id": "pii-classification",
+  "title": "PII Classification Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the PII classification manifest for a data schema. Enforces: all fields are classified, highly-sensitive fields are encrypted at rest, sensitive fields are restricted from logging, no duplicate field IDs, and PII fields declare jurisdiction (GDPR, CCPA, etc.).",
+  "tier": "security",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "pii-classification.compiled.json",
+    "identifier": "PII_CLASSIFICATION"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Classification Checks",  "gates": ["all-fields-classified", "no-duplicate-field-ids"] },
+    { "id": 3, "name": "Protection Policy",      "gates": ["highly-sensitive-encrypted", "sensitive-logging-restricted", "pii-fields-have-jurisdiction"] },
+    { "id": 4, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "PC001", "name": "spec-valid",                    "phase": 1 },
+    { "id": "PC002", "name": "all-fields-classified",         "phase": 2 },
+    { "id": "PC003", "name": "highly-sensitive-encrypted",    "phase": 3 },
+    { "id": "PC004", "name": "sensitive-logging-restricted",  "phase": 3 },
+    { "id": "PC005", "name": "no-duplicate-field-ids",        "phase": 2 },
+    { "id": "PC006", "name": "pii-fields-have-jurisdiction",  "phase": 3 },
+    { "id": "PC007", "name": "no-todos",                      "phase": 4 }
+  ],
+  "error_codes": {
+    "PC001": "pii-spec.json missing or invalid — required fields: fields[] with id, name, classification",
+    "PC002": "One or more schema fields have no PII classification — all fields must be: none, low, medium, high, or critical",
+    "PC003": "Highly-sensitive PII field (SSN, payment, biometric) not flagged for encryption at rest",
+    "PC004": "Sensitive PII field not restricted from logging — mark logRestricted: true for medium+ fields",
+    "PC005": "Duplicate field ID found in PII manifest — field IDs must be unique",
+    "PC006": "PII field has no jurisdiction declared — specify applicable regulations: GDPR, CCPA, HIPAA, etc.",
+    "PC007": "TODO/FIXME/HACK comment found"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "connection-pool-config",
+  "version": "1.0.0",
+  "description": "A connection pool configuration spec defines a valid PgBouncer (or equivalent) pool policy — mode, sizing, auth, health checking, and idle management — such that the pool never exhausts PostgreSQL max_connections.",
+  "rules": [
+    { "id": "required-fields-present", "description": "The spec must declare pool_mode, max_client_connections, default_pool_size, reserve_pool_size, server_idle_timeout, auth_type, health_check_query, max_db_connections, and pools array." },
+    { "id": "pool-mode-valid", "description": "pool_mode must be session, transaction, or statement. Any other value is rejected by PgBouncer and causes silent fallback to session mode." },
+    { "id": "pool-sizes-within-max-connections", "description": "The sum of all pool sizes plus reserve_pool_size must not exceed (max_db_connections - reserved_system_connections). Exceeding this hard limit causes PostgreSQL to reject connections with FATAL: too many connections." },
+    { "id": "max-client-enables-queuing", "description": "max_client_connections must be greater than the sum of all pool sizes. This ensures clients can queue when all pool slots are busy rather than being immediately rejected." },
+    { "id": "auth-type-scram-sha-256", "description": "auth_type must be scram-sha-256. MD5 is deprecated, vulnerable to offline cracking from challenge-response captures, and disabled by default in PostgreSQL 16+." },
+    { "id": "health-check-query-defined", "description": "health_check_query must be a non-empty SQL string. Without it, stale server connections silently accumulate in the pool and cause unexpected connection close errors." },
+    { "id": "reserve-pool-nonzero", "description": "reserve_pool_size must be > 0. A zero reserve means clients are hard-rejected when all pool slots are occupied — no graceful degradation is possible." },
+    { "id": "idle-timeout-defined", "description": "server_idle_timeout must be a positive number >= 30 seconds. Zero disables timeout and causes connection exhaustion; values below 30s cause excessive churn." }
+  ]
+}

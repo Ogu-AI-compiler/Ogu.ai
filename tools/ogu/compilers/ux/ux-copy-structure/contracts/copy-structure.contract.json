@@ -1,0 +1,47 @@
+{
+  "id": "ux-copy-structure",
+  "version": "1.0.0",
+  "description": "A copy structure artifact is valid when every content slot has a unique id and screen reference, all placeholders are typed with examples, state coverage entries are complete, primary slots have character limits, and i18n interpolation keys match declared placeholders.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "copy-structure-spec.json must exist with a content_slots array. Copy without a spec cannot be audited for completeness or i18n correctness."
+    },
+    {
+      "id": "slots-have-screen-reference",
+      "description": "Every content slot must declare a screen (string). Without a screen reference, slots cannot be mapped to their UI context."
+    },
+    {
+      "id": "unique-slot-ids",
+      "description": "All slot ids must be unique across the spec. Duplicate ids create ambiguous copy lookup and override unexpected content."
+    },
+    {
+      "id": "slot-priority-valid",
+      "description": "Every slot must declare priority as primary, secondary, or tertiary. Priority drives character limit enforcement and rendering hierarchy."
+    },
+    {
+      "id": "placeholders-are-typed-objects",
+      "description": "Every placeholder must be an object with key, type, and example. Bare string placeholders cannot be type-checked or localized correctly."
+    },
+    {
+      "id": "state-coverage-complete",
+      "description": "Every stateCoverage entry must have a valid state (loading, success, empty, error) and either content (string) or inherit (boolean). States without content produce blank UI."
+    },
+    {
+      "id": "primary-slots-have-char-limit",
+      "description": "All primary slots must declare charLimit as a positive number. Primary content without a character budget causes layout overflow in constrained containers."
+    },
+    {
+      "id": "i18n-keys-declared",
+      "description": "All {{key}} and {key} interpolation patterns in content strings must have a matching placeholder entry in the same slot. Undeclared keys cause runtime i18n errors."
+    },
+    {
+      "id": "variant-ids-non-empty",
+      "description": "Slots declaring experimentVariant must provide a non-empty variantId. Slots that are not part of an experiment must set experimentVariant=null explicitly."
+    },
+    {
+      "id": "spec-identified",
+      "description": "The spec must declare feature_id or id for cross-compiler reference tracking and artifact lineage."
+    }
+  ]
+}

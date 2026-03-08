@@ -1,0 +1,34 @@
+{
+  "id": "vuln-exception-record",
+  "title": "Vulnerability Exception Record Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a formal vulnerability exception record. Enforces: expiry within 90 days, mitigation context is meaningful (not boilerplate), an approver is declared.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "dep-vuln-policy.compiled.json",
+    "output_artifact": "vuln-exception-record.compiled.json",
+    "identifier": "VULN_EXCEPTION_RECORD"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Expiry & Accountability","gates": ["expiry-within-90-days", "approver-declared"] },
+    { "id": 3, "name": "Mitigation Quality",    "gates": ["mitigation-context-meaningful", "affected-components-listed"] },
+    { "id": 4, "name": "Quality",               "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "VE001", "name": "spec-valid",                       "phase": 1 },
+    { "id": "VE002", "name": "expiry-within-90-days",            "phase": 2 },
+    { "id": "VE003", "name": "mitigation-context-meaningful",    "phase": 3 },
+    { "id": "VE004", "name": "approver-declared",                "phase": 2 },
+    { "id": "VE005", "name": "no-todos",                         "phase": 4 },
+    { "id": "VE006", "name": "affected-components-listed",       "phase": 3 }
+  ],
+  "error_codes": {
+    "VE001": "vuln-exception-spec.json missing or invalid — required fields: cveId, severity, expiresAt, mitigation, approver",
+    "VE002": "Exception expiry exceeds 90 days from today — vulnerability exceptions must be short-lived and reviewed regularly",
+    "VE003": "Mitigation context is too short or generic — explain specifically why this vulnerability is acceptable in this context",
+    "VE004": "No approver declared — vulnerability exceptions require a named security approver",
+    "VE005": "TODO/FIXME/HACK comment found",
+    "VE006": "No affected components listed — declare affectedComponents[] to precisely scope which packages or services carry this exception"
+  }
+}

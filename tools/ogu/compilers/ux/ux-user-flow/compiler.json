@@ -1,0 +1,155 @@
+{
+  "id": "ux-user-flow",
+  "version": "1.0.0",
+  "title": "UX User Flow Compiler",
+  "description": "Validates user flow graphs: every path terminates in a classified terminal, no dead-ends or orphan nodes, decision nodes have typed branches, and all edges reference valid nodes. Produces user-flow-artifact.json consumed by task-flow, state-matrix, and wireframe compilers.",
+  "tier": "ux",
+  "ir_prefix": "UXF",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract user-flow-spec.json from feature brief, screen map, and role definitions",
+      "model": "haiku",
+      "outputs": ["user-flow-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate nodes, edges, and terminal classifications",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "terminal-nodes-classified", "edge-references-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "graph",
+      "title": "Graph Integrity",
+      "description": "Validate reachability, dead-ends, and path finiteness",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["no-dead-ends", "no-orphan-nodes", "finite-paths"]
+    },
+    {
+      "phase": 3,
+      "id": "branches",
+      "title": "Branches",
+      "description": "Validate decision node structure and branch conditions",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["decision-branches", "branch-conditions-typed"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["user-flow-artifact.json"],
+      "gates": ["contract-user-flow"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "user-flow-spec.json exists with nodes, edges, terminals, and entryNodes arrays",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "terminal-nodes-classified",
+      "title": "Terminal Nodes Classified",
+      "description": "Every terminal exists in nodes, has type='terminal', and declares a terminalType",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "edge-references-valid",
+      "title": "Edge References Valid",
+      "description": "Every edge.from and edge.to references an existing node id",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-dead-ends",
+      "title": "No Dead Ends",
+      "description": "Every non-terminal node has at least one outgoing edge",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-orphan-nodes",
+      "title": "No Orphan Nodes",
+      "description": "Every node is reachable from at least one entry node",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "finite-paths",
+      "title": "Finite Paths",
+      "description": "Every path from entry nodes reaches a terminal (no infinite cycles without exits)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "decision-branches",
+      "title": "Decision Branches",
+      "description": "Every decision node has at least 2 outgoing edges",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "branch-conditions-typed",
+      "title": "Branch Conditions Typed",
+      "description": "Every edge from a decision node declares a conditionType",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-user-flow",
+      "title": "User Flow Contract",
+      "description": "Full contract: version, flow id, unique node ids, at least one success terminal",
+      "phase": 4,
+      "required": true,
+      "contract": "user-flow"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "user-flow",
+      "file": "contracts/user-flow.contract.json",
+      "description": "Structural requirements for all compiled user flow graphs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UXF:{flowId}", "UXF:{flowId}:{nodeId}"],
+    "output_artifact": "user-flow-artifact.json",
+    "artifact_schema": "user-flow-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "user-flow-artifact-v1",
+    "fields": ["version", "flow_id", "node_count", "edge_count", "terminal_count", "decision_count", "entry_count", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UXF001": "user-flow-spec.json missing or invalid — nodes, edges, terminals, entryNodes required",
+    "UXF002": "Terminal node unclassified — missing terminalType or type != 'terminal'",
+    "UXF003": "Dead-end node — non-terminal node with no outgoing edges",
+    "UXF004": "Orphan node — node unreachable from all entry nodes",
+    "UXF005": "Decision node has fewer than 2 outgoing edges",
+    "UXF006": "Edge references invalid node id (dangling edge)",
+    "UXF007": "Infinite path — cycle with no terminal exit detected",
+    "UXF008": "Decision edge missing conditionType",
+    "UXF009": "User flow contract violation — version, flow id, or success terminal missing"
+  }
+}

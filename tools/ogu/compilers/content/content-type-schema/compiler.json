@@ -1,0 +1,38 @@
+{
+  "id": "content-type-schema",
+  "title": "Content Type Schema Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the CMS-agnostic content type schema. Enforces: all content type IDs are unique, reference fields point to existing types, slug fields have unique constraints, image fields declare alt text requirements, and field names follow camelCase convention.",
+  "tier": "content",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "content-type-schema.json",
+    "identifier": "CONTENT_TYPE_SCHEMA"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Type Integrity",           "gates": ["unique-ids", "required-fields", "slug-unique-constraint"] },
+    { "id": 3, "name": "Field Constraints",        "gates": ["reference-integrity", "image-alt-declared", "field-naming-convention"] },
+    { "id": 4, "name": "Quality",                  "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "CTS001", "name": "spec-valid",               "phase": 1 },
+    { "id": "CTS002", "name": "unique-ids",               "phase": 2 },
+    { "id": "CTS003", "name": "required-fields",          "phase": 2 },
+    { "id": "CTS004", "name": "slug-unique-constraint",   "phase": 2 },
+    { "id": "CTS005", "name": "reference-integrity",      "phase": 3 },
+    { "id": "CTS006", "name": "image-alt-declared",       "phase": 3 },
+    { "id": "CTS007", "name": "field-naming-convention",  "phase": 3 },
+    { "id": "CTS008", "name": "no-todos",                 "phase": 4 }
+  ],
+  "error_codes": {
+    "CTS001": "content-type-schema.json missing or invalid — required fields: types[] with id, displayName, fields[]",
+    "CTS002": "Duplicate content type ID — every content type must have a globally unique id",
+    "CTS003": "Content type has no required fields — every type must declare at least one field with required: true",
+    "CTS004": "Slug field missing unique: true constraint — slug fields must be unique to prevent URL collisions",
+    "CTS005": "Reference field points to non-existent content type — referenceTo must name a type defined in this schema",
+    "CTS006": "Image field missing alt text requirement declaration — every image field must declare whether alt text is required",
+    "CTS007": "Field name violates naming convention — all field names must be camelCase",
+    "CTS008": "TODO/FIXME/HACK comment found"
+  }
+}

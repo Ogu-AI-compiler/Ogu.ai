@@ -1,0 +1,36 @@
+{
+  "id": "visual-regression",
+  "name": "Visual Regression Compiler",
+  "tier": "qa",
+  "version": "1.0.0",
+  "description": "Validates visual regression test specifications — tool config, pixel diff thresholds, viewport coverage, approval workflow, and Storybook integration",
+  "spec_file": "visual-regression-spec.json",
+  "artifact": "visual-regression-artifact.json",
+  "ir_id_prefix": "VISUAL_REGRESSION:",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Spec Foundation",
+      "gates": ["spec-valid", "threshold-realistic"]
+    },
+    {
+      "phase": 2,
+      "name": "Coverage",
+      "gates": ["mobile-viewport-present", "approval-workflow-defined"]
+    },
+    {
+      "phase": 3,
+      "name": "Integration & Contract",
+      "gates": ["storybook-build-dir-declared", "no-todos", "contract-visual"]
+    }
+  ],
+  "gates": [
+    { "code": "QA060", "name": "spec-valid",                    "phase": 1 },
+    { "code": "QA061", "name": "threshold-realistic",           "phase": 1 },
+    { "code": "QA062", "name": "mobile-viewport-present",       "phase": 2 },
+    { "code": "QA063", "name": "approval-workflow-defined",     "phase": 2 },
+    { "code": "QA064", "name": "storybook-build-dir-declared",  "phase": 3 },
+    { "code": "QA065", "name": "no-todos",                      "phase": 3 },
+    { "code": "QA066", "name": "contract-visual",               "phase": 3 }
+  ]
+}

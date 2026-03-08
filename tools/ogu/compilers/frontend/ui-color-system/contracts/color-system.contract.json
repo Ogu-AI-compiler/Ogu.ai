@@ -1,0 +1,27 @@
+{
+  "id": "color-system",
+  "version": "1.0.0",
+  "description": "A valid UI color system declares semantic roles with mode coverage, interactive deltas, a focus indicator, and a WCAG compliance target.",
+  "rules": [
+    {
+      "id": "destructive-role-exists",
+      "description": "The destructive semantic role must be declared. It maps to error, danger, and delete actions — its absence makes danger states unverifiable."
+    },
+    {
+      "id": "focus-indicator-declared",
+      "description": "A focusIndicator section must specify the focus ring color and its adjacent surface. Required for WCAG 2.1 SC 1.4.11 (Non-text Contrast) compliance."
+    },
+    {
+      "id": "wcag-level-declared",
+      "description": "The project must explicitly declare its WCAG target level (AA or AAA). Without this, contrast gate thresholds are ambiguous."
+    },
+    {
+      "id": "multi-mode",
+      "description": "At least one non-light mode (dark or high-contrast) should be declared to support accessibility requirements and user preference media queries."
+    },
+    {
+      "id": "roles-have-ids",
+      "description": "Every semantic role entry must have an id field. The id is the machine-readable identifier used by downstream compilers to reference the role."
+    }
+  ]
+}

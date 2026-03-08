@@ -1,0 +1,76 @@
+{
+  "id": "kubernetes_workload",
+  "version": "1.0.0",
+  "description": "Validates Kubernetes workload manifests for resource safety, image pinning, probe definitions, and rollout correctness",
+  "rules": [
+    {
+      "id": "KW001",
+      "gate": "spec-valid",
+      "description": "k8s-workload-spec.json must exist, be valid JSON, and declare name, kind, image, and replicas",
+      "required": true,
+      "fields": {
+        "kind": { "enum": ["Deployment", "StatefulSet", "DaemonSet"] },
+        "replicas": { "type": "integer", "min": 0 }
+      }
+    },
+    {
+      "id": "KW002",
+      "gate": "selector-labels-match",
+      "description": "Every label in selectorLabels must also appear in podLabels. Kubernetes rejects workloads where the selector does not match the pod template",
+      "required": true
+    },
+    {
+      "id": "KW003",
+      "gate": "containers-have-resources",
+      "description": "Every container must declare CPU and memory requests (for the scheduler) and a memory limit (to prevent OOM eviction of other pods). CPU limits are optional but requests are mandatory",
+      "required": true,
+      "mandatoryFields": ["resources.requests.cpu", "resources.requests.memory", "resources.limits.memory"]
+    },
+    {
+      "id": "KW004",
+      "gate": "image-refs-valid",
+      "description": "Every container image must be pinned to an explicit version tag or SHA digest. Mutable tags cause non-deterministic deployments",
+      "required": true,
+      "forbiddenTags": [":latest", ":dev", ":main", ":master", ":edge", ":stable", ":nightly", ":canary", "(implicit — no tag)"]
+    },
+    {
+      "id": "KW005",
+      "gate": "refs-declared",
+      "description": "All ConfigMaps and Secrets referenced via envFrom or volumeMounts must be explicitly listed in spec.declaredRefs. Undeclared refs cause CrashLoopBackOff with cryptic errors at scheduling time",
+      "required": false,
+      "note": "Skipped when spec.allowUndeclaredRefs is true"
+    },
+    {
+      "id": "KW006",
+      "gate": "rollout-strategy-valid",
+      "description": "strategy.type must be RollingUpdate or Recreate. RollingUpdate parameters maxSurge and maxUnavailable must be non-negative integers or percentage strings (e.g. '25%'). DaemonSet is skipped",
+      "required": false,
+      "fields": {
+        "strategy.type": { "enum": ["RollingUpdate", "Recreate"] },
+        "strategy.rollingUpdate.maxSurge": { "type": "intOrPercent", "min": 0 },
+        "strategy.rollingUpdate.maxUnavailable": { "type": "intOrPercent", "min": 0 }
+      },
+      "note": "Skipped for DaemonSet; passes when no strategy is declared (Kubernetes default applies)"
+    },
+    {
+      "id": "KW007",
+      "gate": "no-todos",
+      "description": "k8s-workload-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "KW008",
+      "gate": "contract-k8s-workload",
+      "description": "livenessProbe and readinessProbe must be defined. Namespace must be declared (default namespace is an antipattern in shared clusters). Single-replica Deployments without HPA cause downtime during rolling updates",
+      "required": true,
+      "mandatoryFields": ["livenessProbe (or probes.liveness)", "readinessProbe (or probes.readiness)", "namespace"],
+      "note": "Probe check can be skipped with skipProbeCheck: true; single-replica check with skipSingleReplicaCheck: true"
+    }
+  ],
+  "artifact": {
+    "file": "k8s-workload-artifact.json",
+    "ir_id_prefix": "K8S_WORKLOAD:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

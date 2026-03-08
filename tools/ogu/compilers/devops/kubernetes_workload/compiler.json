@@ -1,0 +1,41 @@
+{
+  "id": "kubernetes_workload",
+  "title": "Kubernetes Workload Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Kubernetes Deployment, StatefulSet, and DaemonSet manifests. Enforces: selector labels match pod template, every container has image+resources, all configmaps/secrets/serviceaccounts exist or declared, valid rollout strategy.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "dockerfile-artifact.json",
+    "output_artifact": "k8s-workload-artifact.json",
+    "identifier": "K8S_WORKLOAD"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Label Integrity",         "gates": ["selector-labels-match"] },
+    { "id": 3, "name": "Container Requirements",  "gates": ["containers-have-resources", "image-refs-valid"] },
+    { "id": 4, "name": "Reference Check",         "gates": ["refs-declared"] },
+    { "id": 5, "name": "Rollout Policy",          "gates": ["rollout-strategy-valid"] },
+    { "id": 6, "name": "Quality",                 "gates": ["no-todos"] },
+    { "id": 7, "name": "Attest",                  "gates": ["contract-k8s-workload"] }
+  ],
+  "gates": [
+    { "id": "KW001", "name": "spec-valid",               "phase": 1 },
+    { "id": "KW002", "name": "selector-labels-match",    "phase": 2 },
+    { "id": "KW003", "name": "containers-have-resources","phase": 3 },
+    { "id": "KW004", "name": "image-refs-valid",         "phase": 3 },
+    { "id": "KW005", "name": "refs-declared",            "phase": 4 },
+    { "id": "KW006", "name": "rollout-strategy-valid",   "phase": 5 },
+    { "id": "KW007", "name": "no-todos",                 "phase": 6 },
+    { "id": "KW008", "name": "contract-k8s-workload",    "phase": 7 }
+  ],
+  "error_codes": {
+    "KW001": "k8s-workload-spec.json missing or invalid — required: name, kind, image, replicas, ports[]",
+    "KW002": "Selector labels do not match pod template labels",
+    "KW003": "Container missing resource requests or limits",
+    "KW004": "Image reference has no version tag or digest (floating latest)",
+    "KW005": "ConfigMap, Secret, or ServiceAccount referenced but not declared",
+    "KW006": "Rollout strategy values are invalid",
+    "KW007": "TODO/FIXME/HACK found",
+    "KW008": "Kubernetes workload contract violation"
+  }
+}

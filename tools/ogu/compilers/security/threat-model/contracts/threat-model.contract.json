@@ -1,0 +1,19 @@
+{
+  "id": "threat-model",
+  "version": "1.0.0",
+  "description": "A threat-model artifact enumerates security threats for a feature using STRIDE classification, risk scoring, and explicit mitigations linked to downstream security compilers.",
+  "rules": [
+    { "id": "spec-has-feature", "description": "The threat model must identify the feature it covers." },
+    { "id": "spec-has-assets", "description": "The assets array must be non-empty — at least one asset under threat must be declared." },
+    { "id": "spec-has-trust-boundaries", "description": "The trust_boundaries array must be present (may be empty only if the feature has no trust boundary crossings)." },
+    { "id": "spec-has-threats", "description": "The threats array must be present." },
+    { "id": "threats-have-required-fields", "description": "Each threat must declare: id, title, stride_category, affected_component, likelihood, impact." },
+    { "id": "valid-stride-category", "description": "stride_category must be one of: Spoofing, Tampering, Repudiation, Information_Disclosure, Denial_of_Service, Elevation_of_Privilege." },
+    { "id": "valid-risk-scoring", "description": "likelihood and impact must each be integers 1–5. If risk_score is declared, it must equal likelihood × impact." },
+    { "id": "high-risk-threats-mitigated", "description": "Every threat with risk score ≥ 15 must have at least one mitigation with a description, or a waiver_ref pointing to an approved exception record." },
+    { "id": "every-asset-referenced", "description": "Every declared asset must appear as the affected_component in at least one threat." },
+    { "id": "trust-boundaries-have-direction", "description": "Each trust boundary must declare 'from' and 'to' fields identifying the zones that it separates." },
+    { "id": "mitigations-have-reference", "description": "Each declared mitigation must include either a compiler_ref (e.g. 'authz-policy') or a mechanism field describing the control." },
+    { "id": "llm-threats-present-if-applicable", "description": "If the feature uses LLM or AI, the threat model must include threats addressing prompt injection and data exfiltration." }
+  ]
+}

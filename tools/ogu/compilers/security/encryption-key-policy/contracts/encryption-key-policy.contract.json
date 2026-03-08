@@ -1,0 +1,15 @@
+{
+  "id": "encryption-key-policy",
+  "version": "1.0.0",
+  "description": "An encryption-key-policy artifact defines the cryptographic algorithms, key lengths, purposes, rotation schedules, and storage backends for every encryption key used by the application.",
+  "rules": [
+    { "id": "spec-has-project", "description": "The policy must declare a project name." },
+    { "id": "spec-has-keys", "description": "The keys array must contain at least one entry." },
+    { "id": "every-key-has-required-fields", "description": "Each key must declare: id, algorithm, purpose, key_length_bits, rotation_days, and storage_backend." },
+    { "id": "approved-algorithms-only", "description": "Only NIST-approved algorithms are permitted. Deprecated algorithms (MD5, SHA-1, DES, 3DES, RC4, ECB modes, RSA-1024) are explicitly forbidden." },
+    { "id": "minimum-key-length", "description": "AES keys must be at least 128 bits; RSA keys at least 2048 bits; ECDSA/ECDH at least 256 bits; all keys at least 128 bits." },
+    { "id": "single-purpose-per-key", "description": "Each key must declare exactly one purpose. Compound purposes ('signing and encryption') or wildcards ('all') are forbidden." },
+    { "id": "transit-and-storage-covered", "description": "The policy must include at least one key covering data-in-transit and one covering data-at-rest, unless tls_managed_externally: true." },
+    { "id": "rotation-interval-bounded", "description": "No key may have a rotation interval exceeding 730 days. Purpose-specific limits apply: JWT/token keys ≤ 90 days, signing keys ≤ 365 days." }
+  ]
+}

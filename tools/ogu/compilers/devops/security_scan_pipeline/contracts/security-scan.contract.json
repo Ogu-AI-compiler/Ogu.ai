@@ -1,0 +1,75 @@
+{
+  "id": "security_scan_pipeline",
+  "version": "1.0.0",
+  "description": "Validates security scan pipelines for recognised scanner types, severity failure thresholds, prohibition of blanket ignore rules, defined report output, and contract-level scanner coverage",
+  "rules": [
+    {
+      "id": "SS001",
+      "gate": "spec-valid",
+      "description": "security-scan-spec.json must exist, be valid JSON, and declare name and a non-empty scanners array",
+      "required": true,
+      "mandatoryFields": ["name", "scanners"],
+      "constraints": {
+        "scanners": "must be a non-empty array"
+      }
+    },
+    {
+      "id": "SS002",
+      "gate": "scanners-known",
+      "description": "Every scanner type must be in the allowlist of recognised security tools. Unknown types may be typos or unsupported tools that fail silently at pipeline execution time",
+      "required": true,
+      "knownScanners": ["trivy", "snyk", "grype", "semgrep", "bandit", "gosec", "checkov", "tfsec", "kubesec", "nuclei", "sonarqube", "owasp-zap", "nikto", "clair"]
+    },
+    {
+      "id": "SS003",
+      "gate": "severity-thresholds-set",
+      "description": "Every scanner must declare a failOn severity threshold. Without a threshold the scanner runs but never fails the pipeline — vulnerabilities are reported but do not block deployments",
+      "required": true,
+      "mandatoryFields": ["failOn"],
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    {
+      "id": "SS004",
+      "gate": "no-ignore-all",
+      "description": "No scanner may use ignoreAll=true or ignoreVulns=['*']. The spec-level globalIgnore=true is also prohibited. Blanket ignore rules disable all security checks — the pipeline reports success while ignoring all findings",
+      "required": true,
+      "prohibited": {
+        "scanner.ignoreAll": true,
+        "scanner.ignoreVulns": ["*"],
+        "globalIgnore": true
+      }
+    },
+    {
+      "id": "SS005",
+      "gate": "report-output-defined",
+      "description": "A report output path and format must be configured. Without defined output, scan results are printed to stdout and lost — findings cannot be tracked, compared across releases, or uploaded to a security dashboard",
+      "required": true,
+      "mandatoryFields": ["output", "output.path", "output.format"],
+      "formatEnum": ["json", "sarif", "junit", "html", "table", "cyclonedx"]
+    },
+    {
+      "id": "SS006",
+      "gate": "no-todos",
+      "description": "security-scan-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers. Placeholder scanner types or severity thresholds result in scanners that either fail to run or never block the pipeline",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "SS007",
+      "gate": "contract-security-scan",
+      "description": "The pipeline must include at least one image scanner (trivy, grype, clair, or snyk) and at least one SAST scanner (semgrep, bandit, gosec, or sonarqube). Image scanning catches known CVEs in container images. SAST catches code-level vulnerabilities. Both are required for complete security posture",
+      "required": true,
+      "imageScanners": ["trivy", "grype", "clair", "snyk"],
+      "sastScanners": ["semgrep", "bandit", "gosec", "sonarqube"],
+      "constraints": {
+        "image-scanner": "at least one image scanner required unless skipImageScan: true",
+        "sast-scanner": "at least one SAST scanner required unless skipSAST: true"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "security-scan-artifact.json",
+    "ir_id_prefix": "SECURITY_SCAN_PIPELINE:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "scheduled-job-contract", "version": "1.0.0",
+  "rules": [
+    { "id": "SCHEDULED_JOB-001", "description": "Cron expression must be valid", "enforcement": "gate:cron-valid" },
+    { "id": "SCHEDULED_JOB-002", "description": "Job registration ID is a stable constant", "enforcement": "gate:stable-registration-id" },
+    { "id": "SCHEDULED_JOB-003", "description": "Distributed lock prevents concurrent execution", "enforcement": "gate:distributed-lock" },
+    { "id": "SCHEDULED_JOB-004", "description": "Errors caught — job failure does not crash scheduler", "enforcement": "gate:errors-non-fatal" }
+  ]
+}

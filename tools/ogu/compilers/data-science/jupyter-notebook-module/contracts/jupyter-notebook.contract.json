@@ -1,0 +1,12 @@
+{
+  "id": "jupyter-notebook-module",
+  "version": "1.0.0",
+  "description": "Contract rules for Jupyter notebooks",
+  "rules": [
+    { "id": "has-markdown-title", "description": "First cell is a markdown heading" },
+    { "id": "linear-execution", "description": "Cells executed in linear order" },
+    { "id": "has-functions", "description": "Logic extracted into function definitions" },
+    { "id": "no-empty-cells", "description": "No empty code cells" },
+    { "id": "reproducible", "description": "Random seeds are set" }
+  ]
+}

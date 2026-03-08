@@ -1,0 +1,147 @@
+{
+  "id": "ux-experiment-variant-flow",
+  "version": "1.0.0",
+  "title": "UX Experiment Variant Flow Compiler",
+  "description": "Validates experiment variant specs: control group presence, feature flag alignment, terminal state declarations, analytics event parity, security bypass prevention, rollback behavior, and contract attestation. Produces experiment-variant-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "UEV",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract experiment-variant-spec.json from feature brief and variant definitions",
+      "model": "haiku",
+      "outputs": ["experiment-variant-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and control group presence",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "control-group"]
+    },
+    {
+      "phase": 2,
+      "id": "variants",
+      "title": "Variants",
+      "description": "Validate feature flag alignment, terminal states, and analytics event parity",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["flag-alignment", "terminal-states", "analytics-parity"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate security bypass prevention and rollback behavior",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["no-security-bypass", "rollback-declared"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["experiment-variant-artifact.json"],
+      "gates": ["contract-experiment-variant"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "experiment-variant-spec.json exists with experiment_id(string), hypothesis(string), variants(array) of at least 2; each variant has id+name+flowRef+featureFlag",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "control-group",
+      "title": "Control Group",
+      "description": "Exactly one variant must have isControl:true — no more, no less",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "flag-alignment",
+      "title": "Flag Alignment",
+      "description": "Every variant.featureFlag must be a non-empty string",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "terminal-states",
+      "title": "Terminal States",
+      "description": "Every variant must declare terminals array with at least one terminal: { type: success|failure|abandoned, description: string }",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "analytics-parity",
+      "title": "Analytics Parity",
+      "description": "If spec has analyticsEvents, every event name must appear in all variants; missing events in any variant are violations",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-security-bypass",
+      "title": "No Security Bypass",
+      "description": "No variant may declare bypassAuth:true, bypassValidation:true, or skipGuards:true",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "rollback-declared",
+      "title": "Rollback Declared",
+      "description": "Spec must declare rollbackBehavior: revert-to-control, disable-experiment, or gradual-ramp-down",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-experiment-variant",
+      "title": "Experiment Variant Contract",
+      "description": "Version, unique variant ids, experiment_id non-empty, hypothesis non-empty, exactly one control",
+      "phase": 4,
+      "required": true,
+      "contract": "experiment-variant"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "experiment-variant",
+      "file": "contracts/experiment-variant.contract.json",
+      "description": "Structural requirements for all compiled experiment variant specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UEV:{experiment_id}", "UEV:{experiment_id}:{variantId}"],
+    "output_artifact": "experiment-variant-artifact.json",
+    "artifact_schema": "experiment-variant-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "experiment-variant-artifact-v1",
+    "fields": ["version", "experiment_id", "hypothesis", "variant_count", "control_variant_id", "rollback_behavior", "has_analytics_events", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UEV001": "experiment-variant-spec.json missing or invalid — experiment_id, hypothesis, variants(>=2) with id+name+flowRef+featureFlag required",
+    "UEV002": "Control group missing or multiple — exactly one variant must have isControl:true",
+    "UEV003": "Variant missing or empty featureFlag — cannot be activated programmatically",
+    "UEV004": "Variant missing terminals array or no terminal with type and description",
+    "UEV005": "Analytics event parity violation — event name missing in one or more variants",
+    "UEV006": "Variant declares security bypass — bypassAuth, bypassValidation, or skipGuards not permitted",
+    "UEV007": "rollbackBehavior missing — must be revert-to-control, disable-experiment, or gradual-ramp-down",
+    "UEV008": "Experiment variant contract violation — version, unique variant ids, experiment_id, hypothesis, or control count invalid"
+  }
+}

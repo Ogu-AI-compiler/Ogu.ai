@@ -1,0 +1,38 @@
+{
+  "id": "alt-text-policy",
+  "title": "Alt Text Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the alt text policy for all image contexts. Enforces: every image context declares alt_text_required, decorative images have empty_alt_permitted and aria_hidden, max character length defined, prohibited phrases listed, CMS field referenced, and auto-generation rule declared.",
+  "tier": "content",
+  "ir": {
+    "input_artifact": "content-type-schema.json",
+    "output_artifact": "alt-text-policy.json",
+    "identifier": "ALT_TEXT_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Context Coverage",        "gates": ["context-required-declared", "decorative-marked", "max-length-defined"] },
+    { "id": 3, "name": "Quality Rules",           "gates": ["prohibited-phrases-declared", "cms-field-referenced", "auto-generation-declared"] },
+    { "id": 4, "name": "Quality",                 "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "ALT001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "ALT002", "name": "context-required-declared",   "phase": 2 },
+    { "id": "ALT003", "name": "decorative-marked",           "phase": 2 },
+    { "id": "ALT004", "name": "max-length-defined",          "phase": 2 },
+    { "id": "ALT005", "name": "prohibited-phrases-declared", "phase": 3 },
+    { "id": "ALT006", "name": "cms-field-referenced",        "phase": 3 },
+    { "id": "ALT007", "name": "auto-generation-declared",    "phase": 3 },
+    { "id": "ALT008", "name": "no-todos",                    "phase": 4 }
+  ],
+  "error_codes": {
+    "ALT001": "alt-text-policy.json missing or invalid — required fields: contexts[] with name, alt_text_required",
+    "ALT002": "Image context missing alt_text_required declaration — every context must explicitly declare whether alt text is required",
+    "ALT003": "Decorative context missing empty_alt_permitted or aria_hidden declaration — decorative images must declare both flags",
+    "ALT004": "Max character length not defined for image context — declare max_length (typically ≤ 125 characters) per context",
+    "ALT005": "Prohibited phrases list is absent — declare phrases that must not appear in alt text (file names, 'image of', etc.)",
+    "ALT006": "CMS field reference not defined for image context — each context must map to its CMS alt text field",
+    "ALT007": "Auto-generation rule not declared — declare whether automated alt text generation is allowed or not-allowed",
+    "ALT008": "TODO/FIXME/HACK comment found"
+  }
+}

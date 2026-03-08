@@ -1,0 +1,41 @@
+{
+  "id": "job-producer-module",
+  "title": "Job Producer Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a typed job enqueue module for BullMQ/Bull/pg-boss. Enforces: job payload validated against schema before enqueue, queue name from topology (not hardcoded), no fire-and-forget (enqueue result must be awaited), job options from spec (delay, priority, attempts).",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "queue-topology-artifact.json",
+    "output_artifact": "job-producer-artifact.json",
+    "identifier": "JOB_PRODUCER"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid", "cross-topology"] },
+    { "id": 2, "name": "Enqueue Contract", "gates": ["payload-validated", "queue-name-from-topology"] },
+    { "id": 3, "name": "Reliability", "gates": ["no-fire-and-forget", "options-from-spec"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-job-producer"] }
+  ],
+  "gates": [
+    { "id": "JP001", "name": "spec-valid",              "phase": 1 },
+    { "id": "JP002", "name": "cross-topology",          "phase": 1 },
+    { "id": "JP003", "name": "payload-validated",       "phase": 2 },
+    { "id": "JP004", "name": "queue-name-from-topology","phase": 2 },
+    { "id": "JP005", "name": "no-fire-and-forget",      "phase": 3 },
+    { "id": "JP006", "name": "options-from-spec",       "phase": 3 },
+    { "id": "JP007", "name": "no-todos",                "phase": 4 },
+    { "id": "JP008", "name": "tests-pass",              "phase": 4 },
+    { "id": "JP009", "name": "contract-job-producer",   "phase": 5 }
+  ],
+  "error_codes": {
+    "JP001": "job-producer-spec.json missing or invalid",
+    "JP002": "queue-topology-artifact.json not found — compile queue-topology first",
+    "JP003": "Job payload not validated before enqueue (no schema parse/validate call)",
+    "JP004": "Queue name hardcoded as string literal — must come from topology constant",
+    "JP005": "Enqueue call not awaited — fire-and-forget job enqueue detected",
+    "JP006": "Job options (delay, priority, attempts) not sourced from spec",
+    "JP007": "TODO/FIXME/HACK comment found",
+    "JP008": "Tests failed",
+    "JP009": "Job producer contract violation"
+  }
+}

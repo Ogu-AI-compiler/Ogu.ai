@@ -1,0 +1,63 @@
+{
+  "id": "backup_verification_job",
+  "version": "1.0.0",
+  "description": "Validates backup verification jobs for non-production restore targets, defined verification queries, result artifact paths, schedule/trigger configuration, and failure alerting",
+  "rules": [
+    {
+      "id": "BV001",
+      "gate": "spec-valid",
+      "description": "backup-verify-spec.json must exist, be valid JSON, and declare backupSource, restoreTarget, and verifyQueries",
+      "required": true,
+      "mandatoryFields": ["backupSource", "restoreTarget", "verifyQueries"]
+    },
+    {
+      "id": "BV002",
+      "gate": "target-non-production",
+      "description": "restoreTarget must not be production, prod, live, or prd unless productionOverride: true is set. Restoring a backup into production as a verification step risks data corruption and service disruption",
+      "required": true,
+      "productionNames": ["production", "prod", "live", "prd"],
+      "note": "Override with productionOverride: true only with written justification"
+    },
+    {
+      "id": "BV003",
+      "gate": "verify-queries-defined",
+      "description": "verifyQueries must be a non-empty array. Without queries, the job can only verify that the restore process completed without error — it cannot confirm data integrity. A backup that restores silently with zero rows is not a valid backup",
+      "required": true
+    },
+    {
+      "id": "BV004",
+      "gate": "result-artifact-path",
+      "description": "resultArtifactPath must be declared so the verification outcome is written to a known, retrievable location. Without a result path, verification failures cannot be reviewed after the job completes",
+      "required": true
+    },
+    {
+      "id": "BV005",
+      "gate": "schedule-or-trigger",
+      "description": "The job must declare either a cron schedule or an event trigger so it runs automatically rather than only on demand. Manual-only verification means backups go untested until someone remembers",
+      "required": true,
+      "requiredAtLeastOne": ["schedule", "trigger"]
+    },
+    {
+      "id": "BV006",
+      "gate": "no-todos",
+      "description": "backup-verify-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "BV007",
+      "gate": "contract-backup-verify",
+      "description": "Failed verifications must trigger an alert (notifyOnFailure: true or alertChannel declared). An owner must be declared for on-call routing. A backup that cannot be restored is not a backup — silent failures are unacceptable",
+      "required": true,
+      "mandatoryFields": ["owner"],
+      "constraints": {
+        "failure-notification": "notifyOnFailure: true or alertChannel must be declared"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "backup-verify-artifact.json",
+    "ir_id_prefix": "BACKUP_VERIFICATION:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

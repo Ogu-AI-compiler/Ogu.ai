@@ -1,0 +1,41 @@
+{
+  "id": "query-module",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "typed-return",
+      "description": "useQuery must declare response type generic: useQuery<ResponseType, ErrorType>",
+      "severity": "error"
+    },
+    {
+      "id": "stale-time",
+      "description": "staleTime must be explicitly set to prevent constant refetching",
+      "severity": "error"
+    },
+    {
+      "id": "error-typed",
+      "description": "Error type must be the second generic of useQuery, not implicit unknown",
+      "severity": "warning"
+    },
+    {
+      "id": "no-direct-fetch",
+      "description": "queryFn must delegate to a typed fetcher function; raw fetch() inside queryFn is forbidden",
+      "severity": "error"
+    },
+    {
+      "id": "select-memoized",
+      "description": "select transform must be stable — defined outside component or wrapped in useCallback",
+      "severity": "warning"
+    },
+    {
+      "id": "querykey-exported",
+      "description": "queryKey factory must be exported for use by mutation invalidation and tests",
+      "severity": "error"
+    },
+    {
+      "id": "enabled-on-required-params",
+      "description": "If any params are required, enabled: !!param guard must be present to prevent undefined queries",
+      "severity": "error"
+    }
+  ]
+}

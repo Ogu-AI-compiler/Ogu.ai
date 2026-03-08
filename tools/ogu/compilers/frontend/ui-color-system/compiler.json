@@ -1,0 +1,145 @@
+{
+  "id": "ui-color-system",
+  "version": "1.0.0",
+  "title": "UI Color System Compiler",
+  "description": "Verifies color system spec: WCAG contrast ratios, semantic role completeness, interactive state deltas, no raw hex in semantic entries, focus indicator contrast",
+  "ir_prefix": "UI_COLOR",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract brand palette, semantic intent map, WCAG target, surface/foreground pairing rules",
+      "model": "haiku",
+      "outputs": ["color-system-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "verify",
+      "title": "Verify Color System",
+      "description": "Run all gates: contrast, semantic completeness, raw hex detection, focus contrast, mode coverage",
+      "model": "haiku",
+      "outputs": ["color-artifact.json"],
+      "gates": [
+        "spec-valid",
+        "semantic-roles-complete",
+        "contrast-ratios",
+        "focus-contrast",
+        "no-raw-hex",
+        "interactive-deltas",
+        "mode-coverage",
+        "no-todos",
+        "contract-color"
+      ]
+    },
+    {
+      "phase": 2,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed attestation artifact for downstream theme and component compilers",
+      "model": "haiku",
+      "outputs": ["color-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "color-system-spec.json exists with required fields: semanticRoles, pairings, modes",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "semantic-roles-complete",
+      "title": "Semantic Roles Complete",
+      "description": "All 7 required semantic roles declared: primary, secondary, destructive, success, warning, info, neutral",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "contrast-ratios",
+      "title": "WCAG Contrast Ratios",
+      "description": "Every foreground/background pairing meets the declared WCAG threshold (AA: 4.5:1, AAA: 7:1)",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "focus-contrast",
+      "title": "Focus Indicator Contrast",
+      "description": "Focus indicator color has contrast ≥ 3:1 against the adjacent surface background",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-raw-hex",
+      "title": "No Raw Hex in Semantic Entries",
+      "description": "Semantic color entries must reference design tokens, not raw hex/rgb values",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "interactive-deltas",
+      "title": "Interactive State Deltas",
+      "description": "Every semantic role defines hover, focus, and active color deltas",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "mode-coverage",
+      "title": "Mode Coverage",
+      "description": "Every semantic role has a color assignment for every declared mode (light, dark, high-contrast)",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-todos",
+      "title": "No TODOs",
+      "description": "No TODO/FIXME/HACK in color spec files",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "contract-color",
+      "title": "Contract: Color System",
+      "description": "Artifact validates against color-system.contract.json rules",
+      "phase": 1,
+      "required": true
+    }
+  ],
+  "contracts": [
+    {
+      "id": "color-system",
+      "file": "contracts/color-system.contract.json",
+      "description": "Structural requirements for a valid UI color system"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UI_COLOR:color-system"],
+    "output_artifact": "color-artifact.json",
+    "artifact_schema": "ui-color-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "ui-color-artifact-v1",
+    "fields": ["semantic_role_count", "pairing_count", "min_contrast", "modes", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UCS001": "color-system-spec.json missing or invalid structure",
+    "UCS002": "Required semantic role missing (primary/secondary/destructive/success/warning/info/neutral)",
+    "UCS003": "Foreground/background pairing fails WCAG contrast threshold",
+    "UCS004": "Focus indicator fails 3:1 contrast against adjacent surface",
+    "UCS005": "Semantic entry uses raw hex value instead of token reference",
+    "UCS006": "Semantic role missing interactive state delta (hover/focus/active)",
+    "UCS007": "Semantic role not defined for a declared theme mode",
+    "UCS008": "TODO/FIXME/HACK found in color spec files",
+    "UCS009": "Color system contract violation"
+  }
+}

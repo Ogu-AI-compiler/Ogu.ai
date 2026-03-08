@@ -1,0 +1,110 @@
+{
+  "id": "background_worker_runtime",
+  "title": "Background Worker Runtime Compiler",
+  "version": "1.0.0",
+  "description": "Compiles queue worker Deployments/StatefulSets + HPA/KEDA manifests. Enforces: manifests validate, image+queue bindings exist, autoscaling bounds valid, worker not externally exposed, grace period set.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "dockerfile-artifact.json",
+    "output_artifact": "worker-runtime-artifact.json",
+    "identifier": "WORKER_RUNTIME"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "image-refs-valid",
+        "queue-bindings-valid"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "autoscaling-bounds-valid",
+        "worker-not-exposed"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "grace-period-set"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Phase 6",
+      "gates": [
+        "contract-worker-runtime"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "BW001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "BW002",
+      "name": "image-refs-valid",
+      "phase": 2
+    },
+    {
+      "id": "BW003",
+      "name": "queue-bindings-valid",
+      "phase": 2
+    },
+    {
+      "id": "BW004",
+      "name": "autoscaling-bounds-valid",
+      "phase": 3
+    },
+    {
+      "id": "BW005",
+      "name": "worker-not-exposed",
+      "phase": 3
+    },
+    {
+      "id": "BW006",
+      "name": "grace-period-set",
+      "phase": 4
+    },
+    {
+      "id": "BW007",
+      "name": "no-todos",
+      "phase": 5
+    },
+    {
+      "id": "BW008",
+      "name": "contract-worker-runtime",
+      "phase": 6
+    }
+  ],
+  "error_codes": {
+    "BW001": "bg-worker-spec.json missing — required: name, image, queues[]",
+    "BW002": "Worker image reference has no version tag (floating latest)",
+    "BW003": "Queue name or connection binding undeclared in spec",
+    "BW004": "Autoscaler min > max replicas, or non-positive bounds",
+    "BW005": "Worker workload exposed through external Service without allowance",
+    "BW006": "terminationGracePeriodSeconds not set — in-flight jobs will be killed",
+    "BW007": "TODO/FIXME found",
+    "BW008": "Worker runtime contract violation"
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "id": "disaster_recovery_runbook",
+  "title": "Disaster Recovery Runbook Compiler",
+  "version": "1.0.0",
+  "description": "Compiles disaster recovery runbooks. Enforces: required sections present (scope, triggers, RTO/RPO, restore steps, verification, rollback, escalation), all referenced scripts/dashboards/jobs exist, command blocks are fenced, last-reviewed date valid, owner set.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "backup-verify-artifact.json",
+    "output_artifact": "dr-runbook-artifact.json",
+    "identifier": "DR_RUNBOOK"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "required-sections-present",
+        "rto-rpo-declared"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "command-blocks-fenced",
+        "artifacts-linked"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "last-reviewed-valid",
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-dr-runbook"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "DR001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "DR002",
+      "name": "required-sections-present",
+      "phase": 2
+    },
+    {
+      "id": "DR003",
+      "name": "rto-rpo-declared",
+      "phase": 2
+    },
+    {
+      "id": "DR004",
+      "name": "command-blocks-fenced",
+      "phase": 3
+    },
+    {
+      "id": "DR005",
+      "name": "artifacts-linked",
+      "phase": 3
+    },
+    {
+      "id": "DR006",
+      "name": "last-reviewed-valid",
+      "phase": 4
+    },
+    {
+      "id": "DR007",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "DR008",
+      "name": "contract-dr-runbook",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "DR001": "dr-runbook-spec.json missing — required: title, owner, lastReviewed, sections{}",
+    "DR002": "Runbook missing required section(s): scope, triggers, prerequisites, restoreSteps, verification, rollback, escalation",
+    "DR003": "RTO and RPO targets not declared in runbook",
+    "DR004": "Command block not properly fenced with code block markers",
+    "DR005": "Referenced backup artifact or verification result not linked",
+    "DR006": "lastReviewed is not a valid ISO-8601 date or owner is empty",
+    "DR007": "TODO/FIXME found",
+    "DR008": "DR runbook contract violation"
+  }
+}

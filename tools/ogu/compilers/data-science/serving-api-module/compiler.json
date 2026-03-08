@@ -1,0 +1,39 @@
+{
+  "id": "serving-api-module",
+  "title": "Model Serving API Compiler",
+  "version": "1.0.0",
+  "description": "Compiles model serving APIs (FastAPI/Flask). Enforces Pydantic input validation, typed response schemas, model loaded once at startup, health endpoint, proper error handling, structured logging, latency SLA contract, and no silent failures.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "registry-artifact.json", "output_artifact": "serving-artifact.json", "identifier": "SERVING_API" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "API Structure", "gates": ["input-schema-validated", "output-schema-typed", "health-endpoint"] },
+    { "id": 3, "name": "Production Safety", "gates": ["model-loaded-once", "error-handling", "logging-not-print"] },
+    { "id": 4, "name": "Contract", "gates": ["latency-contract", "no-todos", "contract-serving"] }
+  ],
+  "gates": [
+    { "id": "SA001", "name": "spec-valid",            "phase": 1 },
+    { "id": "SA002", "name": "input-schema-validated","phase": 2 },
+    { "id": "SA003", "name": "output-schema-typed",   "phase": 2 },
+    { "id": "SA004", "name": "health-endpoint",       "phase": 2 },
+    { "id": "SA005", "name": "model-loaded-once",     "phase": 3 },
+    { "id": "SA006", "name": "error-handling",        "phase": 3 },
+    { "id": "SA007", "name": "logging-not-print",     "phase": 3 },
+    { "id": "SA008", "name": "latency-contract",      "phase": 4 },
+    { "id": "SA009", "name": "no-todos",              "phase": 4 },
+    { "id": "SA010", "name": "contract-serving",      "phase": 4 }
+  ],
+  "error_codes": {
+    "SA001": "Invalid serving API spec",
+    "SA002": "Request body not validated (no Pydantic BaseModel or marshmallow schema)",
+    "SA003": "Response not typed (response_model not set in FastAPI / no schema on output)",
+    "SA004": "No /health or /ping endpoint defined",
+    "SA005": "Model loaded inside request handler — must load once at startup (global/lifespan)",
+    "SA006": "Bare except or no HTTP error handlers defined",
+    "SA007": "print() used instead of logging in serving API",
+    "SA008": "No latency SLA documented in spec (max_latency_ms)",
+    "SA009": "TODO/FIXME found",
+    "SA010": "Serving API contract violation"
+  }
+}

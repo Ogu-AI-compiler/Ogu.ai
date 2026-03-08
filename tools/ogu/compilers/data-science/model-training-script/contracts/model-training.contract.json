@@ -1,0 +1,12 @@
+{
+  "id": "model-training-script",
+  "version": "1.0.0",
+  "description": "Contract rules for model training scripts",
+  "rules": [
+    { "id": "random-seed", "description": "Random seed must be set for reproducibility" },
+    { "id": "experiment-tracking", "description": "MLflow/W&B experiment tracking required" },
+    { "id": "model-serialized", "description": "Model must be saved/serialized" },
+    { "id": "type-hints", "description": "Functions must have type hints" },
+    { "id": "hyperparams-configurable", "description": "Hyperparameters loaded from config, not hardcoded" }
+  ]
+}

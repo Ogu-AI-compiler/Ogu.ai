@@ -1,0 +1,74 @@
+{
+  "id": "developer_platform_stack",
+  "version": "1.0.0",
+  "description": "Validates developer platform stacks for recognised component types, required foundational pillars, golden path completeness, IDP integration, SBOM coverage, and contract-level component uniqueness",
+  "rules": [
+    {
+      "id": "DP001",
+      "gate": "spec-valid",
+      "description": "dev-platform-spec.json must exist, be valid JSON, and declare name and a non-empty components array",
+      "required": true,
+      "mandatoryFields": ["name", "components"],
+      "constraints": {
+        "components": "must be a non-empty array"
+      }
+    },
+    {
+      "id": "DP002",
+      "gate": "components-known",
+      "description": "Every component type must be in the allowlist of recognised platform component categories. Unknown types may be typos or categories that need standardisation",
+      "required": true,
+      "knownComponents": [
+        "source-control", "ci-cd", "artifact-registry", "secret-manager", "idp", "api-gateway",
+        "service-mesh", "observability", "feature-flags", "developer-portal", "local-dev",
+        "gitops", "code-review", "dependency-scanning", "sbom", "iac-automation",
+        "platform-api", "self-service-catalog", "cost-attribution", "oncall"
+      ]
+    },
+    {
+      "id": "DP003",
+      "gate": "golden-paths-defined",
+      "description": "At least one golden path must be defined. Golden paths are the opinionated developer workflows (e.g. 'create new service', 'deploy to production') that give the platform a unified developer experience. Without them, the platform is a collection of tools without a workflow. Each golden path must have a name and a non-empty steps array. Set skipGoldenPaths: true for exemption",
+      "required": true,
+      "mandatoryGoldenPathFields": ["name", "steps"],
+      "note": "Skipped when spec.skipGoldenPaths is true"
+    },
+    {
+      "id": "DP004",
+      "gate": "idp-integrated",
+      "description": "An Internal Developer Portal (IDP) component must be present with a tool field. The IDP is the primary interface through which developers discover services, documentation, and platform capabilities. Without it, platform capabilities are undiscoverable. Set skipIDPCheck: true for exemption",
+      "required": true,
+      "mandatoryIdpFields": ["tool"],
+      "note": "Skipped when spec.skipIDPCheck is true"
+    },
+    {
+      "id": "DP005",
+      "gate": "sbom-coverage",
+      "description": "An SBOM component must be present in the platform stack. SBOMs are required for supply chain integrity verification, compliance (EO 14028), and vulnerability tracking when a new CVE is discovered. Set skipSBOM: true with justification for exemption",
+      "required": true,
+      "note": "Skipped when spec.skipSBOM is true"
+    },
+    {
+      "id": "DP006",
+      "gate": "no-todos",
+      "description": "dev-platform-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers. Placeholder component types or tool names cause the platform spec to reference tools that do not exist",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "DP007",
+      "gate": "contract-dev-platform",
+      "description": "The three foundational component types must be present: source-control, ci-cd, and artifact-registry. No component type may appear more than once unless marked multi: true. A platform missing any foundational pillar is incomplete",
+      "required": true,
+      "requiredComponentTypes": ["source-control", "ci-cd", "artifact-registry"],
+      "constraints": {
+        "no-duplicate-types": "each component type must be unique unless multi: true is set"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "dev-platform-artifact.json",
+    "ir_id_prefix": "DEVELOPER_PLATFORM_STACK:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

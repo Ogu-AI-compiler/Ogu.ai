@@ -1,0 +1,49 @@
+{
+  "contract": "seed-scenario",
+  "version": "1.0.0",
+  "ir_prefix": "SEED_SCENARIO",
+  "description": "Seed scenario compiler contract — idempotent, deterministic, safe fixtures",
+  "rules": [
+    {
+      "id": "SS-C01",
+      "title": "Upsert only",
+      "description": "Seed files must use upsert (createOrUpdate, ON CONFLICT DO UPDATE) — no bare inserts that fail on re-run",
+      "gate": "SS003"
+    },
+    {
+      "id": "SS-C02",
+      "title": "No random data",
+      "description": "Seed data must be deterministic — no Math.random(), faker.*, uuid(), nanoid() unless spec.allowRandom: true",
+      "gate": "SS004"
+    },
+    {
+      "id": "SS-C03",
+      "title": "Cleanup declared",
+      "description": "Every seed module must export a teardown/cleanup/reset function for test isolation",
+      "gate": "SS005"
+    },
+    {
+      "id": "SS-C04",
+      "title": "No production data",
+      "description": "Seed files must not contain real PII — no real SSNs, credit cards, production email domains, or real phone numbers",
+      "gate": "SS006"
+    },
+    {
+      "id": "SS-C05",
+      "title": "No TODOs",
+      "description": "No TODO, FIXME, or HACK comments in any source file",
+      "gate": "SS007"
+    },
+    {
+      "id": "SS-C06",
+      "title": "Tests pass",
+      "description": "All test files in the module pass (vitest or jest)",
+      "gate": "SS008"
+    }
+  ],
+  "artifact": {
+    "file": "seed-scenario-artifact.json",
+    "required_fields": ["ir_id", "scenarioId", "entities", "seedOrder", "attestation"],
+    "ir_id_pattern": "^SEED_SCENARIO:.+"
+  }
+}

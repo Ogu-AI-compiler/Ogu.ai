@@ -1,0 +1,37 @@
+{
+  "id": "env_schema",
+  "title": "Env Schema Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a typed, validated env variable schema. Enforces: every key has a unique name and declared type, defaults conform to declared types, secrets have no literal defaults, and all downstream env refs are declared.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "env-schema-artifact.json",
+    "identifier": "ENV_SCHEMA"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Key Integrity",            "gates": ["unique-names", "type-valid", "defaults-typed"] },
+    { "id": 3, "name": "Security Check",           "gates": ["no-secret-default"] },
+    { "id": 4, "name": "Quality",                  "gates": ["no-todos"] },
+    { "id": 5, "name": "Attest",                   "gates": ["contract-env-schema"] }
+  ],
+  "gates": [
+    { "id": "ES001", "name": "spec-valid",         "phase": 1 },
+    { "id": "ES002", "name": "unique-names",       "phase": 2 },
+    { "id": "ES003", "name": "type-valid",         "phase": 2 },
+    { "id": "ES004", "name": "defaults-typed",     "phase": 2 },
+    { "id": "ES005", "name": "no-secret-default",  "phase": 3 },
+    { "id": "ES006", "name": "no-todos",           "phase": 4 },
+    { "id": "ES007", "name": "contract-env-schema","phase": 5 }
+  ],
+  "error_codes": {
+    "ES001": "env-schema-spec.json missing or invalid — required: envKeys[], unknownKeyPolicy",
+    "ES002": "Duplicate env key name detected",
+    "ES003": "Env key has invalid or missing type",
+    "ES004": "Default value does not conform to declared type",
+    "ES005": "Secret-marked key has a literal default or committed value",
+    "ES006": "TODO/FIXME/HACK comment found",
+    "ES007": "Env schema contract violation"
+  }
+}

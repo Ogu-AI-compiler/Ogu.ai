@@ -1,0 +1,46 @@
+{
+  "id": "design-tokens",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "tailwind-extended",
+      "description": "tailwind.config.ts must use theme.extend — never replace the entire theme object",
+      "severity": "error"
+    },
+    {
+      "id": "css-vars-defined",
+      "description": "Colors must be expressed as CSS custom properties (--color-primary: ...) for runtime theming support",
+      "severity": "error"
+    },
+    {
+      "id": "no-hardcoded-colors-in-config",
+      "description": "tailwind.config must reference var(--...) CSS vars, not hardcoded hex values",
+      "severity": "warning"
+    },
+    {
+      "id": "semantic-layer",
+      "description": "Semantic tokens (primary, secondary, destructive, muted, accent) must be defined as a layer above the raw palette",
+      "severity": "error"
+    },
+    {
+      "id": "wcag-aa",
+      "description": "All declared contrast pairs must pass WCAG AA (4.5:1 normal text, 3:1 large text)",
+      "severity": "error"
+    },
+    {
+      "id": "kebab-case-keys",
+      "description": "All token keys must be kebab-case — no camelCase, PascalCase, or underscores",
+      "severity": "error"
+    },
+    {
+      "id": "dark-mode-parity",
+      "description": "If darkMode is enabled, every semantic color token must have a dark counterpart",
+      "severity": "error"
+    },
+    {
+      "id": "no-key-collisions",
+      "description": "Token keys must be unique across all categories (colors, spacing, typography, radius)",
+      "severity": "error"
+    }
+  ]
+}

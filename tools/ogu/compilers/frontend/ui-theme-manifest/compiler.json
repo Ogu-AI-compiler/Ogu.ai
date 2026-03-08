@@ -1,0 +1,84 @@
+{
+  "id": "ui-theme-manifest",
+  "version": "1.0.0",
+  "title": "UI Theme Manifest Compiler",
+  "description": "Verifies theme manifest: every semantic token mapped per mode, dark mode contrast, high-contrast opacity, token references valid, mode switching stability",
+  "ir_prefix": "UI_THEME",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract color system, token spec, mode list (light/dark/high-contrast), override rules",
+      "model": "haiku",
+      "outputs": ["theme-manifest-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "verify",
+      "title": "Verify Theme Manifest",
+      "description": "Run all gates against theme manifest spec",
+      "model": "haiku",
+      "outputs": ["theme-artifact.json"],
+      "gates": [
+        "spec-valid",
+        "modes-complete",
+        "token-refs-valid",
+        "dark-mode-contrast",
+        "high-contrast-opacity",
+        "mode-name-stable",
+        "no-todos",
+        "contract-theme"
+      ]
+    },
+    {
+      "phase": 2,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed theme artifact for component and page compilers",
+      "model": "haiku",
+      "outputs": ["theme-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    { "id": "spec-valid",          "title": "Spec Valid",             "description": "theme-manifest-spec.json exists with modes, tokens, and mappings", "phase": 1, "required": true },
+    { "id": "modes-complete",      "title": "Modes Complete",         "description": "Every semantic token has a mapping for every declared mode", "phase": 1, "required": true },
+    { "id": "token-refs-valid",    "title": "Token References Valid", "description": "Every mode mapping value references an existing primitive token or valid hex", "phase": 1, "required": true },
+    { "id": "dark-mode-contrast",  "title": "Dark Mode Contrast",     "description": "Dark mode foreground/background pairs declare contrast ratio ≥ 4.5:1", "phase": 1, "required": false },
+    { "id": "high-contrast-opacity","title": "High Contrast Opacity", "description": "High-contrast mode has no token with opacity < 1 (no transparency)", "phase": 1, "required": false },
+    { "id": "mode-name-stable",    "title": "Mode Name Stability",    "description": "Token semantic names are identical across modes (only values change)", "phase": 1, "required": true },
+    { "id": "no-todos",            "title": "No TODOs",               "description": "No TODO/FIXME/HACK in theme spec files", "phase": 1, "required": true },
+    { "id": "contract-theme",      "title": "Contract: Theme",        "description": "Artifact validates against theme-manifest.contract.json", "phase": 1, "required": true }
+  ],
+  "contracts": [
+    { "id": "theme-manifest", "file": "contracts/theme-manifest.contract.json", "description": "Structural requirements for a valid UI theme manifest" }
+  ],
+  "ir": {
+    "identifiers": ["UI_THEME:theme-manifest"],
+    "output_artifact": "theme-artifact.json",
+    "artifact_schema": "ui-theme-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "ui-theme-artifact-v1",
+    "fields": ["mode_count", "token_count", "modes", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UTH001": "theme-manifest-spec.json missing or invalid structure",
+    "UTH002": "Semantic token missing mode mapping",
+    "UTH003": "Theme mode mapping value references undefined token",
+    "UTH004": "Dark mode color pair fails WCAG contrast",
+    "UTH005": "High-contrast mode contains transparent or semi-transparent token",
+    "UTH006": "Token semantic name differs between modes (must be stable)",
+    "UTH007": "TODO/FIXME/HACK found in theme spec files",
+    "UTH008": "Theme manifest contract violation"
+  }
+}

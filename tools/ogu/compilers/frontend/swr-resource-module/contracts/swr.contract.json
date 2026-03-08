@@ -1,0 +1,8 @@
+{ "id": "swr-resource", "version": "1.0.0", "rules": [
+  { "id": "uses-swr", "description": "useSWR imported and used" },
+  { "id": "typed-data", "description": "useSWR<T> generic typed" },
+  { "id": "exported-hook", "description": "Custom hook exported" },
+  { "id": "unique-key", "description": "SWR key is parameterized" },
+  { "id": "revalidation-declared", "description": "Revalidation strategy set" },
+  { "id": "state-destructured", "description": "{ data, error } destructured" }
+]}

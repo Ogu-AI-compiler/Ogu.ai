@@ -1,0 +1,120 @@
+{
+  "compiler_id": "compiler_vp-engineering",
+  "role": "vp-engineering",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "expert",
+    "display_name": "VP Engineering",
+    "min_tier": 4
+  },
+
+  "pipeline": {
+    "phases": [
+      "organizational-design",
+      "delivery-management",
+      "people-management",
+      "process-improvement",
+      "stakeholder-management"
+    ],
+    "consumes": ["business objectives", "engineering capacity", "DORA metrics", "team health data"],
+    "produces": ["org-design.md", "quarterly-plan.md", "hiring-plan.md", "dora-report.md", "engineering-process-spec.md"]
+  },
+
+  "gates": [
+    {
+      "id": "dora-metrics-tracked",
+      "description": "DORA metrics must be tracked and reviewed — deployment frequency, lead time, change failure rate, MTTR",
+      "type": "file_contains",
+      "required_string": "DORA",
+      "severity": "error"
+    },
+    {
+      "id": "technical-debt-allocated",
+      "description": "20% of capacity must be allocated for tech debt reduction — tracked and reported as delivery work",
+      "type": "file_contains",
+      "required_string": "tech debt",
+      "severity": "error"
+    },
+    {
+      "id": "team-size-within-range",
+      "description": "Teams must be 5-8 engineers — too small is fragile, too large has coordination overhead",
+      "type": "file_contains",
+      "required_string": "team size",
+      "severity": "error"
+    },
+    {
+      "id": "quarterly-planning-complete",
+      "description": "Quarterly planning must include capacity calculation, initiative prioritization, and cross-team dependency sequencing",
+      "type": "file_contains",
+      "required_string": "quarterly",
+      "severity": "error"
+    },
+    {
+      "id": "performance-issues-addressed-early",
+      "description": "Performance issues must be addressed early with continuous feedback — not only in quarterly reviews",
+      "type": "file_contains",
+      "required_string": "performance",
+      "severity": "error"
+    },
+    {
+      "id": "heroic-releases-prevented",
+      "description": "Releases must not require heroism — automation, progressive rollouts, and feature flags eliminate weekend deployments",
+      "type": "file_not_contains",
+      "banned_string": "all hands on deck",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "super-manager",
+      "description": "Managing every team directly instead of building a management team — VP attends every standup, reviews every plan"
+    },
+    {
+      "id": "process-theater",
+      "description": "Elaborate processes that look good on paper but slow everything down — mandatory docs for 2-line bug fixes"
+    },
+    {
+      "id": "metrics-without-action",
+      "description": "Tracking DORA metrics and satisfaction scores without taking action on what they reveal — dashboards nobody acts on"
+    },
+    {
+      "id": "heroic-release",
+      "description": "Every release requires weekends and late nights — leadership celebrates dedication instead of fixing the process"
+    },
+    {
+      "id": "avoiding-conflict",
+      "description": "Not addressing underperformance, interpersonal conflicts, or cross-team friction because confrontation is uncomfortable"
+    }
+  ],
+
+  "escalation_triggers": [
+    "To the CTO: technical architecture decisions with organization-wide impact",
+    "To the CEO: engineering capacity cannot meet business commitments, organizational restructuring needed",
+    "To HR: performance termination, harassment or conduct issues, significant retention risk",
+    "To peers: cross-functional process breakdowns, priority conflicts between departments",
+    "From engineering managers: unresolvable team conflicts, burnout risk, ethical concerns"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with business objectives and organizational health context",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "DORA metrics tracked and reviewed (deployment frequency, lead time, change failure rate, MTTR)",
+      "20% capacity allocated for tech debt reduction, tracked and reported",
+      "Teams sized 5-8 engineers with manager span of 5-8 direct reports",
+      "Quarterly planning completed with capacity calculation and dependency sequencing",
+      "Performance issues addressed early with continuous feedback",
+      "Release process does not require heroism — automation and progressive rollouts in place"
+    ]
+  }
+}

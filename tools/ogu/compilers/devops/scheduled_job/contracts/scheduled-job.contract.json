@@ -1,0 +1,82 @@
+{
+  "id": "scheduled_job",
+  "version": "1.0.0",
+  "description": "Validates Kubernetes CronJob specs for cron expression validity, job template completeness, concurrency policy, job limits, secret ref integrity, and ownership accountability",
+  "rules": [
+    {
+      "id": "SJ001",
+      "gate": "spec-valid",
+      "description": "scheduled-job-spec.json must exist, be valid JSON, and declare name, schedule, command, and image",
+      "required": true,
+      "mandatoryFields": ["name", "schedule", "command", "image"]
+    },
+    {
+      "id": "SJ002",
+      "gate": "cron-expression-valid",
+      "description": "The schedule field must be a valid 5-field cron expression (minute hour day-of-month month day-of-week) or a recognised shorthand. Each field is validated against its allowed range. An invalid expression causes the CronJob controller to reject the resource at admission time",
+      "required": true,
+      "cronFields": {
+        "minute":       { "min": 0, "max": 59 },
+        "hour":         { "min": 0, "max": 23 },
+        "day-of-month": { "min": 1, "max": 31 },
+        "month":        { "min": 1, "max": 12 },
+        "day-of-week":  { "min": 0, "max": 7 }
+      },
+      "shorthands": ["@yearly", "@annually", "@monthly", "@weekly", "@daily", "@midnight", "@hourly", "@reboot"]
+    },
+    {
+      "id": "SJ003",
+      "gate": "job-template-valid",
+      "description": "The job template must declare both command and image. A job without an image cannot be scheduled; a job without a command runs the container's default entrypoint, which may not be the intended job logic",
+      "required": true,
+      "mandatoryFields": ["command", "image"]
+    },
+    {
+      "id": "SJ004",
+      "gate": "concurrency-policy-set",
+      "description": "concurrencyPolicy must be explicitly declared. Without it, Kubernetes defaults to Allow — which lets multiple instances run in parallel. For most scheduled jobs this causes resource exhaustion, data duplication, or deadlocks when two instances process the same records",
+      "required": true,
+      "fields": {
+        "concurrencyPolicy": { "enum": ["Allow", "Forbid", "Replace"] }
+      }
+    },
+    {
+      "id": "SJ005",
+      "gate": "limits-valid",
+      "description": "Job history and retry limit fields (backoffLimit, successfulJobsHistoryLimit, failedJobsHistoryLimit) must be non-negative integers when declared. Negative or non-integer values are rejected by the Kubernetes API server at resource creation",
+      "required": true,
+      "note": "Skipped for fields that are absent; only validates declared fields",
+      "fields": {
+        "backoffLimit":                { "type": "integer", "min": 0 },
+        "successfulJobsHistoryLimit":  { "type": "integer", "min": 0 },
+        "failedJobsHistoryLimit":      { "type": "integer", "min": 0 }
+      }
+    },
+    {
+      "id": "SJ006",
+      "gate": "no-undeclared-secrets",
+      "description": "Every entry in envRefs marked as secret: true must also declare a secretName pointing to the Kubernetes Secret resource. A secret ref without a secretName causes the pod to fail to schedule with a missing reference error",
+      "required": true,
+      "note": "Skipped when envRefs is absent or empty"
+    },
+    {
+      "id": "SJ007",
+      "gate": "no-todos",
+      "description": "scheduled-job-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "SJ008",
+      "gate": "contract-scheduled-job",
+      "description": "Every job must declare an owner (for on-call routing when the job fails) and an explicit concurrencyPolicy (Kubernetes defaults to Allow which causes job pile-up for most workloads)",
+      "required": true,
+      "mandatoryFields": ["owner", "concurrencyPolicy"]
+    }
+  ],
+  "artifact": {
+    "file": "scheduled-job-artifact.json",
+    "ir_id_prefix": "SCHEDULED_JOB:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

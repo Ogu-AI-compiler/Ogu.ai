@@ -1,0 +1,32 @@
+{
+  "id": "cache-contract",
+  "version": "1.0.0",
+  "description": "Contract for cache-module output artifacts",
+  "rules": [
+    {
+      "id": "CACHE-001",
+      "description": "Key builder must use all declared keyInputs from spec",
+      "enforcement": "gate:key-builder-matches-spec"
+    },
+    {
+      "id": "CACHE-002",
+      "description": "TTL must come from topology/config — no inline numeric literals",
+      "enforcement": "gate:no-inline-ttl"
+    },
+    {
+      "id": "CACHE-003",
+      "description": "Cache miss must propagate to origin — no silent null returns",
+      "enforcement": "gate:miss-propagates"
+    },
+    {
+      "id": "CACHE-004",
+      "description": "No write-back to cache inside catch blocks (on origin failure)",
+      "enforcement": "gate:no-writeback-on-failure"
+    },
+    {
+      "id": "CACHE-005",
+      "description": "Invalidation only targets namespaces declared in spec.invalidates",
+      "enforcement": "gate:invalidation-scoped"
+    }
+  ]
+}

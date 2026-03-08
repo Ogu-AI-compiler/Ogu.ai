@@ -1,0 +1,6 @@
+{ "id": "a11y-harness", "version": "1.0.0", "rules": [
+  { "id": "has-axe", "description": "axe-core or jest-axe installed" },
+  { "id": "wcag-level-declared", "description": "WCAG conformance level declared" },
+  { "id": "storybook-addon", "description": "@storybook/addon-a11y if Storybook used" },
+  { "id": "axe-in-tests", "description": "axe assertions present in test files" }
+]}

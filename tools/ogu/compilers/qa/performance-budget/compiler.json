@@ -1,0 +1,39 @@
+{
+  "id": "performance-budget",
+  "title": "Performance Budget Compiler",
+  "version": "1.0.0",
+  "description": "Compiles performance budgets for Core Web Vitals, bundle sizes, and Lighthouse scores. Enforces: INP not FID (FID deprecated 2024), CLS is decimal not integer, ciAction enforced, Lighthouse runs ≥3 for statistical reliability, per-route budgets reference real routes.",
+  "tier": "qa",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "performance-budget-artifact.json",
+    "identifier": "PERFORMANCE_BUDGET"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "CWV Correctness",         "gates": ["no-fid-metric", "cls-is-decimal", "lcp-threshold-realistic"] },
+    { "id": 3, "name": "Bundle & Lighthouse",     "gates": ["ci-action-enforced", "lighthouse-runs-sufficient"] },
+    { "id": 4, "name": "Quality",                 "gates": ["no-todos"] },
+    { "id": 5, "name": "Attest",                  "gates": ["contract-performance"] }
+  ],
+  "gates": [
+    { "id": "QA030", "name": "spec-valid",                  "phase": 1 },
+    { "id": "QA031", "name": "no-fid-metric",               "phase": 2 },
+    { "id": "QA032", "name": "cls-is-decimal",              "phase": 2 },
+    { "id": "QA033", "name": "lcp-threshold-realistic",     "phase": 2 },
+    { "id": "QA034", "name": "ci-action-enforced",          "phase": 3 },
+    { "id": "QA035", "name": "lighthouse-runs-sufficient",  "phase": 3 },
+    { "id": "QA036", "name": "no-todos",                    "phase": 4 },
+    { "id": "QA037", "name": "contract-performance",        "phase": 5 }
+  ],
+  "error_codes": {
+    "QA030": "performance-budget-spec.json missing or invalid — required: coreWebVitals, ciAction",
+    "QA031": "FID (First Input Delay) declared — FID was deprecated in 2024, use INP (Interaction to Next Paint) instead",
+    "QA032": "CLS threshold is integer (≥1) — CLS is a score between 0 and 0.25, not milliseconds",
+    "QA033": "LCP.good threshold outside realistic range [500ms–5000ms]",
+    "QA034": "ciAction is 'none' or missing — performance budget defined but never enforced",
+    "QA035": "Lighthouse numberOfRuns < 3 — single-run Lighthouse scores have high variance",
+    "QA036": "TODO/FIXME/HACK comment found",
+    "QA037": "Performance budget artifact contract violation"
+  }
+}

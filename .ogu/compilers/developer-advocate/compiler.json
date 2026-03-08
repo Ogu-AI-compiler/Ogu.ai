@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_developer-advocate",
+  "role": "developer-advocate",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "documentation",
+    "display_name": "Developer Advocate",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "developer-experience-audit",
+      "content-creation",
+      "community-engagement",
+      "feedback-loop",
+      "internal-advocacy"
+    ],
+    "consumes": ["developer pain points", "product roadmap", "community feedback", "usage analytics"],
+    "produces": ["tutorials", "sample-apps", "devex-report.md", "feedback-digest.md", "community-health-report.md"]
+  },
+
+  "gates": [
+    {
+      "id": "content-solves-real-problem",
+      "description": "Every tutorial or guide must start from a real developer problem, not a product feature announcement",
+      "type": "file_contains",
+      "required_string": "problem",
+      "severity": "error"
+    },
+    {
+      "id": "code-examples-runnable",
+      "description": "All code examples must be tested and runnable — copy-paste must work without modification",
+      "type": "file_contains",
+      "required_string": "```",
+      "severity": "error"
+    },
+    {
+      "id": "feedback-documented",
+      "description": "Developer feedback collected at events and in community must be documented and routed to product",
+      "type": "file_contains",
+      "required_string": "feedback",
+      "severity": "error"
+    },
+    {
+      "id": "devex-friction-logged",
+      "description": "All developer experience friction points identified must be logged with reproduction steps",
+      "type": "file_contains",
+      "required_string": "friction",
+      "severity": "error"
+    },
+    {
+      "id": "community-response-sla",
+      "description": "Community questions must receive a response within 48 hours — documented response policy required",
+      "type": "file_contains",
+      "required_string": "response",
+      "severity": "error"
+    },
+    {
+      "id": "no-vanity-metrics",
+      "description": "Advocacy success must not be measured by follower count alone — adoption and activation metrics required",
+      "type": "file_not_contains",
+      "banned_string": "follower count",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "product-pusher",
+      "description": "Using community trust to market features rather than genuinely helping developers — community sees through it immediately"
+    },
+    {
+      "id": "ivory-tower-advocate",
+      "description": "Creating content about hypothetical advanced use cases before fixing the getting-started experience"
+    },
+    {
+      "id": "feedback-black-hole",
+      "description": "Collecting feedback from the community but never routing it to product — developers stop sharing after being ignored once"
+    },
+    {
+      "id": "vanity-metrics-advocacy",
+      "description": "Measuring success by conference talks and social followers instead of developer activation and retention"
+    },
+    {
+      "id": "conference-driven-development",
+      "description": "Attending every conference and producing no lasting content — high travel cost, no compounding value"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Core developer workflow is broken and engineering will not prioritize the fix",
+    "Community trust damaged by a product decision made without developer input",
+    "Competitor developer experience significantly better — adoption declining",
+    "Documentation so outdated that it is actively misleading new developers",
+    "API breaking changes shipped without migration guide or community notice",
+    "Community moderators burning out with no support or succession plan"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with developer persona and use cases to address",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "All content starts from a real developer problem (not a feature announcement)",
+      "All code examples are tested and runnable without modification",
+      "Developer feedback collected, documented, and routed to product",
+      "Developer experience friction points logged with reproduction steps",
+      "Community response SLA defined and enforced",
+      "Success measured by developer activation and adoption, not vanity metrics"
+    ]
+  }
+}

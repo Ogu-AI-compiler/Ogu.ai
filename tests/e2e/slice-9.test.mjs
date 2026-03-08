@@ -4,7 +4,7 @@
  * Slice 9 — Observability API + Metrics E2E Test
  *
  * Proves: Kadima's HTTP API serves rich observability data
- *   that Studio (or any client) can consume.
+ *   that any client can consume.
  *
  * Tests hit the live daemon API endpoints:
  *   GET /api/features           — list all features
@@ -147,7 +147,7 @@ ogu('kadima:stop');
 // ── Tests ──
 
 console.log('\n\x1b[1mSlice 9 — Observability API + Metrics E2E Test\x1b[0m\n');
-console.log('  Live HTTP API endpoints for Studio integration\n');
+console.log('  Live HTTP API endpoints for Kadima UI integration\n');
 
 setup();
 

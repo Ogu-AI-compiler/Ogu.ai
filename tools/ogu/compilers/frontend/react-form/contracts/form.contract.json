@@ -1,0 +1,56 @@
+{
+  "id": "form",
+  "version": "1.0.0",
+  "title": "React Form Contract",
+  "description": "Structural requirements for all compiled React forms",
+  "rules": [
+    {
+      "id": "loading-state",
+      "title": "Loading State",
+      "description": "Form must track a loading/submitting state (isSubmitting, isPending, or isLoading boolean)",
+      "severity": "error"
+    },
+    {
+      "id": "disabled-on-submit",
+      "title": "Submit Button Disabled During Submission",
+      "description": "Submit button must be disabled while loading/submitting to prevent double-submit",
+      "severity": "error"
+    },
+    {
+      "id": "per-field-errors",
+      "title": "Per-Field Error Display",
+      "description": "Each field's validation error must be displayed adjacent to that field, not only in a global error banner",
+      "severity": "error"
+    },
+    {
+      "id": "accessible-labels",
+      "title": "Accessible Labels",
+      "description": "Every input, select, and textarea must have an associated <label htmlFor> or aria-label",
+      "severity": "error"
+    },
+    {
+      "id": "form-element",
+      "title": "Native Form Element",
+      "description": "Form must use a <form> element with onSubmit — not a <div> with onClick",
+      "severity": "error"
+    },
+    {
+      "id": "zod-resolver",
+      "title": "Zod Validation",
+      "description": "Form validation must use zodResolver from @hookform/resolvers/zod — no manual validate functions",
+      "severity": "error"
+    },
+    {
+      "id": "submit-route-called",
+      "title": "Submit Route Called",
+      "description": "onSubmit must invoke the declared submitRoute — calling fetch/axios/api directly without the route path is a violation",
+      "severity": "error"
+    },
+    {
+      "id": "error-reset",
+      "title": "Error Reset on Resubmit",
+      "description": "Form errors must be clearable — user can fix errors and resubmit without stale error state",
+      "severity": "warning"
+    }
+  ]
+}

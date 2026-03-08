@@ -1,8 +1,8 @@
 /**
- * Slice 44 — Studio API Extensions + Event Envelope (P20 backend + P20-P28 prep)
+ * Slice 44 — API Extensions + Event Envelope (P20 backend + P20-P28 prep)
  *
- * Studio API: new endpoints for org, agents, budget, governance, audit.
- * Event Envelope: StudioEventEnvelope type and serialization.
+ * API: new endpoints for org, agents, budget, governance, audit.
+ * Event Envelope: EventEnvelope type and serialization.
  */
 
 import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
@@ -46,15 +46,15 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 44 — Studio API Extensions + Event Envelope\x1b[0m\n");
-console.log("  Backend APIs for Studio panels, event envelopes\n");
+console.log("\n\x1b[1mSlice 44 — API Extensions + Event Envelope\x1b[0m\n");
+console.log("  Backend APIs for Kadima UI panels, event envelopes\n");
 
-// ── Part 1: Studio Data Provider ──────────────────────────────
+// ── Part 1: Data Provider ──────────────────────────────
 
-console.log("\x1b[36m  Part 1: Studio Data Provider\x1b[0m");
+console.log("\x1b[36m  Part 1: Data Provider\x1b[0m");
 
-const providerLib = join(process.cwd(), "tools/ogu/commands/lib/studio-data-provider.mjs");
-assert("studio-data-provider.mjs exists", () => {
+const providerLib = join(process.cwd(), "tools/ogu/commands/lib/data-provider.mjs");
+assert("data-provider.mjs exists", () => {
   if (!existsSync(providerLib)) throw new Error("file missing");
 });
 
@@ -117,12 +117,12 @@ assert("getDashboardSnapshot returns full dashboard data", () => {
   if (!snapshot.timestamp) throw new Error("no timestamp");
 });
 
-// ── Part 2: Studio Event Envelope ──────────────────────────────
+// ── Part 2: Event Envelope ──────────────────────────────
 
-console.log("\n\x1b[36m  Part 2: Studio Event Envelope\x1b[0m");
+console.log("\n\x1b[36m  Part 2: Event Envelope\x1b[0m");
 
-const envelopeLib = join(process.cwd(), "tools/ogu/commands/lib/studio-event-envelope.mjs");
-assert("studio-event-envelope.mjs exists", () => {
+const envelopeLib = join(process.cwd(), "tools/ogu/commands/lib/event-envelope.mjs");
+assert("event-envelope.mjs exists", () => {
   if (!existsSync(envelopeLib)) throw new Error("file missing");
 });
 

@@ -2,7 +2,7 @@
  * @ogu/contracts — Shared schemas, envelopes, and error codes
  *
  * The single source of truth for all data structures in the Agentic Company OS.
- * Every service (CLI, Kadima, Runner, Studio) imports from here.
+ * Every service (CLI, Kadima, Runner, UI) imports from here.
  */
 
 // ── Schemas ──

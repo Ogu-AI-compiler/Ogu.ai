@@ -1,0 +1,37 @@
+{
+  "id": "jupyter-notebook-module",
+  "title": "Jupyter Notebook Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Jupyter notebooks for production readiness. Enforces linear top-to-bottom execution, adequate markdown documentation, functions extracted from repeated logic, cleared outputs before commit, no global state mutations, and reproducible execution.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": null, "output_artifact": "notebook-artifact.json", "identifier": "JUPYTER_NOTEBOOK" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Notebook Structure", "gates": ["linear-execution", "markdown-documentation", "outputs-cleared"] },
+    { "id": 3, "name": "Code Quality", "gates": ["functions-extracted", "no-global-mutations", "reproducible"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-notebook"] }
+  ],
+  "gates": [
+    { "id": "JN001", "name": "spec-valid",            "phase": 1 },
+    { "id": "JN002", "name": "linear-execution",      "phase": 2 },
+    { "id": "JN003", "name": "markdown-documentation","phase": 2 },
+    { "id": "JN004", "name": "outputs-cleared",       "phase": 2 },
+    { "id": "JN005", "name": "functions-extracted",   "phase": 3 },
+    { "id": "JN006", "name": "no-global-mutations",   "phase": 3 },
+    { "id": "JN007", "name": "reproducible",          "phase": 3 },
+    { "id": "JN008", "name": "no-todos",              "phase": 4 },
+    { "id": "JN009", "name": "contract-notebook",     "phase": 4 }
+  ],
+  "error_codes": {
+    "JN001": "Invalid notebook spec",
+    "JN002": "Notebook cells cannot run linearly (out-of-order dependency detected)",
+    "JN003": "Insufficient markdown documentation — notebook sections need explanations",
+    "JN004": "Notebook has stored outputs — clear outputs before committing (nbstripout)",
+    "JN005": "Repeated code blocks not extracted into functions",
+    "JN006": "Global variable mutated across cells without reset — hidden state risk",
+    "JN007": "No random seed set — notebook results are not reproducible",
+    "JN008": "TODO/FIXME found",
+    "JN009": "Notebook contract violation"
+  }
+}

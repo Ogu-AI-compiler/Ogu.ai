@@ -1,0 +1,44 @@
+{
+  "id": "route-resilience",
+  "title": "Route Resilience Compiler",
+  "version": "1.0.0",
+  "description": "Compiles error boundaries and fallback UI for routes. Enforces that every route has an error boundary, 404 handling, and loading suspense.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "routing-artifact.json",
+    "output_artifact": "resilience-artifact.json",
+    "identifier": "RESILIENCE"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["error-boundary", "not-found-route", "suspense-fallback"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Cross-Compiler Verify", "gates": ["cross-routing"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-resilience"] }
+  ],
+  "gates": [
+    { "id": "RR001", "name": "spec-valid",         "phase": 1 },
+    { "id": "RR002", "name": "ts-valid",           "phase": 2 },
+    { "id": "RR003", "name": "no-any",             "phase": 2 },
+    { "id": "RR004", "name": "error-boundary",     "phase": 3 },
+    { "id": "RR005", "name": "not-found-route",    "phase": 3 },
+    { "id": "RR006", "name": "suspense-fallback",  "phase": 3 },
+    { "id": "RR007", "name": "no-todos",           "phase": 4 },
+    { "id": "RR008", "name": "tests-pass",         "phase": 4 },
+    { "id": "RR009", "name": "cross-routing",      "phase": 5 },
+    { "id": "RR010", "name": "contract-resilience","phase": 6 }
+  ],
+  "error_codes": {
+    "RR001": "Invalid resilience spec",
+    "RR002": "TypeScript compilation failed",
+    "RR003": "Explicit 'any' found",
+    "RR004": "No ErrorBoundary wrapping route — routes must catch render errors",
+    "RR005": "No 404/NotFound route — router must handle unknown paths",
+    "RR006": "No Suspense fallback — lazy routes must have loading fallback",
+    "RR007": "TODO/FIXME found",
+    "RR008": "Tests failed",
+    "RR009": "routing-artifact not found — compile routing-config first",
+    "RR010": "Contract violation"
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "compiler_id": "compiler_ui-developer",
+  "role": "ui-developer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "engineering",
+    "display_name": "UI Developer",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "component-engineering",
+      "css-architecture",
+      "animation-motion",
+      "responsive-impl",
+      "visual-qa"
+    ],
+    "consumes": ["DESIGN.md", "Spec.md", "design tokens", "design specs"],
+    "produces": ["component files", "style files", "token definitions"]
+  },
+
+  "gates": [
+    {
+      "id": "components-exist",
+      "description": "At least one UI component file must be produced",
+      "type": "output_count",
+      "min": 1,
+      "severity": "error"
+    },
+    {
+      "id": "no-important-css",
+      "description": "No !important in CSS (indicates broken specificity architecture)",
+      "type": "file_not_contains",
+      "banned_string": "!important",
+      "severity": "error"
+    },
+    {
+      "id": "focus-indicator-present",
+      "description": "Focus indicator styles must be defined for interactive elements",
+      "type": "file_contains",
+      "required_string": "focus",
+      "severity": "error"
+    },
+    {
+      "id": "no-layout-animation",
+      "description": "No animation of layout properties (width, height, top, left)",
+      "type": "file_not_contains",
+      "banned_string": "transition: width",
+      "severity": "warn"
+    },
+    {
+      "id": "token-usage",
+      "description": "Design tokens must be referenced in component styles",
+      "type": "file_contains",
+      "required_string": "var(--",
+      "severity": "warn"
+    },
+    {
+      "id": "reduced-motion-supported",
+      "description": "Animations must respect prefers-reduced-motion",
+      "type": "file_contains",
+      "required_string": "reduced-motion",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "div-soup",
+      "description": "Using divs for everything instead of semantic HTML elements"
+    },
+    {
+      "id": "style-overfitting",
+      "description": "CSS that only works with current content — breaks when text length changes"
+    },
+    {
+      "id": "z-index-wars",
+      "description": "z-index: 9999 because stacking contexts aren't managed"
+    },
+    {
+      "id": "important-proliferation",
+      "description": "Using !important to win specificity battles instead of fixing architecture"
+    },
+    {
+      "id": "testing-by-eyeballing",
+      "description": "Looks good to me as the quality bar — no visual regression testing"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Design spec requires an interaction causing significant performance degradation",
+    "Browser compatibility issue affects >2% of users with no CSS workaround",
+    "Design system needs a new token category affecting multiple components",
+    "Accessibility requirement conflicts with design spec and can't be reconciled"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "DESIGN.md",
+        "description": "DESIGN.md with visual specifications and design tokens",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "All component variants implemented (size, color, state)",
+      "All interactive states present (hover, focus, active, disabled)",
+      "No !important in CSS",
+      "Focus indicators visible and accessible",
+      "Design tokens referenced (no magic numbers)",
+      "Animations respect prefers-reduced-motion"
+    ]
+  }
+}

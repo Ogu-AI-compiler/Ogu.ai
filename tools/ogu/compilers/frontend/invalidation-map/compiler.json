@@ -1,0 +1,36 @@
+{
+  "id": "invalidation-map",
+  "title": "Invalidation Map Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a cache invalidation map that declares which queries are invalidated by which mutations. Enforces referential integrity between query and mutation artifacts.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "mutation-artifact.json",
+    "output_artifact": "invalidation-artifact.json",
+    "identifier": "INVALIDATION"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Implement", "gates": ["no-orphan-queries", "no-orphan-mutations", "no-circular"] },
+    { "id": 3, "name": "Cross-Compiler Verify", "gates": ["cross-query", "cross-mutation"] },
+    { "id": 4, "name": "Attest", "gates": ["contract-invalidation"] }
+  ],
+  "gates": [
+    { "id": "IV001", "name": "spec-valid",           "phase": 1 },
+    { "id": "IV002", "name": "no-orphan-queries",    "phase": 2 },
+    { "id": "IV003", "name": "no-orphan-mutations",  "phase": 2 },
+    { "id": "IV004", "name": "no-circular",          "phase": 2 },
+    { "id": "IV005", "name": "cross-query",          "phase": 3 },
+    { "id": "IV006", "name": "cross-mutation",       "phase": 3 },
+    { "id": "IV007", "name": "contract-invalidation","phase": 4 }
+  ],
+  "error_codes": {
+    "IV001": "Invalid invalidation-map spec",
+    "IV002": "Query key referenced in map has no corresponding query-artifact",
+    "IV003": "Mutation referenced in map has no corresponding mutation-artifact",
+    "IV004": "Circular invalidation detected (mutation A invalidates query that triggers mutation A)",
+    "IV005": "Query artifact mismatch",
+    "IV006": "Mutation artifact mismatch",
+    "IV007": "Contract violation"
+  }
+}

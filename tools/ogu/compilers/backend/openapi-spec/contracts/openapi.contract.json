@@ -1,0 +1,50 @@
+{
+  "id": "openapi",
+  "version": "1.0.0",
+  "title": "OpenAPI Document Contract",
+  "description": "Structural requirements for all compiled OpenAPI 3.1 documents",
+  "rules": [
+    {
+      "id": "info-complete",
+      "title": "Info Complete",
+      "description": "info object must have title, version, and description. contact.email is required.",
+      "severity": "error"
+    },
+    {
+      "id": "errors-documented",
+      "title": "Errors Documented",
+      "description": "Every path operation must document at least: 400 (if POST/PUT/PATCH), 401 (if secured), 500",
+      "severity": "error"
+    },
+    {
+      "id": "no-empty-paths",
+      "title": "No Empty Paths",
+      "description": "Every path in paths must have at least one HTTP method defined",
+      "severity": "error"
+    },
+    {
+      "id": "operation-ids",
+      "title": "Operation IDs",
+      "description": "Every operation must have a unique operationId in camelCase",
+      "severity": "error"
+    },
+    {
+      "id": "response-schemas",
+      "title": "Response Schemas",
+      "description": "All 2xx responses must have a content schema. 204 (No Content) is the only exception.",
+      "severity": "error"
+    },
+    {
+      "id": "servers-defined",
+      "title": "Servers Defined",
+      "description": "servers[] must have at least one entry with a url",
+      "severity": "error"
+    },
+    {
+      "id": "security-global-or-per-op",
+      "title": "Security Declared",
+      "description": "Either global security is declared or every protected operation has security declared at operation level",
+      "severity": "warning"
+    }
+  ]
+}

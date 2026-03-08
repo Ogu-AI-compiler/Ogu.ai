@@ -1,0 +1,44 @@
+{
+  "id": "navigation-config",
+  "title": "Navigation Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles app navigation structure (nav items, breadcrumbs, sidebar, tabs). Enforces that every nav item points to a registered route, active-state logic is present, and nav is keyboard-accessible.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "routing-artifact.json",
+    "output_artifact": "nav-artifact.json",
+    "identifier": "NAV"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["nav-routes-valid", "active-state", "keyboard-accessible"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Cross-Compiler Verify", "gates": ["cross-routing"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-nav"] }
+  ],
+  "gates": [
+    { "id": "NC001", "name": "spec-valid",          "phase": 1 },
+    { "id": "NC002", "name": "ts-valid",            "phase": 2 },
+    { "id": "NC003", "name": "no-any",              "phase": 2 },
+    { "id": "NC004", "name": "nav-routes-valid",    "phase": 3 },
+    { "id": "NC005", "name": "active-state",        "phase": 3 },
+    { "id": "NC006", "name": "keyboard-accessible", "phase": 3 },
+    { "id": "NC007", "name": "no-todos",            "phase": 4 },
+    { "id": "NC008", "name": "tests-pass",          "phase": 4 },
+    { "id": "NC009", "name": "cross-routing",       "phase": 5 },
+    { "id": "NC010", "name": "contract-nav",        "phase": 6 }
+  ],
+  "error_codes": {
+    "NC001": "Invalid navigation spec",
+    "NC002": "TypeScript compilation failed",
+    "NC003": "Explicit 'any' found",
+    "NC004": "Nav item points to unregistered route",
+    "NC005": "No active-state logic (current page highlight missing)",
+    "NC006": "Navigation not keyboard accessible (missing role=navigation, aria-current, or tab index)",
+    "NC007": "TODO/FIXME found",
+    "NC008": "Tests failed",
+    "NC009": "routing-artifact not found — compile routing-config first",
+    "NC010": "Contract violation"
+  }
+}

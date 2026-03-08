@@ -1,0 +1,39 @@
+{
+  "id": "data-pipeline-script",
+  "title": "Data Pipeline Script Compiler",
+  "version": "1.0.0",
+  "description": "Compiles ETL/data pipeline scripts. Enforces idempotency, raw data immutability, checkpoint artifacts, schema validation at input/output boundaries, no hardcoded paths, and proper error handling.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "schema-ds-artifact.json", "output_artifact": "pipeline-artifact.json", "identifier": "DATA_PIPELINE" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Structure", "gates": ["pathlib-paths", "main-guard", "logging-not-print"] },
+    { "id": 3, "name": "Pipeline Safety", "gates": ["idempotent-pipeline", "no-raw-mutation", "schema-boundary-check", "error-handling"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-pipeline"] }
+  ],
+  "gates": [
+    { "id": "DP001", "name": "spec-valid",           "phase": 1 },
+    { "id": "DP002", "name": "pathlib-paths",        "phase": 2 },
+    { "id": "DP003", "name": "main-guard",           "phase": 2 },
+    { "id": "DP004", "name": "logging-not-print",    "phase": 2 },
+    { "id": "DP005", "name": "idempotent-pipeline",  "phase": 3 },
+    { "id": "DP006", "name": "no-raw-mutation",      "phase": 3 },
+    { "id": "DP007", "name": "schema-boundary-check","phase": 3 },
+    { "id": "DP008", "name": "error-handling",       "phase": 3 },
+    { "id": "DP009", "name": "no-todos",             "phase": 4 },
+    { "id": "DP010", "name": "contract-pipeline",    "phase": 4 }
+  ],
+  "error_codes": {
+    "DP001": "Invalid pipeline spec",
+    "DP002": "Hardcoded absolute path — use pathlib.Path and config",
+    "DP003": "Missing if __name__ == '__main__': guard",
+    "DP004": "print() used instead of logging",
+    "DP005": "Pipeline not idempotent — intermediate outputs not deterministic",
+    "DP006": "Raw data overwritten — raw layer is immutable",
+    "DP007": "Schema not validated at input or output boundary",
+    "DP008": "Bare except or uncaught exception in pipeline stage",
+    "DP009": "TODO/FIXME found",
+    "DP010": "Pipeline contract violation"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "id": "grafana_dashboard_bundle",
+  "title": "Grafana Dashboard Bundle Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Grafana dashboard JSON and provisioning YAML. Enforces: JSON parses, required top-level fields present, all datasource UIDs exist, panel IDs unique, provisioning YAML validates.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "prometheus-rules-artifact.json",
+    "output_artifact": "grafana-dashboard-artifact.json",
+    "identifier": "GRAFANA_DASHBOARD"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "dashboard-json-valid",
+        "required-fields-present"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "datasource-uids-declared",
+        "panel-ids-unique"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-grafana-dashboard"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "GD001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "GD002",
+      "name": "dashboard-json-valid",
+      "phase": 2
+    },
+    {
+      "id": "GD003",
+      "name": "required-fields-present",
+      "phase": 2
+    },
+    {
+      "id": "GD004",
+      "name": "datasource-uids-declared",
+      "phase": 3
+    },
+    {
+      "id": "GD005",
+      "name": "panel-ids-unique",
+      "phase": 3
+    },
+    {
+      "id": "GD006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "GD007",
+      "name": "contract-grafana-dashboard",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "GD001": "grafana-dashboard-spec.json missing — required: dashboards[{file, uid}], datasources[]",
+    "GD002": "Dashboard JSON file does not parse",
+    "GD003": "Dashboard JSON missing required fields: title, panels, schemaVersion",
+    "GD004": "Panel datasource UID not in declared datasources list",
+    "GD005": "Duplicate panel ID within dashboard",
+    "GD006": "TODO/FIXME found",
+    "GD007": "Grafana dashboard contract violation"
+  }
+}

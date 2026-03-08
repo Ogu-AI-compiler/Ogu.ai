@@ -1,0 +1,155 @@
+{
+  "id": "ux-navigation-graph",
+  "version": "1.0.0",
+  "title": "UX Navigation Graph Compiler",
+  "description": "Validates the navigation graph: every screen is reachable from entry points, all transitions target valid nodes, protected routes declare guards, no cyclic traps exist, and 404 handling is declared. Produces navigation-artifact.json consumed by user-flow and permission-branch compilers.",
+  "tier": "ux",
+  "ir_prefix": "UNG",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract navigation-spec.json from sitemap, route inventory, and auth policy",
+      "model": "haiku",
+      "outputs": ["navigation-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate node structure, entry points, and transition targets",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "entry-points-valid", "transition-targets-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "graph",
+      "title": "Graph Integrity",
+      "description": "Validate reachability and back-path coverage",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["no-orphan-routes", "back-path-valid"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate guards, 404 handling, and cycle detection",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["guards-declared", "not-found-reachable", "no-cyclic-trap"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["navigation-artifact.json"],
+      "gates": ["contract-navigation"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "navigation-spec.json exists with nodes array (each having id, transitions) and entryPoints array",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "entry-points-valid",
+      "title": "Entry Points Valid",
+      "description": "Every id in entryPoints references an existing node",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "transition-targets-valid",
+      "title": "Transition Targets Valid",
+      "description": "Every transition.to references an existing node id",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-orphan-routes",
+      "title": "No Orphan Routes",
+      "description": "Every node is reachable from at least one entry point (BFS from all entry points)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "back-path-valid",
+      "title": "Back Path Valid",
+      "description": "Every non-entry node has at least one incoming transition",
+      "phase": 2,
+      "required": false
+    },
+    {
+      "id": "guards-declared",
+      "title": "Guards Declared",
+      "description": "Every protected node (auth=true or visibility != public) declares a guard or redirectOnFail",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "not-found-reachable",
+      "title": "404 State Declared",
+      "description": "A 404/not-found state is declared in the graph or notFoundHandledExternally=true",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "no-cyclic-trap",
+      "title": "No Cyclic Trap",
+      "description": "No strongly connected component of size > 1 lacks an exit edge to a node outside the component",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-navigation",
+      "title": "Navigation Contract",
+      "description": "Full contract check: version, unique ids, transition triggers, auth-visibility alignment",
+      "phase": 4,
+      "required": true,
+      "contract": "navigation"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "navigation",
+      "file": "contracts/navigation.contract.json",
+      "description": "Structural requirements for all compiled navigation graphs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UNG:{nodeId}", "UNG:{nodeId}:{trigger}"],
+    "output_artifact": "navigation-artifact.json",
+    "artifact_schema": "navigation-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "navigation-artifact-v1",
+    "fields": ["version", "node_count", "entry_count", "transition_count", "has_not_found", "protected_count", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UNG001": "navigation-spec.json missing or invalid — nodes array and entryPoints required",
+    "UNG002": "Entry point id does not reference a valid node in the graph",
+    "UNG003": "Orphan route — node is unreachable from all declared entry points",
+    "UNG004": "Protected node missing guard — auth=true or visibility != public requires a guard declaration",
+    "UNG005": "Node has no incoming transitions and is not an entry point",
+    "UNG006": "Transition target not found — transition.to references a non-existent node id",
+    "UNG007": "No 404/not-found state declared in navigation graph",
+    "UNG008": "Cyclic navigation trap — SCC with no exit edge detected",
+    "UNG009": "Navigation contract violation — version missing, duplicate ids, untriggered transitions, or auth-visibility mismatch"
+  }
+}

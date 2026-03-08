@@ -1,0 +1,43 @@
+{
+  "id": "ux-search-filter-sort",
+  "version": "1.0.0",
+  "description": "A search-filter-sort spec is valid when the entity is declared, all filter types are from the allowed set, sort entries declare a default direction, no-results and loading states are handled, filter persistence is explicit, and all ids are unique.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "search-filter-sort-spec.json must exist with entity (string), filters (array), and sorts (array). Specs without these fields cannot be validated."
+    },
+    {
+      "id": "filters-have-id-label-type",
+      "description": "Every filter must declare id, label, and type. Filters without these fields cannot be rendered or referenced by the search engine."
+    },
+    {
+      "id": "sorts-have-id-label-field",
+      "description": "Every sort must declare id, label, and field. Sorts without a field binding cannot generate an API sort parameter."
+    },
+    {
+      "id": "filter-types-in-allowed-set",
+      "description": "Every filter.type must be one of: text, select, multi-select, range, date-range, boolean, tag. Unknown filter types produce undefined UI behavior."
+    },
+    {
+      "id": "no-results-state-declared",
+      "description": "Spec must declare noResultsState with message and at least one of clearFiltersAction or suggestionsEnabled, or set noResultsHandledGlobally:true. Search results that return nothing must communicate what to do next."
+    },
+    {
+      "id": "sort-default-direction-declared",
+      "description": "Every sort entry must declare defaultDirection as asc or desc. Sorts without a declared direction create inconsistent initial render order."
+    },
+    {
+      "id": "loading-state-declared",
+      "description": "Spec must declare loadingState with type skeleton, spinner, or progressive, or set loadingHandledGlobally:true. Search results that load without feedback create perceived unresponsiveness."
+    },
+    {
+      "id": "filter-persistence-declared",
+      "description": "Spec must declare persistence as session, url, none, or user-preference. Filters without a persistence policy reset unexpectedly on navigation or page reload."
+    },
+    {
+      "id": "filter-ids-unique",
+      "description": "All filter ids must be unique within the spec. Duplicate filter ids create conflicting state keys and unpredictable behavior."
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "id": "cost_tagging_policy",
+  "title": "Cost Tagging Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles FinOps tagging policies for IaC resources. Enforces: all required tag keys present, values non-empty and match allowed patterns, ownership and environment tags resolve to known identifiers, no forbidden tags.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "iac-artifact.json",
+    "output_artifact": "cost-tagging-artifact.json",
+    "identifier": "COST_TAGGING"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "required-tags-present",
+        "tag-values-valid"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "ownership-tags-resolve",
+        "no-forbidden-tags"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-cost-tagging"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "CT001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "CT002",
+      "name": "required-tags-present",
+      "phase": 2
+    },
+    {
+      "id": "CT003",
+      "name": "tag-values-valid",
+      "phase": 2
+    },
+    {
+      "id": "CT004",
+      "name": "ownership-tags-resolve",
+      "phase": 3
+    },
+    {
+      "id": "CT005",
+      "name": "no-forbidden-tags",
+      "phase": 3
+    },
+    {
+      "id": "CT006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "CT007",
+      "name": "contract-cost-tagging",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "CT001": "cost-tagging-spec.json missing — required: requiredTags[], allowedValues{}",
+    "CT002": "Required tag key missing from tagging policy",
+    "CT003": "Tag value is empty or does not match allowed pattern/enum",
+    "CT004": "Ownership or environment tag does not map to a known team or env identifier",
+    "CT005": "Forbidden tag key found in tagging policy",
+    "CT006": "TODO/FIXME found",
+    "CT007": "Cost tagging contract violation"
+  }
+}

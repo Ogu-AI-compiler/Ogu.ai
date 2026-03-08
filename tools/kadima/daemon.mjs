@@ -6,7 +6,7 @@
  * Long-running background process that:
  * - Runs the scheduler loop (picks tasks, dispatches to runners)
  * - Runs the state machine loop (auto-transitions)
- * - Serves an HTTP API for CLI and Studio
+ * - Serves HTTP API + Kadima UI (static files from ui/dist/)
  * - Manages the runner pool
  *
  * Started by: ogu kadima:start
@@ -14,8 +14,55 @@
  */
 
 import { createServer } from 'node:http';
-import { writeFileSync, unlinkSync, existsSync, readFileSync, mkdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { writeFileSync, unlinkSync, existsSync, readFileSync, mkdirSync, statSync } from 'node:fs';
+import { join, resolve, extname, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const UI_DIST = join(__dirname, 'ui', 'dist');
+
+// MIME types for static file serving
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.js':   'application/javascript',
+  '.mjs':  'application/javascript',
+  '.css':  'text/css',
+  '.json': 'application/json',
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.svg':  'image/svg+xml',
+  '.ico':  'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2':'font/woff2',
+  '.ttf':  'font/ttf',
+  '.webp': 'image/webp',
+};
+
+function serveStatic(req, res) {
+  if (!existsSync(UI_DIST)) return false;
+  const url = new URL(req.url, 'http://localhost');
+  // Only serve non-API paths
+  if (url.pathname.startsWith('/api/') || url.pathname === '/health') return false;
+
+  let filePath = join(UI_DIST, url.pathname);
+  // Serve index.html for SPA routes (non-asset paths)
+  if (!existsSync(filePath) || statSync(filePath).isDirectory()) {
+    filePath = join(UI_DIST, 'index.html');
+  }
+  if (!existsSync(filePath)) return false;
+
+  const ext = extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  try {
+    const content = readFileSync(filePath);
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(content);
+    return true;
+  } catch {
+    return false;
+  }
+}
 import { createSchedulerLoop } from './loops/scheduler.mjs';
 import { createStateMachineLoop } from './loops/state-machine.mjs';
 import { createConsistencyLoop } from './loops/consistency.mjs';
@@ -61,6 +108,7 @@ import { createCommand, createResponse, COMMAND_ACTIONS } from '../ogu/commands/
 import { createCommandQueue } from '../ogu/commands/lib/command-queue.mjs';
 import { createBatchProcessor } from '../ogu/commands/lib/batch-processor.mjs';
 import { getAuditDir, getLogsDir, getOguRoot, getRunnersDir, getStateDir, resolveOguPath, resolveRuntimePath } from '../ogu/commands/lib/runtime-paths.mjs';
+import { initBroadcast } from './execution/dispatch.mjs';
 
 // ── Resolve project root ──
 const ROOT = process.env.OGU_ROOT || process.cwd();
@@ -198,6 +246,15 @@ const auditSealer = createAuditSealer({ secret: process.env.OGU_AUDIT_SECRET || 
 
 // ── SSE Broadcaster ──
 const broadcaster = createBroadcaster();
+
+// ── Wire dispatch engine broadcast → SSE ──
+// Dispatch emits flat messages: { type, slug, text, taskId, ... }
+// Kadima broadcaster expects: { type, payload, feature }
+initBroadcast((msg) => broadcaster.broadcast({
+  type: msg.type,
+  payload: msg,
+  feature: msg.slug || msg.featureSlug || undefined,
+}));
 
 // ── Audit helper ──
 import { appendFileSync } from 'node:fs';
@@ -349,7 +406,9 @@ const apiRouter = createApiRouter({
   root: ROOT, runnerPool, loops, emitAudit, config, broadcaster,
   healthAggregator, healthProbe: runHealthProbe, healthDashboard: checkSystemHealth,
 });
-const server = createServer(apiRouter);
+const server = createServer((req, res) => {
+  if (!serveStatic(req, res)) apiRouter(req, res);
+});
 
 server.listen(config.api.port, config.api.host, () => {
   emitAudit('daemon.api_ready', { port: config.api.port });

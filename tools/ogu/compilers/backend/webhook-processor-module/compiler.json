@@ -1,0 +1,39 @@
+{
+  "id": "webhook-processor-module",
+  "title": "Webhook Processor Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a webhook receiver. Enforces: signature verified before payload parsed, HTTP 200 returned fast (before async processing), payload handled in background job or queue, raw body preserved for signature verification, no business logic in the HTTP handler.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "webhook-processor-artifact.json",
+    "identifier": "WEBHOOK_PROCESSOR"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Security", "gates": ["signature-verified", "raw-body-preserved"] },
+    { "id": 3, "name": "Ack Pattern", "gates": ["fast-ack", "async-handoff"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-webhook-processor"] }
+  ],
+  "gates": [
+    { "id": "WH001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "WH002", "name": "signature-verified",          "phase": 2 },
+    { "id": "WH003", "name": "raw-body-preserved",         "phase": 2 },
+    { "id": "WH004", "name": "fast-ack",                   "phase": 3 },
+    { "id": "WH005", "name": "async-handoff",              "phase": 3 },
+    { "id": "WH006", "name": "no-todos",                   "phase": 4 },
+    { "id": "WH007", "name": "tests-pass",                 "phase": 4 },
+    { "id": "WH008", "name": "contract-webhook-processor", "phase": 5 }
+  ],
+  "error_codes": {
+    "WH001": "webhook-processor-spec.json missing or invalid",
+    "WH002": "Signature not verified before payload parsing (HMAC/RSA check missing)",
+    "WH003": "Raw body not preserved — signature verification will fail with parsed JSON body",
+    "WH004": "HTTP 200/202 not returned before async processing (timeout risk)",
+    "WH005": "No async handoff — business logic executed synchronously in HTTP handler",
+    "WH006": "TODO/FIXME/HACK comment found",
+    "WH007": "Tests failed",
+    "WH008": "Webhook processor contract violation"
+  }
+}

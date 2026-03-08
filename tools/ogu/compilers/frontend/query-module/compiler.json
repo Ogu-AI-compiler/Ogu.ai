@@ -1,0 +1,72 @@
+{
+  "id": "query-module",
+  "title": "Query Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles typed React Query hooks from API route specs. Produces useXxx hooks with queryKeys, enabled guards, caching config, and TypeScript types.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "route-artifact.json",
+    "output_artifact": "query-artifact.json",
+    "identifier": "QUERY"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid", "naming-valid", "querykey-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Scaffold",
+      "gates": ["ts-valid", "no-any"]
+    },
+    {
+      "id": 3,
+      "name": "Implement",
+      "gates": ["enabled-guard", "no-side-effects"]
+    },
+    {
+      "id": 4,
+      "name": "Test",
+      "gates": ["no-todos", "tests-pass", "coverage"]
+    },
+    {
+      "id": 5,
+      "name": "Cross-Compiler Verify",
+      "gates": ["cross-route"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-query"]
+    }
+  ],
+  "gates": [
+    { "id": "QM001", "name": "spec-valid", "phase": 1 },
+    { "id": "QM002", "name": "naming-valid", "phase": 1 },
+    { "id": "QM003", "name": "querykey-valid", "phase": 1 },
+    { "id": "QM004", "name": "ts-valid", "phase": 2 },
+    { "id": "QM005", "name": "no-any", "phase": 2 },
+    { "id": "QM006", "name": "enabled-guard", "phase": 3 },
+    { "id": "QM007", "name": "no-side-effects", "phase": 3 },
+    { "id": "QM008", "name": "no-todos", "phase": 4 },
+    { "id": "QM009", "name": "tests-pass", "phase": 4 },
+    { "id": "QM010", "name": "coverage", "phase": 4 },
+    { "id": "QM011", "name": "cross-route", "phase": 5 },
+    { "id": "QM012", "name": "contract-query", "phase": 6 }
+  ],
+  "error_codes": {
+    "QM001": "Invalid query spec — missing required fields",
+    "QM002": "Hook name must start with 'use'; queryKey must be exported as SCREAMING_SNAKE or camelCase array",
+    "QM003": "queryKey must be an array literal; all path/query params must appear in it",
+    "QM004": "TypeScript compilation failed",
+    "QM005": "Explicit 'any' type found",
+    "QM006": "Required params absent but no enabled:false guard",
+    "QM007": "Mutation side-effect found inside query fetcher (POST/PUT/PATCH/DELETE)",
+    "QM008": "TODO/FIXME/HACK comment found",
+    "QM009": "Tests failed",
+    "QM010": "Test coverage below threshold",
+    "QM011": "Response type or endpoint mismatch with route-artifact",
+    "QM012": "Contract violation"
+  }
+}

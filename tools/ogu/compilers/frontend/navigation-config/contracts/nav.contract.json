@@ -1,0 +1,15 @@
+{
+  "id": "nav-contract",
+  "version": "1.0.0",
+  "compiler": "navigation-config",
+  "rules": [
+    { "id": "nav-landmark", "description": "Must use <nav> element or role='navigation'" },
+    { "id": "nav-items-typed", "description": "Nav items must be TypeScript typed" },
+    { "id": "exported-nav", "description": "Navigation component must be exported" },
+    { "id": "aria-current", "description": "Active item must set aria-current='page'" },
+    { "id": "accepts-items-prop", "description": "Navigation must accept items as props or config" },
+    { "id": "link-elements", "description": "Nav items must use <a>, <Link>, or <NavLink>" },
+    { "id": "no-dead-routes", "description": "All nav paths must point to registered routes" },
+    { "id": "mobile-responsive", "description": "Navigation must handle mobile (hamburger or responsive)" }
+  ]
+}

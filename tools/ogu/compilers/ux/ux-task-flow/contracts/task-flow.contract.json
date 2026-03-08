@@ -1,0 +1,47 @@
+{
+  "id": "ux-task-flow",
+  "version": "1.0.0",
+  "description": "A task flow artifact is valid when steps are sequentially ordered, each step has an actor, completion criteria are declared with descriptions, at least one failure path exists, retry counts are bounded, and abandonment recovery is declared when needed.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "task-flow-spec.json must exist with task_id (string), steps (array), and completion_criteria (array). Flows without a spec cannot be validated."
+    },
+    {
+      "id": "steps-have-sequential-order",
+      "description": "Every step must declare an integer order field. Order values must be unique and contiguous starting from 0 or 1. Gaps indicate missing steps that were deleted without renumbering."
+    },
+    {
+      "id": "completion-criteria-non-empty",
+      "description": "completion_criteria must contain at least one entry. A task flow with no success definition is incomplete and cannot be shipped."
+    },
+    {
+      "id": "criteria-have-descriptions",
+      "description": "Every completion criterion must declare a description string. Criteria without descriptions cannot be verified by QA or stakeholders."
+    },
+    {
+      "id": "failure-path-exists",
+      "description": "At least one failure or cancellation path must be declared — either a step with type=failure or type=cancellation, or a non-empty failure_paths array. Tasks without failure handling trap users."
+    },
+    {
+      "id": "retry-bounded",
+      "description": "Any retryable step must declare maxRetries as a positive integer <= 5. Steps with retryable:true but no maxRetries are effectively infinite retry loops."
+    },
+    {
+      "id": "abandonment-recovery-declared",
+      "description": "When spec.abandonable=true, the spec must declare resumeFrom (step id) or recovery_entry (route/screen). Users who abandon mid-task must have a known re-entry point."
+    },
+    {
+      "id": "steps-have-actor",
+      "description": "Every step must declare actor as user, system, or both. Steps without an actor cannot be assigned ownership or tested correctly."
+    },
+    {
+      "id": "parallel-steps-have-group",
+      "description": "Every step with type=parallel must declare a parallelGroup id so concurrent steps can be rendered and orchestrated correctly."
+    },
+    {
+      "id": "user-actor-present",
+      "description": "At least one step must have actor=user. A task flow with no user actions is a background job, not a task flow — use a different spec type."
+    }
+  ]
+}

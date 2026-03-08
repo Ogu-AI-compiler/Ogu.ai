@@ -19,7 +19,7 @@ export const AuditEventSchema = z.object({
   severity: z.enum(['info', 'warn', 'error', 'critical']),
 
   /** Source service that emitted this event */
-  source: z.enum(['cli', 'kadima', 'runner', 'studio', 'system']),
+  source: z.enum(['cli', 'kadima', 'runner', 'system']),
 
   /** Agent or user that caused the event */
   actor: z.object({

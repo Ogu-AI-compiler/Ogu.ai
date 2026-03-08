@@ -1,0 +1,9 @@
+{ "id": "searchparams", "version": "1.0.0", "rules": [
+  { "id": "parse-exported", "description": "parse() must be exported" },
+  { "id": "serialize-exported", "description": "serialize() must be exported" },
+  { "id": "typed-schema", "description": "Param schema must be typed (interface or type)" },
+  { "id": "no-any", "description": "No any in parse/serialize types" },
+  { "id": "total-parse", "description": "parse() must not have unguarded throws" },
+  { "id": "canonical-serialize", "description": "serialize() must be canonical/deterministic" },
+  { "id": "default-omission", "description": "Default values omitted from URL" }
+]}

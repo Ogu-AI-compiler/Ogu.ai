@@ -1,0 +1,44 @@
+{
+  "id": "dockerfile_image",
+  "title": "Dockerfile Image Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a Dockerfile and build config. Enforces: exactly one CMD/ENTRYPOINT, non-root user, pinned base image, no secrets in build args, ports match spec, .dockerignore present.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "env-schema-artifact.json",
+    "output_artifact": "dockerfile-artifact.json",
+    "identifier": "DOCKERFILE"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Dockerfile Structure",    "gates": ["dockerfile-exists", "single-entrypoint", "base-image-pinned"] },
+    { "id": 3, "name": "Security Check",          "gates": ["non-root", "no-secrets-in-build"] },
+    { "id": 4, "name": "Build Context",           "gates": ["dockerignore-present", "ports-match-spec"] },
+    { "id": 5, "name": "Quality",                 "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                  "gates": ["contract-dockerfile"] }
+  ],
+  "gates": [
+    { "id": "DF001", "name": "spec-valid",           "phase": 1 },
+    { "id": "DF002", "name": "dockerfile-exists",    "phase": 2 },
+    { "id": "DF003", "name": "single-entrypoint",    "phase": 2 },
+    { "id": "DF004", "name": "base-image-pinned",    "phase": 2 },
+    { "id": "DF005", "name": "non-root",             "phase": 3 },
+    { "id": "DF006", "name": "no-secrets-in-build",  "phase": 3 },
+    { "id": "DF007", "name": "dockerignore-present", "phase": 4 },
+    { "id": "DF008", "name": "ports-match-spec",     "phase": 4 },
+    { "id": "DF009", "name": "no-todos",             "phase": 5 },
+    { "id": "DF010", "name": "contract-dockerfile",  "phase": 6 }
+  ],
+  "error_codes": {
+    "DF001": "dockerfile-spec.json missing or invalid — required: runtime, entrypoint, ports[]",
+    "DF002": "Dockerfile not found in target directory",
+    "DF003": "Dockerfile must have exactly one effective CMD or ENTRYPOINT instruction",
+    "DF004": "Base image not pinned to a version tag or digest — floating 'latest' not allowed",
+    "DF005": "Container runs as root — must add USER instruction for non-root user",
+    "DF006": "Secret value passed as ARG or ENV in Dockerfile — use runtime secret injection",
+    "DF007": ".dockerignore not present — build context leaks unnecessary files",
+    "DF008": "EXPOSE ports do not match ports declared in spec",
+    "DF009": "TODO/FIXME/HACK comment found in Dockerfile",
+    "DF010": "Dockerfile contract violation"
+  }
+}

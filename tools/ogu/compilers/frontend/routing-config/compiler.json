@@ -1,0 +1,72 @@
+{
+  "id": "routing-config",
+  "title": "Routing Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the application router configuration — routes array, lazy loading, typed path params, auth guards, and no dead/cyclic routes.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "page-artifact.json",
+    "output_artifact": "routing-artifact.json",
+    "identifier": "ROUTING"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Scaffold",
+      "gates": ["ts-valid", "no-any"]
+    },
+    {
+      "id": 3,
+      "name": "Implement",
+      "gates": ["no-dead-routes", "no-cyclic-routes", "lazy-loading", "typed-params"]
+    },
+    {
+      "id": 4,
+      "name": "Test",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 5,
+      "name": "Cross-Compiler Verify",
+      "gates": ["cross-page", "cross-guard"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-routing"]
+    }
+  ],
+  "gates": [
+    { "id": "RC001", "name": "spec-valid",      "phase": 1 },
+    { "id": "RC002", "name": "ts-valid",         "phase": 2 },
+    { "id": "RC003", "name": "no-any",           "phase": 2 },
+    { "id": "RC004", "name": "no-dead-routes",   "phase": 3 },
+    { "id": "RC005", "name": "no-cyclic-routes", "phase": 3 },
+    { "id": "RC006", "name": "lazy-loading",     "phase": 3 },
+    { "id": "RC007", "name": "typed-params",     "phase": 3 },
+    { "id": "RC008", "name": "no-todos",         "phase": 4 },
+    { "id": "RC009", "name": "tests-pass",       "phase": 4 },
+    { "id": "RC010", "name": "cross-page",       "phase": 5 },
+    { "id": "RC011", "name": "cross-guard",      "phase": 5 },
+    { "id": "RC012", "name": "contract-routing", "phase": 6 }
+  ],
+  "error_codes": {
+    "RC001": "Invalid routing spec",
+    "RC002": "TypeScript compilation failed",
+    "RC003": "Explicit 'any' type found",
+    "RC004": "Dead route detected (path not reachable from any link)",
+    "RC005": "Cyclic redirect detected",
+    "RC006": "Top-level route component not lazy-loaded",
+    "RC007": "Path param ':id' without corresponding TypeScript type param",
+    "RC008": "TODO/FIXME found",
+    "RC009": "Tests failed",
+    "RC010": "Route references page component not found in page-artifact",
+    "RC011": "Protected route missing auth guard",
+    "RC012": "Contract violation"
+  }
+}

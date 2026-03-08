@@ -1,0 +1,47 @@
+{
+  "id": "ux-form-flow",
+  "version": "1.0.0",
+  "description": "A form flow artifact is valid when all required fields have validation rules, server errors map to user messages, multi-step forms show progress, draft and abandonment behaviors are declared, and the submission defines a success target and HTTP method.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "form-flow-spec.json must exist with form_id (string), fields (array), and submission (object). Forms without a spec cannot be validated."
+    },
+    {
+      "id": "required-fields-have-validations",
+      "description": "Every field with required:true must declare at least one validation rule. Required fields without validation rules silently accept invalid input."
+    },
+    {
+      "id": "server-errors-have-code-and-message",
+      "description": "Every entry in the serverErrors array must have a code (string) and userMessage (string). Server errors without user messages show raw technical codes to users."
+    },
+    {
+      "id": "multi-step-forms-show-progress",
+      "description": "When a form has more than one step, every step must declare progressIndicator:true or the spec must declare globalProgressIndicator:true. Users cannot gauge completion without progress context."
+    },
+    {
+      "id": "draft-save-trigger-declared",
+      "description": "When draftEnabled:true, draftSaveTrigger must be auto or manual. Auto-save and manual-save have different UX implications and must be explicit."
+    },
+    {
+      "id": "draft-storage-key-declared",
+      "description": "When draftEnabled:true, draftStorageKey must be a non-empty string. Without a storage key, drafts from different form contexts will overwrite each other."
+    },
+    {
+      "id": "submission-has-success-target",
+      "description": "submission must declare redirectTo or onSuccess. A form with no defined success behavior leaves users on the form with no feedback."
+    },
+    {
+      "id": "multi-step-abandonment-declared",
+      "description": "Multi-step forms must declare abandonedBehavior as save-draft, discard, or warn-then-discard. Without a policy, navigating away causes silent data loss."
+    },
+    {
+      "id": "fields-have-id-and-type",
+      "description": "Every field must declare both id and type. Fields without ids cannot be referenced by validation errors or server mappings."
+    },
+    {
+      "id": "submission-method-declared",
+      "description": "submission.method must be POST, PUT, or PATCH. Forms without an explicit HTTP method default unpredictably across frameworks."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "accessibility-policy",
+  "name": "Accessibility Policy Compiler",
+  "tier": "qa",
+  "version": "1.0.0",
+  "description": "Validates accessibility testing policy — WCAG standard, tool config, automated + manual checkpoint coverage, rule exclusions, and CI enforcement",
+  "spec_file": "accessibility-policy-spec.json",
+  "artifact": "accessibility-policy-artifact.json",
+  "ir_id_prefix": "ACCESSIBILITY_POLICY:",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Spec Foundation",
+      "gates": ["spec-valid", "wcag-standard-current"]
+    },
+    {
+      "phase": 2,
+      "name": "Enforcement",
+      "gates": ["fail-on-critical", "no-excessive-exclusions"]
+    },
+    {
+      "phase": 3,
+      "name": "Manual Coverage",
+      "gates": ["manual-checkpoints-defined", "disabled-rules-justified"]
+    },
+    {
+      "phase": 4,
+      "name": "Contract",
+      "gates": ["no-todos", "contract-accessibility"]
+    }
+  ],
+  "gates": [
+    { "code": "QA070", "name": "spec-valid",                 "phase": 1 },
+    { "code": "QA071", "name": "wcag-standard-current",      "phase": 1 },
+    { "code": "QA072", "name": "fail-on-critical",           "phase": 2 },
+    { "code": "QA073", "name": "no-excessive-exclusions",    "phase": 2 },
+    { "code": "QA074", "name": "manual-checkpoints-defined", "phase": 3 },
+    { "code": "QA075", "name": "disabled-rules-justified",   "phase": 3 },
+    { "code": "QA076", "name": "no-todos",                   "phase": 4 },
+    { "code": "QA077", "name": "contract-accessibility",     "phase": 4 }
+  ]
+}

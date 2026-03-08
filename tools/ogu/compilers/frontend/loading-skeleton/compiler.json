@@ -1,0 +1,70 @@
+{
+  "id": "loading-skeleton",
+  "title": "Loading Skeleton Compiler",
+  "version": "1.0.0",
+  "description": "Compiles loading skeleton components that structurally mirror the content they replace. Enforces aria-busy, reduced-motion, and shape fidelity to the target component.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "component-artifact.json",
+    "output_artifact": "skeleton-artifact.json",
+    "identifier": "SKELETON"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Scaffold",
+      "gates": ["ts-valid", "no-any"]
+    },
+    {
+      "id": 3,
+      "name": "Implement",
+      "gates": ["aria-busy", "reduced-motion", "shape-fidelity", "no-real-data"]
+    },
+    {
+      "id": 4,
+      "name": "Test",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 5,
+      "name": "Cross-Compiler Verify",
+      "gates": ["cross-component"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-skeleton"]
+    }
+  ],
+  "gates": [
+    { "id": "SK001", "name": "spec-valid",       "phase": 1 },
+    { "id": "SK002", "name": "ts-valid",          "phase": 2 },
+    { "id": "SK003", "name": "no-any",            "phase": 2 },
+    { "id": "SK004", "name": "aria-busy",         "phase": 3 },
+    { "id": "SK005", "name": "reduced-motion",    "phase": 3 },
+    { "id": "SK006", "name": "shape-fidelity",    "phase": 3 },
+    { "id": "SK007", "name": "no-real-data",      "phase": 3 },
+    { "id": "SK008", "name": "no-todos",          "phase": 4 },
+    { "id": "SK009", "name": "tests-pass",        "phase": 4 },
+    { "id": "SK010", "name": "cross-component",   "phase": 5 },
+    { "id": "SK011", "name": "contract-skeleton", "phase": 6 }
+  ],
+  "error_codes": {
+    "SK001": "Invalid skeleton spec",
+    "SK002": "TypeScript compilation failed",
+    "SK003": "Explicit 'any' found",
+    "SK004": "Missing aria-busy='true' on skeleton container",
+    "SK005": "Shimmer animation not respecting prefers-reduced-motion",
+    "SK006": "Skeleton DOM structure doesn't match target component shape",
+    "SK007": "Real data (API calls, props data) used inside skeleton",
+    "SK008": "TODO/FIXME found",
+    "SK009": "Tests failed",
+    "SK010": "Target component-artifact not found",
+    "SK011": "Contract violation"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "spacing-scale",
+  "version": "1.0.0",
+  "description": "A valid spacing scale has a parseable base unit, at least 4 distinct named steps, semantic role coverage, and no sub-2px values.",
+  "rules": [
+    {
+      "id": "minimum-four-steps",
+      "description": "A spacing scale needs at least 4 steps to express the range from tight (4px) to loose (32px+). Fewer steps produce a system with insufficient density control."
+    },
+    {
+      "id": "steps-have-ids",
+      "description": "Every step must have an id or name so it can be referenced by semantic roles and downstream compilers. Anonymous steps are unreferable."
+    },
+    {
+      "id": "steps-have-values",
+      "description": "Every step must declare a value so contrast, multiple, and min-spacing gates can evaluate it."
+    },
+    {
+      "id": "base-unit-parseable",
+      "description": "The baseUnit must be a parseable pixel value (e.g. '4px', '8', '0.5rem'). Unparseable base units make the multiple-check gate unable to verify step relationships."
+    }
+  ]
+}

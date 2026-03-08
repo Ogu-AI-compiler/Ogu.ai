@@ -1,0 +1,70 @@
+{
+  "id": "service-client-module",
+  "title": "Service Client Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a typed HTTP service client for a single upstream provider. Enforces: base URL from config (not hardcoded), auth injection via interceptor (not per-call), all responses mapped to typed domain objects, circuit-breaker or retry declared, no request body logging of sensitive fields.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "client-runtime-artifact.json",
+    "output_artifact": "service-client-artifact.json",
+    "identifier": "SERVICE_CLIENT"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid", "cross-runtime"]
+    },
+    {
+      "id": 2,
+      "name": "URL & Auth",
+      "gates": ["base-url-from-config", "auth-via-interceptor"]
+    },
+    {
+      "id": 3,
+      "name": "Response Typing",
+      "gates": ["typed-responses", "error-mapped"]
+    },
+    {
+      "id": 4,
+      "name": "Resilience",
+      "gates": ["resilience-declared", "no-sensitive-logging"]
+    },
+    {
+      "id": 5,
+      "name": "Quality",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-service-client"]
+    }
+  ],
+  "gates": [
+    { "id": "SC001", "name": "spec-valid",             "phase": 1 },
+    { "id": "SC002", "name": "cross-runtime",          "phase": 1 },
+    { "id": "SC003", "name": "base-url-from-config",   "phase": 2 },
+    { "id": "SC004", "name": "auth-via-interceptor",   "phase": 2 },
+    { "id": "SC005", "name": "typed-responses",        "phase": 3 },
+    { "id": "SC006", "name": "error-mapped",           "phase": 3 },
+    { "id": "SC007", "name": "resilience-declared",    "phase": 4 },
+    { "id": "SC008", "name": "no-sensitive-logging",   "phase": 4 },
+    { "id": "SC009", "name": "no-todos",               "phase": 5 },
+    { "id": "SC010", "name": "tests-pass",             "phase": 5 },
+    { "id": "SC011", "name": "contract-service-client","phase": 6 }
+  ],
+  "error_codes": {
+    "SC001": "service-client-spec.json missing or invalid",
+    "SC002": "client-runtime-artifact.json not found — compile service-client-runtime first",
+    "SC003": "Hardcoded base URL found — must come from config/env via client runtime",
+    "SC004": "Auth token injected per-call instead of via interceptor/middleware",
+    "SC005": "Response not mapped to typed domain object (raw any/unknown returned)",
+    "SC006": "Non-2xx response not mapped to typed error class",
+    "SC007": "No retry or circuit-breaker declared for this client",
+    "SC008": "Sensitive request field (password, token, secret) logged without redaction",
+    "SC009": "TODO/FIXME/HACK comment found",
+    "SC010": "Tests failed",
+    "SC011": "Service client contract violation"
+  }
+}

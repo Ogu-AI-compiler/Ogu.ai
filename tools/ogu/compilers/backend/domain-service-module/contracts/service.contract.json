@@ -1,0 +1,15 @@
+{
+  "id": "service-contract-v1",
+  "compiler": "domain-service-module",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "SVC-001", "description": "Service must have a name", "severity": "error" },
+    { "id": "SVC-002", "description": "Service must declare at least one use case", "severity": "error" },
+    { "id": "SVC-003", "description": "Service must declare its dependencies (repositories, clients, cache)", "severity": "error" },
+    { "id": "SVC-004", "description": "Idempotent use cases must declare a dedupeStrategy or use upsert", "severity": "error" },
+    { "id": "SVC-005", "description": "Service must not import HTTP framework types", "severity": "error" },
+    { "id": "SVC-006", "description": "Service must not access process.env directly", "severity": "error" },
+    { "id": "SVC-007", "description": "Service methods must return typed success and failure, not void", "severity": "error" },
+    { "id": "SVC-008", "description": "Multi-write use cases must delegate to transaction-script-module", "severity": "error" }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "statistical-test-module",
+  "title": "Statistical Test Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles statistical hypothesis testing scripts. Enforces hypothesis documentation, sample size adequacy, correct test selection (parametric/non-parametric), effect size reporting alongside p-value, confidence intervals, and multiple testing correction.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": null, "output_artifact": "statistical-test-artifact.json", "identifier": "STATISTICAL_TEST" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Test Design", "gates": ["hypothesis-defined", "sample-size-adequate", "test-selection-justified"] },
+    { "id": 3, "name": "Result Reporting", "gates": ["effect-size-reported", "confidence-intervals", "p-value-in-context"] },
+    { "id": 4, "name": "Multiple Testing", "gates": ["multiple-testing-corrected"] },
+    { "id": 5, "name": "Attest", "gates": ["no-todos", "contract-statistical-test"] }
+  ],
+  "gates": [
+    { "id": "ST001", "name": "spec-valid",                "phase": 1 },
+    { "id": "ST002", "name": "hypothesis-defined",        "phase": 2 },
+    { "id": "ST003", "name": "sample-size-adequate",      "phase": 2 },
+    { "id": "ST004", "name": "test-selection-justified",  "phase": 2 },
+    { "id": "ST005", "name": "effect-size-reported",      "phase": 3 },
+    { "id": "ST006", "name": "confidence-intervals",      "phase": 3 },
+    { "id": "ST007", "name": "p-value-in-context",        "phase": 3 },
+    { "id": "ST008", "name": "multiple-testing-corrected","phase": 4 },
+    { "id": "ST009", "name": "no-todos",                  "phase": 5 },
+    { "id": "ST010", "name": "contract-statistical-test", "phase": 5 }
+  ],
+  "error_codes": {
+    "ST001": "Invalid statistical test spec",
+    "ST002": "Null and alternative hypotheses not documented",
+    "ST003": "No sample size or power analysis — test may be underpowered",
+    "ST004": "Test selection not justified (parametric vs non-parametric choice undocumented)",
+    "ST005": "No effect size reported (Cohen's d, r, eta-squared, odds ratio)",
+    "ST006": "No confidence intervals reported alongside p-value",
+    "ST007": "p-value used as sole decision criterion — must report effect size and CI",
+    "ST008": "Multiple comparisons without correction (Bonferroni, FDR/BH)",
+    "ST009": "TODO/FIXME found",
+    "ST010": "Statistical test contract violation"
+  }
+}

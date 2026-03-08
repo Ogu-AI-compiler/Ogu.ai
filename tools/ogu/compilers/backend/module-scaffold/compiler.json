@@ -1,0 +1,57 @@
+{
+  "id": "module-scaffold",
+  "title": "Module Scaffold Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the module folder structure and boundary rules for a backend feature module. Enforces single public entrypoint, no circular cross-module imports, and no undeclared internal folders.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "scaffold-artifact.json",
+    "identifier": "MODULE"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": ["entrypoint-exists", "folders-declared"]
+    },
+    {
+      "id": 3,
+      "name": "Boundary Check",
+      "gates": ["no-cross-module-internals", "no-circular"]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": ["no-todos"]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": ["contract-scaffold"]
+    }
+  ],
+  "gates": [
+    { "id": "MS001", "name": "spec-valid",             "phase": 1 },
+    { "id": "MS002", "name": "entrypoint-exists",      "phase": 2 },
+    { "id": "MS003", "name": "folders-declared",       "phase": 2 },
+    { "id": "MS004", "name": "no-cross-module-internals", "phase": 3 },
+    { "id": "MS005", "name": "no-circular",            "phase": 3 },
+    { "id": "MS006", "name": "no-todos",               "phase": 4 },
+    { "id": "MS007", "name": "contract-scaffold",      "phase": 5 }
+  ],
+  "error_codes": {
+    "MS001": "module-spec.json missing or invalid — required fields: name, capabilities[]",
+    "MS002": "Module public entrypoint (index.ts) missing or does not export module API",
+    "MS003": "Internal folder exists that was not declared in capabilities[]",
+    "MS004": "Cross-module import bypasses public entrypoint (imports internal file directly)",
+    "MS005": "Circular import detected between modules",
+    "MS006": "TODO/FIXME/HACK comment found",
+    "MS007": "Module scaffold contract violation"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "model-monitoring-config",
+  "version": "1.0.0",
+  "description": "Contract rules for model monitoring configuration",
+  "rules": [
+    { "id": "has-spec", "description": "monitoring-spec.json must exist with required fields" },
+    { "id": "has-drift-metric", "description": "Drift metric (PSI/KS/Jensen-Shannon) must be defined" },
+    { "id": "has-threshold", "description": "Alert threshold must be a positive number" },
+    { "id": "has-baseline", "description": "Baseline distribution for comparison must exist" },
+    { "id": "has-retraining-trigger", "description": "Retraining trigger condition must be defined" }
+  ]
+}

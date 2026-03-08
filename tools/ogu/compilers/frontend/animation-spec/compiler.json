@@ -1,0 +1,46 @@
+{
+  "id": "animation-spec",
+  "title": "Animation Spec Compiler",
+  "version": "1.0.0",
+  "description": "Compiles motion intent into Framer Motion variants or Tailwind animation classes. Enforces reduced-motion fallbacks, valid easing curves, and no layout thrash.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "tokens-artifact.json",
+    "output_artifact": "animation-artifact.json",
+    "identifier": "ANIMATION"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid", "easing-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["reduced-motion", "no-layout-thrash", "duration-bounds"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Cross-Compiler Verify", "gates": ["cross-tokens"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-animation"] }
+  ],
+  "gates": [
+    { "id": "AN001", "name": "spec-valid",       "phase": 1 },
+    { "id": "AN002", "name": "easing-valid",     "phase": 1 },
+    { "id": "AN003", "name": "ts-valid",         "phase": 2 },
+    { "id": "AN004", "name": "no-any",           "phase": 2 },
+    { "id": "AN005", "name": "reduced-motion",   "phase": 3 },
+    { "id": "AN006", "name": "no-layout-thrash", "phase": 3 },
+    { "id": "AN007", "name": "duration-bounds",  "phase": 3 },
+    { "id": "AN008", "name": "no-todos",         "phase": 4 },
+    { "id": "AN009", "name": "tests-pass",       "phase": 4 },
+    { "id": "AN010", "name": "cross-tokens",     "phase": 5 },
+    { "id": "AN011", "name": "contract-animation","phase": 6 }
+  ],
+  "error_codes": {
+    "AN001": "Invalid animation spec",
+    "AN002": "Invalid easing curve (not a valid cubic-bezier or preset)",
+    "AN003": "TypeScript compilation failed",
+    "AN004": "Explicit 'any' found",
+    "AN005": "No reduced-motion fallback for animated variant",
+    "AN006": "Layout-thrashing property animated (width/height/top/left — use transform instead)",
+    "AN007": "Duration out of bounds (< 50ms or > 2000ms)",
+    "AN008": "TODO/FIXME found",
+    "AN009": "Tests failed",
+    "AN010": "Animation references design token not found in tokens-artifact",
+    "AN011": "Contract violation"
+  }
+}

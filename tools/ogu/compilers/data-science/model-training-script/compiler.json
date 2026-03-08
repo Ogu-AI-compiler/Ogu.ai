@@ -1,0 +1,40 @@
+{
+  "id": "model-training-script",
+  "title": "Model Training Script Compiler",
+  "version": "1.0.0",
+  "description": "Compiles ML model training scripts. Enforces random seed hygiene, sklearn Pipeline usage, configurable hyperparameters, experiment tracking (MLflow/W&B), model serialization, no fit on test data, and main guard.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "feature-artifact.json", "output_artifact": "training-artifact.json", "identifier": "MODEL_TRAINING" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Reproducibility", "gates": ["random-seed-set", "pipeline-used", "main-guard"] },
+    { "id": 3, "name": "Training Safety", "gates": ["no-fit-on-test", "hyperparams-configurable"] },
+    { "id": 4, "name": "MLOps", "gates": ["experiment-tracked", "model-serialized"] },
+    { "id": 5, "name": "Attest", "gates": ["no-todos", "contract-model-training"] }
+  ],
+  "gates": [
+    { "id": "MT001", "name": "spec-valid",              "phase": 1 },
+    { "id": "MT002", "name": "random-seed-set",         "phase": 2 },
+    { "id": "MT003", "name": "pipeline-used",           "phase": 2 },
+    { "id": "MT004", "name": "main-guard",              "phase": 2 },
+    { "id": "MT005", "name": "no-fit-on-test",          "phase": 3 },
+    { "id": "MT006", "name": "hyperparams-configurable","phase": 3 },
+    { "id": "MT007", "name": "experiment-tracked",      "phase": 4 },
+    { "id": "MT008", "name": "model-serialized",        "phase": 4 },
+    { "id": "MT009", "name": "no-todos",                "phase": 5 },
+    { "id": "MT010", "name": "contract-model-training", "phase": 5 }
+  ],
+  "error_codes": {
+    "MT001": "Invalid model training spec",
+    "MT002": "No random seed set (random.seed / np.random.seed / torch.manual_seed / random_state)",
+    "MT003": "sklearn Pipeline not used — preprocessing may cause data leakage",
+    "MT004": "Missing if __name__ == '__main__': guard",
+    "MT005": "model.fit() called on test set — models must only be trained on training data",
+    "MT006": "Hyperparameters hardcoded in training code — use config file or argparse",
+    "MT007": "No experiment tracking (mlflow.log_param/log_metric or wandb.log) found",
+    "MT008": "Model not serialized (joblib.dump / mlflow.sklearn.log_model / pickle.dump)",
+    "MT009": "TODO/FIXME found",
+    "MT010": "Model training contract violation"
+  }
+}

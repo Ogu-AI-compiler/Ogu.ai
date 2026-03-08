@@ -1,0 +1,37 @@
+{
+  "id": "contract-test",
+  "name": "Contract Test Compiler",
+  "tier": "qa",
+  "version": "1.0.0",
+  "description": "Validates consumer-driven contract test specifications — Pact/compatible broker config, interaction quality, and OpenAPI alignment",
+  "spec_file": "contract-test-spec.json",
+  "artifact": "contract-test-artifact.json",
+  "ir_id_prefix": "CONTRACT_TEST:",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Spec Foundation",
+      "gates": ["spec-valid", "broker-url-from-env"]
+    },
+    {
+      "phase": 2,
+      "name": "Interaction Quality",
+      "gates": ["publish-results-true", "interactions-match-openapi", "no-wildcard-matching"]
+    },
+    {
+      "phase": 3,
+      "name": "Validation & Contract",
+      "gates": ["openapi-validation-enabled", "no-todos", "contract-pact"]
+    }
+  ],
+  "gates": [
+    { "code": "QA050", "name": "spec-valid",                  "phase": 1 },
+    { "code": "QA051", "name": "broker-url-from-env",         "phase": 1 },
+    { "code": "QA052", "name": "publish-results-true",        "phase": 2 },
+    { "code": "QA053", "name": "interactions-match-openapi",  "phase": 2 },
+    { "code": "QA054", "name": "no-wildcard-matching",        "phase": 2 },
+    { "code": "QA055", "name": "openapi-validation-enabled",  "phase": 3 },
+    { "code": "QA056", "name": "no-todos",                    "phase": 3 },
+    { "code": "QA057", "name": "contract-pact",               "phase": 3 }
+  ]
+}

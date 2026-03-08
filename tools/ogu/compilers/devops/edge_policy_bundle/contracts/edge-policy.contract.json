@@ -1,0 +1,76 @@
+{
+  "id": "edge_policy_bundle",
+  "version": "1.0.0",
+  "description": "Validates edge policy rules for rate limit definitions, CORS header safety, WAF rule validity, geo-restriction format correctness, and contract-level policy auditability",
+  "rules": [
+    {
+      "id": "EP001",
+      "gate": "spec-valid",
+      "description": "edge-policy-spec.json must exist, be valid JSON, and declare name and a non-empty rules array",
+      "required": true,
+      "mandatoryFields": ["name", "rules"],
+      "constraints": {
+        "rules": "must be a non-empty array"
+      }
+    },
+    {
+      "id": "EP002",
+      "gate": "rate-limits-defined",
+      "description": "Every edge rule must declare a rateLimit with requestsPerSecond or requestsPerMinute. Rules without rate limits allow unlimited traffic through the edge, removing the primary DDoS protection layer. Set skipRateLimitRequirement: true for internal-only routes",
+      "required": true,
+      "note": "Skipped when spec.skipRateLimitRequirement is true"
+    },
+    {
+      "id": "EP003",
+      "gate": "cors-headers-valid",
+      "description": "When cors is configured, allowedOrigins must be a non-empty array. allowedOrigins=['*'] combined with allowCredentials=true is a security misconfiguration — browsers reject credential requests to wildcard origins. allowedMethods must use only recognised HTTP verbs. Gate skipped when no cors block is present",
+      "required": true,
+      "corsAllowedMethods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+      "note": "Skipped when spec.cors is absent"
+    },
+    {
+      "id": "EP004",
+      "gate": "waf-rules-valid",
+      "description": "Every WAF rule must have an id (for auditability), a match expression (to define what triggers the rule), and a valid action. waf.mode must be 'detection' or 'prevention'. Gate skipped when no waf block is present",
+      "required": true,
+      "mandatoryWafRuleFields": ["id", "match", "action"],
+      "actionEnum": ["allow", "block", "challenge", "log", "redirect"],
+      "modeEnum": ["detection", "prevention"],
+      "note": "Skipped when spec.waf is absent"
+    },
+    {
+      "id": "EP005",
+      "gate": "geo-restrictions-valid",
+      "description": "All country codes in geoRestrictions.allowlist and denylist must be ISO 3166-1 alpha-2 format (two uppercase letters). Invalid codes are silently ignored by most CDN/edge providers — the restriction appears configured but never applies. allowlist and denylist cannot both be specified",
+      "required": true,
+      "pattern": "^[A-Z]{2}$",
+      "constraints": {
+        "exclusive": "allowlist and denylist cannot both be declared — choose one mode"
+      },
+      "note": "Skipped when spec.geoRestrictions is absent"
+    },
+    {
+      "id": "EP006",
+      "gate": "no-todos",
+      "description": "edge-policy-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers. Placeholder rate limits or WAF rules will either have no effect or block all traffic unexpectedly",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "EP007",
+      "gate": "contract-edge-policy",
+      "description": "Every rule must be identifiable with a name or match field for audit log correlation. requestsPerSecond must be a positive number when declared. Policy-level name is required for auditability",
+      "required": true,
+      "constraints": {
+        "rule-identity": "every rule must have name or match",
+        "rate-positive": "requestsPerSecond must be > 0 when declared",
+        "policy-name": "spec.name must be declared"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "edge-policy-artifact.json",
+    "ir_id_prefix": "EDGE_POLICY_BUNDLE:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

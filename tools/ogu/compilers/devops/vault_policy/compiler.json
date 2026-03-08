@@ -1,0 +1,36 @@
+{
+  "id": "vault_policy",
+  "title": "Vault Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles HashiCorp Vault policies and auth role bindings. Enforces: policy file parses, all paths within allowed prefix list, capabilities from allowed set, no wildcard paths without exception, all bound roles/service accounts exist.",
+  "tier": "devops",
+  "ir": { "input_artifact": "secret-bundle-artifact.json", "output_artifact": "vault-policy-artifact.json", "identifier": "VAULT_POLICY" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Path Policy",             "gates": ["paths-in-allowed-prefix", "no-wildcard-paths"] },
+    { "id": 3, "name": "Capability Check",        "gates": ["capabilities-allowed", "least-privilege"] },
+    { "id": 4, "name": "Role Binding",            "gates": ["roles-declared"] },
+    { "id": 5, "name": "Quality",                 "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                  "gates": ["contract-vault-policy"] }
+  ],
+  "gates": [
+    { "id": "VP001", "name": "spec-valid",               "phase": 1 },
+    { "id": "VP002", "name": "paths-in-allowed-prefix",  "phase": 2 },
+    { "id": "VP003", "name": "no-wildcard-paths",        "phase": 2 },
+    { "id": "VP004", "name": "capabilities-allowed",     "phase": 3 },
+    { "id": "VP005", "name": "least-privilege",          "phase": 3 },
+    { "id": "VP006", "name": "roles-declared",           "phase": 4 },
+    { "id": "VP007", "name": "no-todos",                 "phase": 5 },
+    { "id": "VP008", "name": "contract-vault-policy",    "phase": 6 }
+  ],
+  "error_codes": {
+    "VP001": "vault-policy-spec.json missing or invalid — required: name, paths[], roles[]",
+    "VP002": "Vault path is outside allowed prefix list",
+    "VP003": "Wildcard path used without explicit exception",
+    "VP004": "Capability not in allowed set: create, read, update, delete, list, patch",
+    "VP005": "Policy grants broader access than least-privilege rule requires",
+    "VP006": "Bound role or service account not declared in spec",
+    "VP007": "TODO/FIXME found",
+    "VP008": "Vault policy contract violation"
+  }
+}

@@ -64,6 +64,124 @@ function buildTaskGateResults(gateCheck) {
   return results;
 }
 
+function readJsonArraySafe(path) {
+  try {
+    const raw = readFileSync(path, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadTaskHintsConfig(root, orgSpec) {
+  const bundledPath = new URL('./task-hints.json', import.meta.url);
+  // Optional local override: .ogu/task-hints.json
+  const localOverride = resolveOguPath(root, 'task-hints.json');
+
+  // Optional orgSpec override path (relative to project root)
+  const orgPath = (orgSpec && orgSpec.taskHints && orgSpec.taskHints.path)
+    ? join(root, String(orgSpec.taskHints.path))
+    : null;
+
+  if (orgPath && existsSync(orgPath)) {
+    return readJsonArraySafe(orgPath);
+  }
+  if (existsSync(localOverride)) {
+    return readJsonArraySafe(localOverride);
+  }
+  return readJsonArraySafe(bundledPath);
+}
+
+function readHintsPolicy(root, orgSpec) {
+  const policy = {
+    enabled: true,
+    categories: null,
+    maxRules: 3,
+    minPriority: 0,
+  };
+
+  const specPolicy = orgSpec?.taskHints || {};
+  if (typeof specPolicy.enabled === 'boolean') policy.enabled = specPolicy.enabled;
+  if (Array.isArray(specPolicy.categories) && specPolicy.categories.length > 0) policy.categories = specPolicy.categories;
+  if (Number.isFinite(specPolicy.maxRules)) policy.maxRules = Math.max(0, Number(specPolicy.maxRules));
+  if (Number.isFinite(specPolicy.minPriority)) policy.minPriority = Number(specPolicy.minPriority);
+
+  if (process.env.OGU_TASK_HINTS === '0' || process.env.OGU_TASK_HINTS === 'false') {
+    policy.enabled = false;
+  }
+  if (process.env.OGU_TASK_HINTS_CATEGORIES) {
+    const cats = process.env.OGU_TASK_HINTS_CATEGORIES.split(',').map((c) => c.trim()).filter(Boolean);
+    if (cats.length > 0) policy.categories = cats;
+  }
+  if (process.env.OGU_TASK_HINTS_MAX) {
+    const max = parseInt(process.env.OGU_TASK_HINTS_MAX, 10);
+    if (!Number.isNaN(max)) policy.maxRules = Math.max(0, max);
+  }
+  if (process.env.OGU_TASK_HINTS_MIN_PRIORITY) {
+    const min = parseInt(process.env.OGU_TASK_HINTS_MIN_PRIORITY, 10);
+    if (!Number.isNaN(min)) policy.minPriority = min;
+  }
+
+  // Optional per-project override in .ogu/kadima.config.json
+  const kadimaConfigPath = resolveOguPath(root, 'kadima.config.json');
+  if (existsSync(kadimaConfigPath)) {
+    try {
+      const cfg = JSON.parse(readFileSync(kadimaConfigPath, 'utf8'));
+      const hints = cfg?.taskHints || cfg?.hints || null;
+      if (hints) {
+        if (typeof hints.enabled === 'boolean') policy.enabled = hints.enabled;
+        if (Array.isArray(hints.categories) && hints.categories.length > 0) policy.categories = hints.categories;
+        if (Number.isFinite(hints.maxRules)) policy.maxRules = Math.max(0, Number(hints.maxRules));
+        if (Number.isFinite(hints.minPriority)) policy.minPriority = Number(hints.minPriority);
+      }
+    } catch { /* ignore invalid config */ }
+  }
+
+  return policy;
+}
+
+function matchHint(rule, text) {
+  if (!rule || !rule.match || !text) return false;
+  const t = text.toLowerCase();
+  const any = Array.isArray(rule.match.any) ? rule.match.any : [];
+  const all = Array.isArray(rule.match.all) ? rule.match.all : [];
+  if (any.length > 0 && !any.some((p) => t.includes(String(p).toLowerCase()))) return false;
+  if (all.length > 0 && !all.every((p) => t.includes(String(p).toLowerCase()))) return false;
+  return true;
+}
+
+function buildTaskHints(taskContext, taskSpec, orgSpec, root) {
+  const policy = readHintsPolicy(root, orgSpec);
+  if (!policy.enabled) return '';
+
+  const title = (taskContext?.title || taskContext?.name || taskSpec?.name || '').toString();
+  const desc = (taskSpec?.description || '').toString();
+  const text = `${title} ${desc}`.toLowerCase();
+
+  let rules = loadTaskHintsConfig(root, orgSpec)
+    .filter((r) => matchHint(r, text))
+    .filter((r) => (r.priority || 0) >= policy.minPriority);
+
+  if (Array.isArray(policy.categories) && policy.categories.length > 0) {
+    const allow = new Set(policy.categories.map((c) => String(c).toLowerCase()));
+    rules = rules.filter((r) => !r.category || allow.has(String(r.category).toLowerCase()));
+  }
+
+  rules = rules.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+  if (policy.maxRules > 0) rules = rules.slice(0, policy.maxRules);
+
+  if (rules.length === 0) return '';
+
+  const blocks = rules.map((r) => {
+    const hint = Array.isArray(r.hint) ? r.hint.join('\n') : String(r.hint || '').trim();
+    return hint;
+  }).filter(Boolean);
+
+  if (blocks.length === 0) return '';
+  return `\n\n--- TASK HINTS ---\n${blocks.join('\n\n')}\n--- END TASK HINTS ---`;
+}
+
 /**
  * loadDependencyArtifacts(root, taskSpec, runnersDir) → [{ path, content, _isDepArtifact }]
  * Reads output files from dependent tasks and returns them for context injection.
@@ -251,7 +369,7 @@ export async function executeAgentTaskCore(root, options) {
       attempts: 0,
     };
   }
-  const effectiveTouches = preflight.touches || [];
+  let effectiveTouches = preflight.touches || [];
   const taskContext = {
     ...baseTaskSpec,
     title: baseTaskSpec.title || baseTaskSpec.name || taskId,
@@ -494,6 +612,9 @@ export async function executeAgentTaskCore(root, options) {
       taskDescription += `\n\n--- FILE VALIDATION RULES (your output MUST satisfy ALL of these) ---\n${rules.join('\n')}\n--- END VALIDATION RULES ---`;
     }
 
+    // Task-specific hints for common setup failures
+    taskDescription += buildTaskHints(taskContext, taskSpec, orgSpec, root);
+
     if (activeFixNote) {
       taskDescription += `\n\n--- AUTO-FIX CONTEXT ---\n${activeFixNote}\n--- END AUTO-FIX ---`;
     }
@@ -689,6 +810,26 @@ export async function executeAgentTaskCore(root, options) {
 
         if (!gateCheck.passed) {
           const rawError = formatGateErrorsForFix(gateCheck.errors || []);
+
+          // If gate failures indicate missing deps, allow package.json edits on retry.
+          const missingDeps = (gateCheck.errors || [])
+            .map((err) => {
+              const match = err.match(/imports '([^']+)' which is not in package\.json/);
+              return match ? match[1] : null;
+            })
+            .filter(Boolean);
+          if (missingDeps.length > 0) {
+            const extraTouches = [];
+            if (!effectiveTouches.includes('package.json')) extraTouches.push('package.json');
+            if (existsSync(join(root, 'package-lock.json')) && !effectiveTouches.includes('package-lock.json')) {
+              extraTouches.push('package-lock.json');
+            }
+            if (extraTouches.length > 0) {
+              effectiveTouches = [...effectiveTouches, ...extraTouches];
+              taskContext.touches = effectiveTouches;
+            }
+          }
+
           activeFixNote = buildTaskFixNote(taskContext, { errors: gateCheck.errors || [], rawError }, root);
 
           emitAudit('agent.retry', {

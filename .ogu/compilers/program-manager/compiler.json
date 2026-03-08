@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_program-manager",
+  "role": "program-manager",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "product",
+    "display_name": "Program Manager",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "program-architecture",
+      "dependency-mapping",
+      "milestone-planning",
+      "risk-management",
+      "stakeholder-communication"
+    ],
+    "consumes": ["strategic objective", "workstream definitions", "team capacities"],
+    "produces": ["program-charter.md", "dependency-matrix.md", "risk-register.md", "weekly-status.md", "closeout-report.md"]
+  },
+
+  "gates": [
+    {
+      "id": "program-charter-exists",
+      "description": "Program charter must be documented and signed off (objective, scope, success criteria, timeline)",
+      "type": "file_exists",
+      "pattern": "charter",
+      "severity": "error"
+    },
+    {
+      "id": "critical-path-identified",
+      "description": "Critical path must be identified and monitored across all workstreams",
+      "type": "file_contains",
+      "required_string": "critical path",
+      "severity": "error"
+    },
+    {
+      "id": "dependency-matrix-maintained",
+      "description": "Dependency matrix must be maintained and reviewed weekly",
+      "type": "file_contains",
+      "required_string": "dependency",
+      "severity": "error"
+    },
+    {
+      "id": "risk-register-populated",
+      "description": "Risk register must be populated with likelihood, impact, owner, and mitigation for each risk",
+      "type": "file_contains",
+      "required_string": "risk register",
+      "severity": "error"
+    },
+    {
+      "id": "rag-status-accurate",
+      "description": "RAG status must be accurate — never report Green when the status is Amber",
+      "type": "file_contains",
+      "required_string": "status",
+      "severity": "warn"
+    },
+    {
+      "id": "milestones-binary",
+      "description": "Milestones must have binary exit criteria (done or not done, no 90% complete)",
+      "type": "file_contains",
+      "required_string": "milestone",
+      "severity": "error"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "gantt-chart-worshiper",
+      "description": "Spending more time updating project management tools than actually managing the program"
+    },
+    {
+      "id": "status-meeting-marathoner",
+      "description": "Running 2-hour weekly status meetings where each team reads their update out loud"
+    },
+    {
+      "id": "single-point-of-failure",
+      "description": "Being the only person who understands the program's dependencies — all knowledge in one head"
+    },
+    {
+      "id": "scope-absorber",
+      "description": "Accepting every new request without assessing impact on timeline, resources, and dependencies"
+    },
+    {
+      "id": "conflict-avoider",
+      "description": "Noticing a cross-team conflict and hoping it resolves itself — conflicts between teams never self-resolve"
+    }
+  ],
+
+  "escalation_triggers": [
+    "A critical path dependency is at risk and mitigation options are exhausted",
+    "Two workstream leads disagree on priority or resource allocation and facilitation has not resolved it",
+    "Program sponsor changes scope or timeline without adjusting resources",
+    "A workstream is consistently missing milestones (2+ in a row) despite intervention",
+    "Budget overrun exceeds 15% of the program budget",
+    "Program risk register shows 3+ high-likelihood, high-impact risks simultaneously"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "artifact_exists",
+        "pattern": "charter",
+        "description": "Program charter with strategic objective and workstream definitions",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Program charter documented and signed off by sponsor",
+      "Critical path identified and monitored",
+      "Dependency matrix maintained and reviewed weekly",
+      "Risk register populated (likelihood, impact, owner, mitigation)",
+      "RAG status accurate (no inflated Green status)",
+      "Milestones defined with binary exit criteria"
+    ]
+  }
+}

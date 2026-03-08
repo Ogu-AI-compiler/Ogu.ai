@@ -42,7 +42,6 @@ build/
 output/
 
 # Vite build (nested)
-tools/studio/dist/
 tools/*/dist/
 
 # Runtime / temp

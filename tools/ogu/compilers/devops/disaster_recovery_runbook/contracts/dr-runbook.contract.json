@@ -1,0 +1,91 @@
+{
+  "id": "disaster_recovery_runbook",
+  "version": "1.0.0",
+  "description": "Validates DR runbooks for RTO/RPO format validity, scenario completeness, failover configuration, communication plan, test schedule, and contract-level data-loss coverage",
+  "rules": [
+    {
+      "id": "DR001",
+      "gate": "spec-valid",
+      "description": "dr-runbook-spec.json must exist, be valid JSON, and declare service, rto, rpo, and a non-empty scenarios array",
+      "required": true,
+      "mandatoryFields": ["service", "rto", "rpo", "scenarios"],
+      "constraints": {
+        "scenarios": "must be a non-empty array"
+      }
+    },
+    {
+      "id": "DR002",
+      "gate": "rto-rpo-defined",
+      "description": "rto and rpo must be valid ISO 8601 duration strings (e.g. PT4H, PT30M). rpo must not exceed rto — losing more data than the recovery window is operationally inconsistent. rto exceeding 24h requires skipRTOWarning: true",
+      "required": true,
+      "format": "ISO 8601 duration — PT prefix, fields: H (hours), M (minutes), S (seconds)",
+      "constraints": {
+        "rpo-lte-rto": "rpo must be ≤ rto",
+        "rto-24h-warning": "rto > 24h requires skipRTOWarning: true"
+      }
+    },
+    {
+      "id": "DR003",
+      "gate": "scenarios-complete",
+      "description": "Every scenario must declare name, trigger, steps (non-empty array), and owner. Every step must have an action field. Incomplete scenarios cannot be executed under pressure — missing fields make the runbook useless at the exact moment it is needed",
+      "required": true,
+      "mandatoryScenarioFields": ["name", "trigger", "steps", "owner"],
+      "mandatoryStepFields": ["action"]
+    },
+    {
+      "id": "DR004",
+      "gate": "failover-targets-valid",
+      "description": "When failover is declared, primaryRegion and secondaryRegion must both be specified and must be different regions. failover.strategy must be a recognised pattern. Gate skipped when spec.failover is absent",
+      "required": true,
+      "strategyEnum": ["active-active", "active-passive", "pilot-light", "warm-standby"],
+      "constraints": {
+        "regions-different": "primaryRegion and secondaryRegion must be different geographic regions"
+      },
+      "note": "Skipped when spec.failover is absent"
+    },
+    {
+      "id": "DR005",
+      "gate": "communication-plan-defined",
+      "description": "The communication plan must declare incidentCommander, a non-empty escalationPath, and either statusPageUrl or statusChannel. An incident without a named commander is leaderless. Stakeholders without a status channel have no way to stay informed. Set skipCommunicationPlan: true for exemption",
+      "required": true,
+      "mandatoryCommunicationFields": ["incidentCommander", "escalationPath"],
+      "constraints": {
+        "status-channel": "statusPageUrl or statusChannel must be declared"
+      },
+      "note": "Skipped when spec.skipCommunicationPlan is true"
+    },
+    {
+      "id": "DR006",
+      "gate": "test-schedule-defined",
+      "description": "A testSchedule with frequency or cron must be declared. An untested runbook is a document, not a runbook. DR procedures degrade as systems change and must be regularly exercised. Set skipTestSchedule: true for exemption",
+      "required": true,
+      "frequencyEnum": ["daily", "weekly", "monthly", "quarterly", "annually"],
+      "cronFormat": "5-field cron expression",
+      "note": "Skipped when spec.skipTestSchedule is true"
+    },
+    {
+      "id": "DR007",
+      "gate": "no-todos",
+      "description": "dr-runbook-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers. A runbook with placeholders cannot be executed during a real disaster",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "DR008",
+      "gate": "contract-dr-runbook",
+      "description": "Scenario names must be unique. At least one scenario must cover data loss, corruption, backup, or restore (set skipDataLossScenario: true for exemption). Every scenario must have an owner. When a k8s-workload-artifact is present, spec.service must match the compiled workload name",
+      "required": true,
+      "constraints": {
+        "unique-scenario-names": "each scenario name must be distinct",
+        "data-loss-scenario": "at least one scenario must match /data.?loss|corrupt|backup|restore|recover/ unless skipDataLossScenario: true",
+        "scenario-owner": "every scenario must have an owner field",
+        "service-workload-match": "spec.service must match workload artifact when present — override with skipWorkloadMatch: true"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "dr-runbook-artifact.json",
+    "ir_id_prefix": "DISASTER_RECOVERY_RUNBOOK:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

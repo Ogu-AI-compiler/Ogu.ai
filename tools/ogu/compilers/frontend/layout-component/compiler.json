@@ -1,0 +1,44 @@
+{
+  "id": "layout-component",
+  "title": "Layout Component Compiler",
+  "version": "1.0.0",
+  "description": "Compiles application layout shells (header/sidebar/main/footer slots). Enforces slot typing, responsive breakpoints, and router outlet integration.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "tokens-artifact.json",
+    "output_artifact": "layout-artifact.json",
+    "identifier": "LAYOUT"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["slot-types", "responsive-breakpoints", "no-inline-styles"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Cross-Compiler Verify", "gates": ["cross-tokens"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-layout"] }
+  ],
+  "gates": [
+    { "id": "LC001", "name": "spec-valid",            "phase": 1 },
+    { "id": "LC002", "name": "ts-valid",              "phase": 2 },
+    { "id": "LC003", "name": "no-any",                "phase": 2 },
+    { "id": "LC004", "name": "slot-types",            "phase": 3 },
+    { "id": "LC005", "name": "responsive-breakpoints","phase": 3 },
+    { "id": "LC006", "name": "no-inline-styles",      "phase": 3 },
+    { "id": "LC007", "name": "no-todos",              "phase": 4 },
+    { "id": "LC008", "name": "tests-pass",            "phase": 4 },
+    { "id": "LC009", "name": "cross-tokens",          "phase": 5 },
+    { "id": "LC010", "name": "contract-layout",       "phase": 6 }
+  ],
+  "error_codes": {
+    "LC001": "Invalid layout spec",
+    "LC002": "TypeScript compilation failed",
+    "LC003": "Explicit 'any' found",
+    "LC004": "Slot prop missing ReactNode type or not rendered",
+    "LC005": "No responsive breakpoints defined — layout must adapt to mobile/tablet/desktop",
+    "LC006": "Inline style objects found — use Tailwind classes",
+    "LC007": "TODO/FIXME found",
+    "LC008": "Tests failed",
+    "LC009": "Token reference not found in tokens-artifact",
+    "LC010": "Contract violation"
+  }
+}

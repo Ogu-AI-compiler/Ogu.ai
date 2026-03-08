@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_technical-writer",
+  "role": "technical-writer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "documentation",
+    "display_name": "Technical Writer",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "audience-analysis",
+      "information-architecture",
+      "content-creation",
+      "technical-review",
+      "maintenance"
+    ],
+    "consumes": ["feature specs", "API definitions", "engineer knowledge", "user feedback"],
+    "produces": ["getting-started.md", "how-to guides", "reference docs", "changelog.md", "troubleshooting.md"]
+  },
+
+  "gates": [
+    {
+      "id": "docs-deployed-with-release",
+      "description": "Documentation must be deployed before or simultaneously with the feature release",
+      "type": "file_exists",
+      "pattern": "getting-started",
+      "severity": "error"
+    },
+    {
+      "id": "code-examples-tested",
+      "description": "All code examples must be tested and produce the expected output shown",
+      "type": "file_contains",
+      "required_string": "```",
+      "severity": "error"
+    },
+    {
+      "id": "breaking-changes-have-migration-guide",
+      "description": "Breaking changes must have a migration guide in the documentation",
+      "type": "file_contains",
+      "required_string": "migration",
+      "severity": "error"
+    },
+    {
+      "id": "technical-accuracy-reviewed",
+      "description": "Documentation must be reviewed for technical accuracy by an engineer",
+      "type": "file_contains",
+      "required_string": "reviewed",
+      "severity": "error"
+    },
+    {
+      "id": "terminology-consistent",
+      "description": "Terminology must be consistent with the product glossary throughout all documents",
+      "type": "file_contains",
+      "required_string": "glossary",
+      "severity": "warn"
+    },
+    {
+      "id": "no-stale-screenshots",
+      "description": "Screenshots must match the current UI — stale screenshots confuse users more than they help",
+      "type": "file_not_contains",
+      "banned_string": "TODO: update screenshot",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "write-once-abandon-forever",
+      "description": "Documentation created during initial launch, never updated — within months it is misleading"
+    },
+    {
+      "id": "documentation-by-exhaustion",
+      "description": "Every option documented in a single massive page — the reader cannot find what they need"
+    },
+    {
+      "id": "insider-documentation",
+      "description": "Written by engineers, for engineers — acronyms unexplained, context missing, steps skipped"
+    },
+    {
+      "id": "screenshot-graveyard",
+      "description": "Documentation relies heavily on screenshots that are never updated — old UI confuses readers"
+    },
+    {
+      "id": "knowledge-silo",
+      "description": "Critical knowledge lives in one person's head — when unavailable, the team is stuck"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Major product feature shipping without documentation",
+    "Documentation is consistently inaccurate and engineering will not prioritize fixes",
+    "Users are repeatedly failing tasks despite documentation existing",
+    "Documentation infrastructure is unreliable (build failures, search broken)",
+    "Regulatory requirement for documentation that is not being met",
+    "Localization needed for a new market but no localization process exists"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with feature specification and API definitions",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Documentation deployed before or simultaneously with feature release",
+      "All code examples tested and produce expected output",
+      "Breaking changes have migration guide",
+      "Documentation reviewed for technical accuracy by an engineer",
+      "Terminology consistent with product glossary",
+      "No stale screenshots — UI matches current product"
+    ]
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_database-admin",
+  "role": "database-admin",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "data",
+    "display_name": "Database Administrator",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "database-design",
+      "performance-optimization",
+      "high-availability-setup",
+      "security-hardening",
+      "capacity-planning"
+    ],
+    "consumes": ["schema requirements", "workload profile", "compliance requirements"],
+    "produces": ["schema.sql", "indexing-strategy.md", "backup-policy.md", "monitoring-config", "capacity-plan.md"]
+  },
+
+  "gates": [
+    {
+      "id": "backup-restore-tested",
+      "description": "Backups must be automated, encrypted, and restore must be tested monthly",
+      "type": "file_contains",
+      "required_string": "restore",
+      "severity": "error"
+    },
+    {
+      "id": "replication-configured",
+      "description": "Replication must be configured for production (Multi-AZ or streaming replica)",
+      "type": "file_contains",
+      "required_string": "replication",
+      "severity": "error"
+    },
+    {
+      "id": "least-privilege-db-accounts",
+      "description": "Individual database accounts with least privilege — no shared admin accounts",
+      "type": "file_contains",
+      "required_string": "least privilege",
+      "severity": "error"
+    },
+    {
+      "id": "constraints-enforced",
+      "description": "Database-level constraints must be enforced (NOT NULL, UNIQUE, FK, CHECK)",
+      "type": "file_contains",
+      "required_string": "constraint",
+      "severity": "error"
+    },
+    {
+      "id": "monitoring-configured",
+      "description": "Monitoring must be configured: disk, connections, replication lag, slow queries",
+      "type": "file_contains",
+      "required_string": "monitoring",
+      "severity": "error"
+    },
+    {
+      "id": "encryption-at-rest-and-transit",
+      "description": "Encryption at rest and in transit must be configured for all databases",
+      "type": "file_contains",
+      "required_string": "encrypt",
+      "severity": "error"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "index-everything",
+      "description": "Adding indexes on every column just in case — indexes slow down writes and consume storage"
+    },
+    {
+      "id": "unmonitored-database",
+      "description": "Database running with default configuration and no monitoring — problems discovered when users complain"
+    },
+    {
+      "id": "backup-theater",
+      "description": "Backups running but never tested — a backup strategy without restore testing is a hope strategy"
+    },
+    {
+      "id": "schema-without-constraints",
+      "description": "No foreign keys, no NOT NULL constraints — the application handles validation (until it has bugs)"
+    },
+    {
+      "id": "shared-admin-account",
+      "description": "Everyone connects with the same admin account — no audit trail, no principle of least privilege"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Database outage affecting production applications",
+    "Data corruption or loss detected",
+    "Storage approaching capacity with no immediate expansion path",
+    "Performance degradation not solvable with tuning — architectural change needed",
+    "Security breach: unauthorized access detected",
+    "Replication lag growing and not recovering"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with database requirements and workload profile",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Automated backups configured, encrypted, and restore tested monthly",
+      "Replication configured for production (Multi-AZ or streaming replica)",
+      "Individual database accounts with least privilege (no shared admin accounts)",
+      "Database-level constraints enforced (NOT NULL, UNIQUE, FK, CHECK)",
+      "Monitoring configured (disk, connections, replication lag, slow queries)",
+      "Encryption at rest and in transit configured"
+    ]
+  }
+}

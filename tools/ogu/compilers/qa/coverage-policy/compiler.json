@@ -1,0 +1,42 @@
+{
+  "id": "coverage-policy",
+  "title": "Coverage Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles and enforces project-level code coverage policy. Enforces: global thresholds defined, branch ≤ lines (logically consistent), per-file thresholds for critical paths, anti-cheating checks (tests without assertions), fail-build configured.",
+  "tier": "qa",
+  "ir": {
+    "input_artifact": "qa-test-harness-artifact.json",
+    "output_artifact": "coverage-policy-artifact.json",
+    "identifier": "COVERAGE_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Threshold Consistency",  "gates": ["thresholds-consistent", "thresholds-realistic"] },
+    { "id": 3, "name": "Anti-Cheating",          "gates": ["no-assertion-free-tests", "fail-build-enforced"] },
+    { "id": 4, "name": "Per-File Policy",         "gates": ["per-file-globs-valid", "critical-paths-higher"] },
+    { "id": 5, "name": "Quality",                 "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                  "gates": ["contract-coverage"] }
+  ],
+  "gates": [
+    { "id": "QA010", "name": "spec-valid",               "phase": 1 },
+    { "id": "QA011", "name": "thresholds-consistent",    "phase": 2 },
+    { "id": "QA012", "name": "thresholds-realistic",     "phase": 2 },
+    { "id": "QA013", "name": "no-assertion-free-tests",  "phase": 3 },
+    { "id": "QA014", "name": "fail-build-enforced",      "phase": 3 },
+    { "id": "QA015", "name": "per-file-globs-valid",     "phase": 4 },
+    { "id": "QA016", "name": "critical-paths-higher",    "phase": 4 },
+    { "id": "QA017", "name": "no-todos",                 "phase": 5 },
+    { "id": "QA018", "name": "contract-coverage",        "phase": 6 }
+  ],
+  "error_codes": {
+    "QA010": "coverage-policy-spec.json missing or invalid — required: global thresholds (lines, branches, functions, statements)",
+    "QA011": "branches threshold exceeds lines threshold — logically impossible (branch coverage is always harder)",
+    "QA012": "Global threshold is below 60% or above 100% — unrealistic coverage target",
+    "QA013": "Test file contains it/test block with no expect() assertion — anti-cheating violation",
+    "QA014": "failBuildBelow is 'none' — coverage policy defined but not enforced",
+    "QA015": "per-file threshold glob does not match any files in the project",
+    "QA016": "Library/utility paths (src/lib, src/utils) do not have threshold above global",
+    "QA017": "TODO/FIXME/HACK comment found",
+    "QA018": "Coverage policy artifact contract violation"
+  }
+}

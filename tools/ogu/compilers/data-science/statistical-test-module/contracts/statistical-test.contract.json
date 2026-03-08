@@ -1,0 +1,12 @@
+{
+  "id": "statistical-test-module",
+  "version": "1.0.0",
+  "description": "Contract rules for statistical test modules",
+  "rules": [
+    { "id": "effect-size", "description": "Effect size must be reported alongside p-value" },
+    { "id": "confidence-intervals", "description": "Confidence intervals must be included" },
+    { "id": "alpha-set", "description": "Significance level alpha must be declared in spec" },
+    { "id": "hypothesis-defined", "description": "H0 and H1 must be explicitly stated" },
+    { "id": "multiple-testing", "description": "Multiple tests require correction (Bonferroni/FDR)" }
+  ]
+}

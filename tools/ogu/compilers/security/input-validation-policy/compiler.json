@@ -1,0 +1,36 @@
+{
+  "id": "input-validation-policy",
+  "title": "Input Validation Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles input validation rules for API endpoints. Enforces: string fields have maxLength, numeric fields have bounds, high-risk fields (SQL, HTML, URLs) have sanitization declared, no unvalidated fields, file fields have extension and size restrictions.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "threat-model.compiled.json",
+    "output_artifact": "input-validation-policy.compiled.json",
+    "identifier": "INPUT_VALIDATION_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Field Type Checks",      "gates": ["string-fields-have-maxlength", "numeric-fields-have-bounds", "no-unvalidated-fields"] },
+    { "id": 3, "name": "High-Risk & File Fields","gates": ["high-risk-fields-have-sanitization", "file-fields-restricted"] },
+    { "id": 4, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "IV001", "name": "spec-valid",                         "phase": 1 },
+    { "id": "IV002", "name": "string-fields-have-maxlength",       "phase": 2 },
+    { "id": "IV003", "name": "numeric-fields-have-bounds",         "phase": 2 },
+    { "id": "IV004", "name": "high-risk-fields-have-sanitization", "phase": 3 },
+    { "id": "IV005", "name": "no-unvalidated-fields",              "phase": 2 },
+    { "id": "IV006", "name": "file-fields-restricted",             "phase": 3 },
+    { "id": "IV007", "name": "no-todos",                           "phase": 4 }
+  ],
+  "error_codes": {
+    "IV001": "input-validation-spec.json missing or invalid — required fields: endpoints[], fields[] with type and constraints",
+    "IV002": "String field has no maxLength constraint — unbounded strings enable DoS and truncation attacks",
+    "IV003": "Numeric field has no min/max bounds — unbounded numbers enable overflow and business logic abuse",
+    "IV004": "High-risk field (SQL param, HTML content, URL) has no sanitization declared — specify: escape, htmlEncode, urlValidate",
+    "IV005": "Field declared in API spec but not listed in validation policy — all inputs must be explicitly validated",
+    "IV006": "File upload field has no extension allowlist or size limit — restrict to specific types and set maxBytes",
+    "IV007": "TODO/FIXME/HACK comment found"
+  }
+}

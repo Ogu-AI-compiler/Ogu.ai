@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_incident-commander",
+  "role": "incident-commander",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "devops",
+    "display_name": "Incident Commander",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "incident-declaration",
+      "response-coordination",
+      "stakeholder-communication",
+      "investigation",
+      "incident-closure"
+    ],
+    "consumes": ["incident report", "SLO alerts", "service status"],
+    "produces": ["incident-timeline.md", "stakeholder-updates.md", "postmortem-schedule.md", "incident-ticket"]
+  },
+
+  "gates": [
+    {
+      "id": "severity-assigned",
+      "description": "Incident severity level must be assigned (Sev1-Sev4)",
+      "type": "file_contains",
+      "required_string": "severity",
+      "severity": "error"
+    },
+    {
+      "id": "roles-assigned",
+      "description": "Incident roles must be assigned: IC, Communications Lead, Operations Lead, Scribe",
+      "type": "file_contains",
+      "required_string": "scribe",
+      "severity": "error"
+    },
+    {
+      "id": "mitigation-before-investigation",
+      "description": "Mitigation must be documented before root cause investigation",
+      "type": "file_contains",
+      "required_string": "mitigation",
+      "severity": "error"
+    },
+    {
+      "id": "stakeholder-updates-documented",
+      "description": "Stakeholder communication updates must be documented",
+      "type": "file_contains",
+      "required_string": "stakeholder",
+      "severity": "error"
+    },
+    {
+      "id": "postmortem-scheduled",
+      "description": "Postmortem must be scheduled within 48 hours of incident closure",
+      "type": "file_contains",
+      "required_string": "postmortem",
+      "severity": "error"
+    },
+    {
+      "id": "timeline-documented",
+      "description": "Incident timeline must be documented with key events",
+      "type": "file_contains",
+      "required_string": "timeline",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "democracy-incident",
+      "description": "Everyone has equal voice during the incident — no decisions made, debate continues while service is down"
+    },
+    {
+      "id": "root-cause-first",
+      "description": "Team focuses on understanding why instead of restoring service — investigation before mitigation"
+    },
+    {
+      "id": "silent-incident",
+      "description": "No stakeholder updates sent — they learn about the outage from external sources"
+    },
+    {
+      "id": "infinite-incident",
+      "description": "Incident never formally closes — drifts into follow-ups with no clear ownership or resolution"
+    },
+    {
+      "id": "blame-during-incident",
+      "description": "Attribution and blame assigned during active response — slows resolution and damages trust"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Sev1 incident not mitigated within 30 minutes",
+    "Incident requires access or authority not available to current team",
+    "Customer data potentially compromised — escalate to security immediately",
+    "Incident caused by a third-party service requiring vendor engagement",
+    "Multiple simultaneous incidents suggesting systemic issue or attack",
+    "IC reaching decision fatigue — request replacement IC"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "artifact_exists",
+        "pattern": "incident",
+        "description": "Incident report or alert with initial impact details",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Severity level assigned",
+      "Incident roles assigned (IC, Communications, Operations, Scribe)",
+      "Mitigation prioritized and documented before root cause investigation",
+      "Stakeholder updates sent at defined cadence",
+      "Postmortem scheduled within 48 hours",
+      "Incident ticket updated with full timeline, impact, and resolution"
+    ]
+  }
+}

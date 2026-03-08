@@ -1,0 +1,37 @@
+{
+  "id": "queue-topology-contract-v1",
+  "compiler": "queue-topology-module",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "QTR-001",
+      "description": "All queue names must be unique across the project",
+      "severity": "error"
+    },
+    {
+      "id": "QTR-002",
+      "description": "Every queue must declare retryPolicy or noRetry:true — implicit behavior forbidden",
+      "severity": "error"
+    },
+    {
+      "id": "QTR-003",
+      "description": "Every queue must declare retention policy for completed and failed jobs",
+      "severity": "error"
+    },
+    {
+      "id": "QTR-004",
+      "description": "Queue name literals must not appear outside the topology module",
+      "severity": "error"
+    },
+    {
+      "id": "QTR-005",
+      "description": "Queues with maxRetries > 1 must declare a backoff strategy",
+      "severity": "warning"
+    },
+    {
+      "id": "QTR-006",
+      "description": "Every queue must have an owner declared (which module/team owns it)",
+      "severity": "warning"
+    }
+  ]
+}

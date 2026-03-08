@@ -1,0 +1,8 @@
+{ "id": "experiment-variant", "version": "1.0.0", "rules": [
+  { "id": "uses-hook", "description": "useExperiment or useFeatureFlag hook used" },
+  { "id": "has-fallback", "description": "Control/fallback variant handled" },
+  { "id": "exposure-tracked", "description": "trackExposure called in useEffect" },
+  { "id": "single-exposure", "description": "Exposure fires exactly once" },
+  { "id": "no-branching-sprawl", "description": "No more than 5 variant branches" },
+  { "id": "exported", "description": "Component/hook exported" }
+]}

@@ -1,0 +1,155 @@
+{
+  "id": "ux-sitemap",
+  "version": "1.0.0",
+  "title": "UX Sitemap Compiler",
+  "description": "Validates a product sitemap: every screen has a unique ID, a valid route, a properly formed DAG of parent references, declared visibility for auth-gated screens, and a 404 node. Produces sitemap-artifact.json as the canonical screen inventory for all downstream UX compilers.",
+  "tier": "ux",
+  "ir_prefix": "USM",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract sitemap-spec.json from product scope, route inventory, and role definitions",
+      "model": "haiku",
+      "outputs": ["sitemap-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate node structure: required fields, unique IDs, valid routes",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "unique-ids", "route-format"]
+    },
+    {
+      "phase": 2,
+      "id": "graph",
+      "title": "Graph Integrity",
+      "description": "Validate parent-child relationships and DAG property",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["orphan-nodes", "no-circular-parent"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate visibility, root node count, and 404 declaration",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["valid-visibility", "root-node-limit", "not-found-declared"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["sitemap-artifact.json"],
+      "gates": ["contract-sitemap"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "sitemap-spec.json exists with nodes array; each node has id, label, route",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "unique-ids",
+      "title": "Unique Node IDs",
+      "description": "All node ids are unique within the sitemap",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "route-format",
+      "title": "Route Format",
+      "description": "All non-planned routes start with / and use valid URL path characters",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "orphan-nodes",
+      "title": "No Orphan Nodes",
+      "description": "Every non-root node's parent id exists in the node list",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-circular-parent",
+      "title": "No Circular Parent References",
+      "description": "Following parent chains from any node never produces a cycle",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "valid-visibility",
+      "title": "Valid Visibility Values",
+      "description": "Declared visibility values are: public, authenticated, or a non-empty role string",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "root-node-limit",
+      "title": "Root Node Limit",
+      "description": "Root-level nodes do not exceed maxRootNodes (default: 10)",
+      "phase": 3,
+      "required": false
+    },
+    {
+      "id": "not-found-declared",
+      "title": "404 Screen Declared",
+      "description": "At least one node represents the 404/not-found screen, or notFoundHandledExternally=true",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-sitemap",
+      "title": "Sitemap Contract",
+      "description": "Validates against full sitemap contract: version declared, auth-visibility alignment, no duplicate routes",
+      "phase": 4,
+      "required": true,
+      "contract": "sitemap"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "sitemap",
+      "file": "contracts/sitemap.contract.json",
+      "description": "Structural requirements for all compiled UX sitemaps"
+    }
+  ],
+  "ir": {
+    "identifiers": ["USM:{nodeId}", "USM:{nodeId}:{route}"],
+    "output_artifact": "sitemap-artifact.json",
+    "artifact_schema": "sitemap-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "sitemap-artifact-v1",
+    "fields": ["version", "node_count", "root_count", "max_depth", "has_not_found", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "USM001": "sitemap-spec.json missing or invalid — nodes array required with id, label, route per node",
+    "USM002": "Duplicate node id detected — all node ids must be unique within the sitemap",
+    "USM003": "Orphan node — parent id references a node that does not exist in the sitemap",
+    "USM004": "Circular parent reference — following parent chain produces a cycle",
+    "USM005": "Invalid visibility value — must be 'public', 'authenticated', or a non-empty role string",
+    "USM006": "Invalid route format — route must start with '/' and use valid URL path characters",
+    "USM007": "Root node count exceeds limit — too many top-level screens indicates flat IA",
+    "USM008": "No 404/not-found screen declared in sitemap",
+    "USM009": "Sitemap contract violation — version missing, auth-visibility mismatch, or duplicate routes"
+  }
+}

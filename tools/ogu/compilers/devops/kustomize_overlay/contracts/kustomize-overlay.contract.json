@@ -1,0 +1,63 @@
+{
+  "id": "kustomize_overlay",
+  "version": "1.0.0",
+  "description": "Validates Kustomize overlay specs for kustomization file presence, patch target completeness, duplicate resource detection, namespace-environment alignment, image tag policy, and chart ownership",
+  "rules": [
+    {
+      "id": "KO001",
+      "gate": "spec-valid",
+      "description": "kustomize-spec.json must exist, be valid JSON, and declare base and environment",
+      "required": true,
+      "mandatoryFields": ["base", "environment"]
+    },
+    {
+      "id": "KO002",
+      "gate": "kustomization-valid",
+      "description": "kustomization.yaml must exist at the overlay root and declare at least one of: resources, bases, or components. A kustomization with no resource declarations builds nothing and produces an empty or invalid manifest",
+      "required": true,
+      "requiredAtLeastOne": ["resources", "bases", "components"]
+    },
+    {
+      "id": "KO003",
+      "gate": "patches-resolve",
+      "description": "Every patch in spec.patches that declares a target must include target.kind. Patches without a target kind cannot be matched — kustomize will fail to apply the patch to any resource and the build errors at apply time",
+      "required": true,
+      "note": "Skipped when spec.patches is empty or absent"
+    },
+    {
+      "id": "KO004",
+      "gate": "no-duplicate-resources",
+      "description": "No two entries in spec.resources may share the same kind/name combination. Duplicates cause kustomize to emit conflicting manifests which kubectl rejects with an already-exists error",
+      "required": true,
+      "note": "Skipped when spec.resources is empty or absent"
+    },
+    {
+      "id": "KO005",
+      "gate": "namespace-matches-env",
+      "description": "When namespaceOverride is declared, it must contain the environment name as a substring. A production overlay deploying to a staging namespace is a correctness risk — resources land in the wrong environment with no runtime error. Set allowNamespaceMismatch: true to override",
+      "required": false,
+      "note": "Skipped when spec.namespaceOverride is absent"
+    },
+    {
+      "id": "KO006",
+      "gate": "no-todos",
+      "description": "kustomize-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "KO007",
+      "gate": "contract-kustomize",
+      "description": "imageTagPolicy must be declared and must be one of the recognised strategies. An undeclared policy means image tag override behaviour is non-deterministic across environments",
+      "required": true,
+      "fields": {
+        "imageTagPolicy": { "enum": ["digest", "semver", "latest-allowed"] }
+      }
+    }
+  ],
+  "artifact": {
+    "file": "kustomize-artifact.json",
+    "ir_id_prefix": "KUSTOMIZE_OVERLAY:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

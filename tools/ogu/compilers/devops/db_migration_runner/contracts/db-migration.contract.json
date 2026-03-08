@@ -1,0 +1,71 @@
+{
+  "id": "db_migration_runner",
+  "version": "1.0.0",
+  "description": "Validates database migration runners for command allowlisting, migration directory existence, credential hygiene, explicit deploy ordering, and rollback/timeout contract enforcement",
+  "rules": [
+    {
+      "id": "MR001",
+      "gate": "spec-valid",
+      "description": "db-migration-runner-spec.json must exist, be valid JSON, and declare command, migrationDir, and orderingPolicy",
+      "required": true,
+      "mandatoryFields": ["command", "migrationDir", "orderingPolicy"]
+    },
+    {
+      "id": "MR002",
+      "gate": "migration-dir-exists",
+      "description": "The directory declared in migrationDir must exist in the repository. A missing directory causes the migration runner to fail at startup before executing any migrations",
+      "required": true
+    },
+    {
+      "id": "MR003",
+      "gate": "command-allowlisted",
+      "description": "The migration command must include an allowlisted migration tool. Arbitrary shell commands in a highly privileged database context create code execution risks. Only well-understood migration frameworks are allowed",
+      "required": true,
+      "allowedCommands": [
+        "prisma migrate deploy",
+        "drizzle-kit migrate",
+        "knex migrate:latest",
+        "db-migrate up",
+        "flyway migrate",
+        "liquibase update",
+        "migrate",
+        "npx prisma",
+        "python manage.py migrate"
+      ]
+    },
+    {
+      "id": "MR004",
+      "gate": "credentials-via-env",
+      "description": "Database connection strings and passwords must be supplied via environment variable references — no hardcoded credential values are permitted in the spec. Hardcoded credentials are committed to source control and exposed in CI logs",
+      "required": true
+    },
+    {
+      "id": "MR005",
+      "gate": "ordering-explicit",
+      "description": "orderingPolicy must be one of pre-deploy/deploy/post-deploy. Running migrations in the wrong phase causes schema/code mismatches: pre-deploy is safest for additive changes, post-deploy for cleanup, deploy for non-breaking in-place changes",
+      "required": true,
+      "fields": {
+        "orderingPolicy": { "enum": ["pre-deploy", "deploy", "post-deploy"] }
+      }
+    },
+    {
+      "id": "MR006",
+      "gate": "no-todos",
+      "description": "db-migration-runner-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "MR007",
+      "gate": "contract-migration-runner",
+      "description": "Every migration runner must declare a rollbackCommand (to undo a failed migration automatically) and a timeoutSeconds (to prevent a stuck migration from blocking the deployment pipeline indefinitely)",
+      "required": true,
+      "mandatoryFields": ["rollbackCommand", "timeoutSeconds"]
+    }
+  ],
+  "artifact": {
+    "file": "migration-runner-artifact.json",
+    "ir_id_prefix": "DB_MIGRATION_RUNNER:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

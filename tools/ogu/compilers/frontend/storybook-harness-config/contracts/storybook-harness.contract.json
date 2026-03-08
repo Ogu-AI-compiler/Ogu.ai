@@ -1,0 +1,6 @@
+{ "id": "storybook-harness", "version": "1.0.0", "rules": [
+  { "id": "has-main", "description": ".storybook/main.ts exists" },
+  { "id": "has-preview", "description": ".storybook/preview.ts exists" },
+  { "id": "typescript-enabled", "description": "main.ts is TypeScript" },
+  { "id": "a11y-addon", "description": "@storybook/addon-a11y installed and registered" }
+]}

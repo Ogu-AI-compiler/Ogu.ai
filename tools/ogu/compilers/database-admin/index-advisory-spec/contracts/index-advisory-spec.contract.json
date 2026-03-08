@@ -1,0 +1,13 @@
+{
+  "id": "index-advisory-spec",
+  "version": "1.0.0",
+  "description": "An index advisory spec defines a set of index add/remove/retain actions with justifications, ensuring indexes are purposeful, non-redundant, and do not over-burden write-heavy tables.",
+  "rules": [
+    { "id": "required-fields-present", "description": "The spec must declare an indexes array. Each entry must have table, action (add/remove/retain), and columns (for add/retain)." },
+    { "id": "add-actions-have-rationale", "description": "Every add index action must have a rationale field of at least 20 characters explaining the specific query pattern it supports. Vague rationales (performance, speed, optimization) are rejected." },
+    { "id": "max-10-indexes-per-table", "description": "After applying add and remove actions, no table may have more than 10 total indexes without index_limit_waiver: true and a documented justification. More than 10 indexes degrades write performance." },
+    { "id": "no-redundant-indexes", "description": "No two add or retain entries on the same table may cover identical columns. Prefix-redundant indexes (A when A,B exists) are also flagged. Use redundant_ok: true only for indexes with specific predicates or includes." },
+    { "id": "write-heavy-tables-not-over-indexed", "description": "Tables declared write_heavy: true may receive at most 3 new index additions without write_heavy_index_waiver: true plus justification. Each additional index on a write-heavy table increases write latency linearly." },
+    { "id": "remove-actions-have-reason", "description": "Every remove index action must have a reason field of at least 15 characters. Recreating a dropped index on a large table takes hours — removal must be documented and auditable." }
+  ]
+}

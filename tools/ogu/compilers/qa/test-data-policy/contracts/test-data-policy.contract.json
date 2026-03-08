@@ -1,0 +1,38 @@
+{
+  "id": "test-data-policy",
+  "version": "1.0.0",
+  "description": "Test data policy contract — validates PII prohibition, snapshot governance, DB isolation, deterministic seeds, and factory framework configuration",
+  "rules": [
+    {
+      "id": "TD-C01",
+      "description": "piiPolicy.allowRealData must not be true; source must not be a production copy",
+      "required": true
+    },
+    {
+      "id": "TD-C02",
+      "description": "isolation.strategy must be one of: transaction-rollback, per-test-db, per-suite-db, truncate-between, in-memory, docker-per-suite",
+      "required": true,
+      "enum": ["transaction-rollback", "per-test-db", "per-suite-db", "truncate-between", "in-memory", "docker-per-suite", "savepoint-rollback", "schema-per-test"]
+    },
+    {
+      "id": "TD-C03",
+      "description": "snapshotPolicy required when strategy includes 'snapshots'; must have maxAgeDays ≤ 90 and sanitized: true",
+      "required": false
+    },
+    {
+      "id": "TD-C04",
+      "description": "seed.value or seed.strategy required when strategy includes 'factories' or 'generated'",
+      "required": false
+    },
+    {
+      "id": "TD-C05",
+      "description": "factoryFramework required when strategy includes 'factories'",
+      "required": false
+    }
+  ],
+  "artifact": {
+    "file": "test-data-policy-artifact.json",
+    "ir_id_prefix": "TEST_DATA_POLICY:",
+    "required_fields": ["ir_id", "strategies", "isolation", "piiPolicy", "attestation"]
+  }
+}

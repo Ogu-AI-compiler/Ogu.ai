@@ -1,0 +1,14 @@
+{
+  "id": "ab-test-analysis",
+  "version": "1.0.0",
+  "description": "Contract rules for A/B test analyses",
+  "rules": [
+    { "id": "has-hypothesis", "description": "Hypothesis defined in spec (≥20 chars)" },
+    { "id": "has-alpha", "description": "Alpha significance level declared in spec" },
+    { "id": "has-statistical-test", "description": "Statistical test computed in code" },
+    { "id": "has-effect-size", "description": "Effect size reported" },
+    { "id": "has-control-group", "description": "Control group explicitly defined" },
+    { "id": "has-guardrails", "description": "Guardrail metrics monitored" },
+    { "id": "has-power", "description": "Statistical power reported" }
+  ]
+}

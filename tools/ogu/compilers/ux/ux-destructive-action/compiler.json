@@ -1,0 +1,139 @@
+{
+  "id": "ux-destructive-action",
+  "version": "1.0.0",
+  "title": "UX Destructive Action Compiler",
+  "description": "Validates destructive action specs: risk classification, user confirmation requirements, undo window declarations, auto-confirm prohibition, recovery paths for high-risk actions, and contract attestation. Produces destructive-action-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "UDA",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract destructive-action-spec.json from feature brief and risk assessment",
+      "model": "haiku",
+      "outputs": ["destructive-action-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and risk classification",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "risk-classified"]
+    },
+    {
+      "phase": 2,
+      "id": "safety",
+      "title": "Safety",
+      "description": "Validate confirmation, auto-confirm, and undo declarations",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["confirmation-required", "no-auto-confirm", "undo-declared"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate recovery paths for high-risk actions",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["recovery-link"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["destructive-action-artifact.json"],
+      "gates": ["contract-destructive-action"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "destructive-action-spec.json exists with actions array, each action has id, label, riskLevel",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "risk-classified",
+      "title": "Risk Classified",
+      "description": "All riskLevel values are low|medium|high|critical; critical actions require text confirmation",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "confirmation-required",
+      "title": "Confirmation Required",
+      "description": "Every action has confirmation.message (escape hatch: confirmationNotRequired:true for low-risk only)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-auto-confirm",
+      "title": "No Auto Confirm",
+      "description": "No action may have autoConfirm:true — auto-confirmation bypasses user intent",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "undo-declared",
+      "title": "Undo Declared",
+      "description": "Reversible actions declare undoWindow (seconds) and undoTrigger (string)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "recovery-link",
+      "title": "Recovery Link",
+      "description": "High and critical actions declare recoveryPath for post-undo-window recovery",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-destructive-action",
+      "title": "Destructive Action Contract",
+      "description": "Version, unique ids, at least one action, undoWindow <= 300s",
+      "phase": 4,
+      "required": true,
+      "contract": "destructive-action"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "destructive-action",
+      "file": "contracts/destructive-action.contract.json",
+      "description": "Structural requirements for all compiled destructive action specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UDA:{actionId}"],
+    "output_artifact": "destructive-action-artifact.json",
+    "artifact_schema": "destructive-action-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "destructive-action-artifact-v1",
+    "fields": ["version", "action_count", "risk_breakdown", "reversible_count", "requires_text_confirmation_count", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UDA001": "destructive-action-spec.json missing or invalid — actions array with id, label, riskLevel required",
+    "UDA002": "Action missing confirmation object or confirmation.message",
+    "UDA003": "Reversible action missing undoWindow or undoTrigger",
+    "UDA004": "Action has autoConfirm:true — forbidden for all risk levels",
+    "UDA005": "riskLevel invalid or critical action missing requiresTextConfirmation:true",
+    "UDA006": "High/critical action missing recoveryPath",
+    "UDA007": "Destructive action contract violation — version, unique ids, or undoWindow > 300s"
+  }
+}

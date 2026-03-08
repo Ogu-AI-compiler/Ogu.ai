@@ -1,0 +1,72 @@
+{
+  "id": "data_seed_job",
+  "version": "1.0.0",
+  "description": "Validates data seed jobs for idempotency declaration, production environment protection, database reference mapping, and ownership accountability",
+  "rules": [
+    {
+      "id": "DS001",
+      "gate": "spec-valid",
+      "description": "data-seed-spec.json must exist, be valid JSON, and declare name, command, and targetEnvironments",
+      "required": true,
+      "mandatoryFields": ["name", "command", "targetEnvironments"]
+    },
+    {
+      "id": "DS002",
+      "gate": "command-path-exists",
+      "description": "The seed script or binary path referenced in command must resolve to an existing file relative to the project root. A missing script path fails immediately at job start",
+      "required": true
+    },
+    {
+      "id": "DS003",
+      "gate": "idempotency-declared",
+      "description": "The seed job must declare an explicit idempotency strategy via idempotencyContract (preferred) or idempotent: true with an idempotencyDescription. Without idempotency, a partial failure leaves the database inconsistent and re-running creates duplicate records",
+      "required": true,
+      "fields": {
+        "idempotencyContract": { "enum": ["upsert", "skip-existing", "truncate-insert", "merge", "idempotent-insert"] }
+      },
+      "constraints": {
+        "idempotent-true": "When idempotent: true is used (legacy), idempotencyDescription must also be declared"
+      }
+    },
+    {
+      "id": "DS004",
+      "gate": "no-production-target",
+      "description": "targetEnvironments must not include production or prod unless productionOverride: true is explicitly set. Seed jobs are designed for development and staging — running them in production can corrupt live data or violate GDPR/compliance requirements",
+      "required": true,
+      "productionNames": ["production", "prod"],
+      "note": "Override with productionOverride: true only when seeding production is explicitly justified"
+    },
+    {
+      "id": "DS005",
+      "gate": "db-refs-declared",
+      "description": "Every entry in spec.dbRefs must be mapped to either an envKey (env var injection) or a secretName (k8s Secret reference). Unmapped DB refs mean the connection string will not be injected — the seed job fails to connect at startup",
+      "required": true,
+      "note": "Skipped when spec.dbRefs is empty or absent",
+      "constraints": {
+        "dbRefs[].envKey-or-secretName": "At least one of envKey or secretName must be declared per dbRef entry"
+      }
+    },
+    {
+      "id": "DS006",
+      "gate": "no-todos",
+      "description": "data-seed-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "DS007",
+      "gate": "contract-data-seed",
+      "description": "Every data seed job must declare an idempotency contract (either idempotencyContract or idempotent: true) and an owner. Without an owner, accountability for data changes cannot be established when the seed corrupts or duplicates data",
+      "required": true,
+      "mandatoryFields": ["owner"],
+      "constraints": {
+        "idempotency": "Either idempotencyContract or idempotent: true must be declared"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "data-seed-artifact.json",
+    "ir_id_prefix": "DATA_SEED_JOB:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

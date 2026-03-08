@@ -1,0 +1,6 @@
+{ "id": "test-harness", "version": "1.0.0", "rules": [
+  { "id": "has-config", "description": "vitest.config.ts or jest.config.ts exists" },
+  { "id": "has-setup", "description": "setupFiles configured with jest-dom" },
+  { "id": "has-coverage", "description": "Coverage configured with thresholds" },
+  { "id": "jsdom-environment", "description": "Test environment is jsdom" }
+]}

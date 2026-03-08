@@ -1,0 +1,147 @@
+{
+  "id": "ux-copy-structure",
+  "version": "1.0.0",
+  "title": "UX Copy Structure Compiler",
+  "description": "Validates copy structure specs: unique content slot ids, typed placeholders with examples, state coverage completeness, character limits on primary slots, i18n interpolation consistency, and experiment variant references. Produces copy-structure-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "UCS",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract copy-structure-spec.json from feature brief and content inventory",
+      "model": "haiku",
+      "outputs": ["copy-structure-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and unique slot ids",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "unique-content-ids"]
+    },
+    {
+      "phase": 2,
+      "id": "quality",
+      "title": "Quality",
+      "description": "Validate placeholder typing, state coverage, and character limits",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["placeholder-typed", "state-coverage", "char-limits"]
+    },
+    {
+      "phase": 3,
+      "id": "i18n",
+      "title": "i18n",
+      "description": "Validate i18n interpolation and experiment variant references",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["i18n-interpolation", "variant-refs"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["copy-structure-artifact.json"],
+      "gates": ["contract-copy-structure"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "copy-structure-spec.json exists with content_slots array, each slot has id, screen, priority",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "unique-content-ids",
+      "title": "Unique Content IDs",
+      "description": "All slot ids are unique across the entire spec",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "placeholder-typed",
+      "title": "Placeholder Typed",
+      "description": "Every placeholder is an object with key, type, and example — no bare strings",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "state-coverage",
+      "title": "State Coverage",
+      "description": "Every stateCoverage entry has a valid state and content or inherit declaration",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "char-limits",
+      "title": "Char Limits",
+      "description": "All primary slots declare charLimit (positive number)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "i18n-interpolation",
+      "title": "i18n Interpolation",
+      "description": "All {{key}} and {key} placeholders in content strings have declared placeholder entries",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "variant-refs",
+      "title": "Variant References",
+      "description": "Slots with experimentVariant must have a non-empty variantId (null is explicit opt-out)",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-copy-structure",
+      "title": "Copy Structure Contract",
+      "description": "Version, feature_id or id, screen reference on each slot",
+      "phase": 4,
+      "required": true,
+      "contract": "copy-structure"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "copy-structure",
+      "file": "contracts/copy-structure.contract.json",
+      "description": "Structural requirements for all compiled copy structure specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UCS:{feature_id}", "UCS:{feature_id}:{slotId}"],
+    "output_artifact": "copy-structure-artifact.json",
+    "artifact_schema": "copy-structure-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "copy-structure-artifact-v1",
+    "fields": ["version", "feature_id", "slot_count", "priority_breakdown", "slots_with_placeholders", "slots_with_state_coverage", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UCS001": "copy-structure-spec.json missing or invalid — content_slots with id, screen, priority required",
+    "UCS002": "Duplicate slot id found across content_slots",
+    "UCS003": "Placeholder is a bare string or missing key/type/example fields",
+    "UCS004": "stateCoverage entry missing valid state or content/inherit declaration",
+    "UCS005": "Primary slot missing charLimit — primary content needs a character budget",
+    "UCS006": "Content string uses placeholder key not declared in slot.placeholders",
+    "UCS007": "experimentVariant declared without a non-empty variantId",
+    "UCS008": "Copy structure contract violation — version, identifier, or screen reference missing"
+  }
+}

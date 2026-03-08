@@ -1,0 +1,35 @@
+{
+  "id": "model-monitoring-config",
+  "title": "Model Monitoring Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles model monitoring and drift detection configurations. Enforces baseline distribution capture, drift metric definition (PSI/KS/chi-squared), numeric alert thresholds, retraining triggers, data quality checks, and alerting integration.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "evaluation-artifact.json", "output_artifact": "monitoring-artifact.json", "identifier": "MODEL_MONITORING" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Drift Detection", "gates": ["baseline-distribution", "drift-metric-defined", "alert-threshold-set"] },
+    { "id": 3, "name": "Operations", "gates": ["retraining-trigger", "data-quality-checks"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-monitoring"] }
+  ],
+  "gates": [
+    { "id": "MM001", "name": "spec-valid",           "phase": 1 },
+    { "id": "MM002", "name": "baseline-distribution","phase": 2 },
+    { "id": "MM003", "name": "drift-metric-defined", "phase": 2 },
+    { "id": "MM004", "name": "alert-threshold-set",  "phase": 2 },
+    { "id": "MM005", "name": "retraining-trigger",   "phase": 3 },
+    { "id": "MM006", "name": "data-quality-checks",  "phase": 3 },
+    { "id": "MM007", "name": "no-todos",             "phase": 4 },
+    { "id": "MM008", "name": "contract-monitoring",  "phase": 4 }
+  ],
+  "error_codes": {
+    "MM001": "Invalid monitoring config spec",
+    "MM002": "No baseline/reference distribution captured for drift comparison",
+    "MM003": "No drift metric defined (PSI, KS test, chi-squared, Jensen-Shannon divergence)",
+    "MM004": "No numeric alert threshold set for drift score",
+    "MM005": "No retraining trigger condition defined",
+    "MM006": "No data quality checks (missing rate, range, type validation)",
+    "MM007": "TODO/FIXME found",
+    "MM008": "Monitoring contract violation"
+  }
+}

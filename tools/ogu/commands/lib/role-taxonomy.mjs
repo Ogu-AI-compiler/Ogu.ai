@@ -68,6 +68,9 @@ export const ROLE_TAXONOMY = {
   "database-admin":        { category: "data",          displayName: "Database Administrator",  minTier: 2, capacityUnits: 8  },
   "etl-developer":         { category: "data",          displayName: "ETL Developer",           minTier: 1, capacityUnits: 8  },
 
+  // ── Content (1 role) ──
+  "content-manager":       { category: "content",       displayName: "Content Manager",         minTier: 1, capacityUnits: 8  },
+
   // ── Documentation (3 roles) ──
   "technical-writer":      { category: "documentation", displayName: "Technical Writer",        minTier: 1, capacityUnits: 6  },
   "developer-advocate":    { category: "documentation", displayName: "Developer Advocate",      minTier: 2, capacityUnits: 6  },

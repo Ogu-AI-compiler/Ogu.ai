@@ -1,0 +1,34 @@
+{
+  "id": "unit-test-module",
+  "title": "Frontend Unit Test Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles frontend unit/integration test suites using Testing Library. Enforces user-centric queries, no real network calls, no shared mutable state, and no weak assertions.",
+  "tier": "frontend",
+  "ir": { "input_artifact": null, "output_artifact": "unit-test-artifact.json", "identifier": "UNIT_TEST" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Implement", "gates": ["user-centric-queries", "no-network-calls", "no-shared-state", "no-weak-assertions"] },
+    { "id": 3, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 4, "name": "Attest", "gates": ["contract-unit-test"] }
+  ],
+  "gates": [
+    { "id": "UT001", "name": "spec-valid",            "phase": 1 },
+    { "id": "UT002", "name": "user-centric-queries",  "phase": 2 },
+    { "id": "UT003", "name": "no-network-calls",      "phase": 2 },
+    { "id": "UT004", "name": "no-shared-state",       "phase": 2 },
+    { "id": "UT005", "name": "no-weak-assertions",    "phase": 2 },
+    { "id": "UT006", "name": "no-todos",              "phase": 3 },
+    { "id": "UT007", "name": "tests-pass",            "phase": 3 },
+    { "id": "UT008", "name": "contract-unit-test",    "phase": 4 }
+  ],
+  "error_codes": {
+    "UT001": "Invalid unit test spec",
+    "UT002": "Test uses implementation-detail queries (getByTestId/className) instead of getByRole/getByLabelText",
+    "UT003": "Real network call in unit test — use MSW or vi.mock",
+    "UT004": "Shared mutable state between tests — each test must be isolated",
+    "UT005": "Weak assertion: toBeTruthy/toBeFalsy/toBeDefined without value check",
+    "UT006": "TODO/FIXME found",
+    "UT007": "Tests failed",
+    "UT008": "Contract violation"
+  }
+}

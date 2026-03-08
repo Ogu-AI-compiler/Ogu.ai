@@ -1,0 +1,12 @@
+{
+  "id": "sast-policy",
+  "version": "1.0.0",
+  "description": "A sast-policy artifact configures static analysis scanning: languages, rule sets, blocking severity, and suppression management.",
+  "rules": [
+    { "id": "spec-has-required-fields", "description": "Policy must declare project, languages, rule_sets, and blocking_severity." },
+    { "id": "owasp-top10-covered", "description": "Rule sets must cover: injection, XSS, SSRF, path-traversal, and deserialization." },
+    { "id": "error-severity-is-blocking", "description": "blocking_severity must be 'error', 'critical', 'high', or 'warning' — never 'info' or 'note'." },
+    { "id": "suppressions-have-expiry-and-justification", "description": "Every suppression must declare a future expiry_date and a meaningful justification." },
+    { "id": "all-languages-have-coverage", "description": "Every declared language must have at least one rule set covering it or a catch-all rule set." }
+  ]
+}

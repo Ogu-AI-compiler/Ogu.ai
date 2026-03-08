@@ -1,0 +1,48 @@
+{
+  "id": "state-store",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "typed-state",
+      "description": "State interface/type must be explicitly defined, not inferred from initialState",
+      "severity": "error",
+      "applies_to": ["zustand", "redux-toolkit"]
+    },
+    {
+      "id": "immutable-updates",
+      "description": "State mutations must use spread operators or Immer (no direct property assignment outside Immer context)",
+      "severity": "error",
+      "applies_to": ["zustand"]
+    },
+    {
+      "id": "no-async-reducer",
+      "description": "Sync reducers must not contain async/await or network calls — use createAsyncThunk",
+      "severity": "error",
+      "applies_to": ["redux-toolkit", "redux"]
+    },
+    {
+      "id": "selectors-memoized",
+      "description": "Selectors returning derived arrays/objects must be wrapped in createSelector",
+      "severity": "warning",
+      "applies_to": ["zustand", "redux-toolkit"]
+    },
+    {
+      "id": "exported-actions",
+      "description": "Redux slice actions must be destructured and exported",
+      "severity": "error",
+      "applies_to": ["redux-toolkit"]
+    },
+    {
+      "id": "default-reducer-export",
+      "description": "Redux slice must default-export the reducer for store composition",
+      "severity": "error",
+      "applies_to": ["redux-toolkit"]
+    },
+    {
+      "id": "no-global-singleton",
+      "description": "Do not import store directly in components — use useSelector/useStore hooks",
+      "severity": "error",
+      "applies_to": ["zustand", "redux-toolkit"]
+    }
+  ]
+}

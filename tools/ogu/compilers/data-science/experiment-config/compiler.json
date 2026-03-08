@@ -1,0 +1,35 @@
+{
+  "id": "experiment-config",
+  "title": "Experiment Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles ML experiment configuration files (YAML/JSON). Enforces that all hyperparameters are externalized, documented, reproducibility params are set, and no hardcoded values remain in training code.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": null, "output_artifact": "experiment-config-artifact.json", "identifier": "EXPERIMENT_CONFIG" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Config Structure", "gates": ["config-file-format", "all-hyperparams-documented", "reproducibility-params"] },
+    { "id": 3, "name": "Code Integration", "gates": ["no-hardcoded-hyperparams", "search-space-defined"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-experiment-config"] }
+  ],
+  "gates": [
+    { "id": "EC001", "name": "spec-valid",               "phase": 1 },
+    { "id": "EC002", "name": "config-file-format",       "phase": 2 },
+    { "id": "EC003", "name": "all-hyperparams-documented","phase": 2 },
+    { "id": "EC004", "name": "reproducibility-params",   "phase": 2 },
+    { "id": "EC005", "name": "no-hardcoded-hyperparams", "phase": 3 },
+    { "id": "EC006", "name": "search-space-defined",     "phase": 3 },
+    { "id": "EC007", "name": "no-todos",                 "phase": 4 },
+    { "id": "EC008", "name": "contract-experiment-config","phase": 4 }
+  ],
+  "error_codes": {
+    "EC001": "Invalid experiment config spec",
+    "EC002": "No YAML or JSON config file found — hyperparameters must be externalized",
+    "EC003": "Hyperparameter in config missing description or type annotation",
+    "EC004": "No reproducibility params (seed/random_state) in config",
+    "EC005": "Hardcoded hyperparameter values found in training code (not read from config)",
+    "EC006": "HPO search space not defined (grid/ranges missing)",
+    "EC007": "TODO/FIXME found",
+    "EC008": "Experiment config contract violation"
+  }
+}

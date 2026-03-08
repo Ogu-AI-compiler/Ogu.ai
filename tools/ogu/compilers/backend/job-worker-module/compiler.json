@@ -1,0 +1,41 @@
+{
+  "id": "job-worker-module",
+  "title": "Job Worker Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a BullMQ/Bull job worker. Enforces: job payload validated on receipt, idempotency key checked before processing, typed error handling (non-retryable vs retryable), worker concurrency from spec, no uncaught promise rejections in processor.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "job-producer-artifact.json",
+    "output_artifact": "job-worker-artifact.json",
+    "identifier": "JOB_WORKER"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid", "cross-producer"] },
+    { "id": 2, "name": "Processing Contract", "gates": ["payload-validated-on-receipt", "idempotency-checked"] },
+    { "id": 3, "name": "Error Semantics", "gates": ["errors-typed", "no-uncaught-rejection"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-job-worker"] }
+  ],
+  "gates": [
+    { "id": "JW001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "JW002", "name": "cross-producer",              "phase": 1 },
+    { "id": "JW003", "name": "payload-validated-on-receipt","phase": 2 },
+    { "id": "JW004", "name": "idempotency-checked",         "phase": 2 },
+    { "id": "JW005", "name": "errors-typed",                "phase": 3 },
+    { "id": "JW006", "name": "no-uncaught-rejection",       "phase": 3 },
+    { "id": "JW007", "name": "no-todos",                    "phase": 4 },
+    { "id": "JW008", "name": "tests-pass",                  "phase": 4 },
+    { "id": "JW009", "name": "contract-job-worker",         "phase": 5 }
+  ],
+  "error_codes": {
+    "JW001": "job-worker-spec.json missing or invalid",
+    "JW002": "job-producer-artifact.json not found — compile job-producer first",
+    "JW003": "Job payload not validated on receipt before processing",
+    "JW004": "No idempotency key check before processing (missing deduplication)",
+    "JW005": "Error not classified as retryable vs non-retryable (UnrecoverableError missing)",
+    "JW006": "Promise rejection not caught in processor function",
+    "JW007": "TODO/FIXME/HACK comment found",
+    "JW008": "Tests failed",
+    "JW009": "Job worker contract violation"
+  }
+}

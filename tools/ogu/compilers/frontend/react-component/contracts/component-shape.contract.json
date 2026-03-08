@@ -1,0 +1,43 @@
+{
+  "id": "component-shape",
+  "version": "1.0.0",
+  "description": "Structural requirements for all compiled React components",
+  "rules": [
+    {
+      "id": "named-export",
+      "description": "Component must be exported as a named export matching the component name",
+      "check": "export { ComponentName } or export function ComponentName or export const ComponentName"
+    },
+    {
+      "id": "default-export",
+      "description": "Component must also be the default export",
+      "check": "export default ComponentName"
+    },
+    {
+      "id": "typed-props",
+      "description": "Props must be typed via a TypeScript interface named {ComponentName}Props",
+      "check": "interface {ComponentName}Props or type {ComponentName}Props"
+    },
+    {
+      "id": "display-name",
+      "description": "Component must have displayName set for DevTools",
+      "check": "ComponentName.displayName = '{ComponentName}'"
+    },
+    {
+      "id": "forwardref-if-dom",
+      "description": "If component renders a DOM element it must use forwardRef",
+      "check": "forwardRef<HTMLElement, Props>",
+      "conditional": "renders_dom_root"
+    },
+    {
+      "id": "no-inline-styles",
+      "description": "No style={{ }} attributes on elements — use className only",
+      "check": "absence of style={{"
+    },
+    {
+      "id": "index-reexport",
+      "description": "index.ts must re-export the component and its types",
+      "check": "export { ComponentName, ComponentNameProps } from './{ComponentName}'"
+    }
+  ]
+}

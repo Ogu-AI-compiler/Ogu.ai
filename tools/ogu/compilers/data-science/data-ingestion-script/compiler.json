@@ -1,0 +1,37 @@
+{
+  "id": "data-ingestion-script",
+  "title": "Data Ingestion Script Compiler",
+  "version": "1.0.0",
+  "description": "Compiles raw data ingestion scripts. Enforces raw data immutability, idempotent loading, pathlib paths, structured logging, schema validation at boundary, and proper main guards.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "schema-ds-artifact.json", "output_artifact": "ingestion-artifact.json", "identifier": "DATA_INGESTION" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Structure", "gates": ["pathlib-paths", "main-guard", "logging-not-print"] },
+    { "id": 3, "name": "Data Safety", "gates": ["no-raw-mutation", "idempotent-output", "schema-validated-at-load"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-ingestion"] }
+  ],
+  "gates": [
+    { "id": "DI001", "name": "spec-valid",             "phase": 1 },
+    { "id": "DI002", "name": "pathlib-paths",          "phase": 2 },
+    { "id": "DI003", "name": "main-guard",             "phase": 2 },
+    { "id": "DI004", "name": "logging-not-print",      "phase": 2 },
+    { "id": "DI005", "name": "no-raw-mutation",        "phase": 3 },
+    { "id": "DI006", "name": "idempotent-output",      "phase": 3 },
+    { "id": "DI007", "name": "schema-validated-at-load","phase": 3 },
+    { "id": "DI008", "name": "no-todos",               "phase": 4 },
+    { "id": "DI009", "name": "contract-ingestion",     "phase": 4 }
+  ],
+  "error_codes": {
+    "DI001": "Invalid ingestion spec",
+    "DI002": "Hardcoded absolute path — use pathlib.Path and config/env vars",
+    "DI003": "Missing if __name__ == '__main__': guard",
+    "DI004": "print() used instead of logging — use logging.getLogger(__name__)",
+    "DI005": "Raw data directory written or overwritten — raw data is immutable",
+    "DI006": "Script is not idempotent — re-running produces different output files",
+    "DI007": "Data not validated against schema at load boundary",
+    "DI008": "TODO/FIXME found",
+    "DI009": "Ingestion contract violation"
+  }
+}

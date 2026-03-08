@@ -1,0 +1,34 @@
+{
+  "id": "backup-policy",
+  "title": "Backup Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the database backup policy. Enforces: PITR window defined and meeting RPO, backup retention exceeding PITR window, geo-redundancy for production, WAL archiving configured, and backup retention compliance with declared jurisdiction minimums.",
+  "tier": "database-admin",
+  "ir": {
+    "input_artifact": "db-provisioning-spec-artifact.json",
+    "output_artifact": "backup-policy-artifact.json",
+    "identifier": "BACKUP_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "RPO & PITR",             "gates": ["pitr-defined", "rpo-met"] },
+    { "id": 3, "name": "Retention & Compliance", "gates": ["retention-compliance"] },
+    { "id": 4, "name": "Geo & WAL",              "gates": ["geo-redundancy", "wal-archiving"] }
+  ],
+  "gates": [
+    { "id": "DBP001", "name": "spec-valid",           "phase": 1 },
+    { "id": "DBP002", "name": "pitr-defined",         "phase": 2 },
+    { "id": "DBP003", "name": "rpo-met",              "phase": 2 },
+    { "id": "DBP004", "name": "retention-compliance", "phase": 3 },
+    { "id": "DBP005", "name": "geo-redundancy",       "phase": 4 },
+    { "id": "DBP006", "name": "wal-archiving",        "phase": 4 }
+  ],
+  "error_codes": {
+    "DBP001": "backup-policy.json missing or invalid — required fields: environments[], pitr_window_hours, rpo_hours, retention_days, backup_destination",
+    "DBP002": "PITR window not defined — point-in-time recovery window must be declared per environment",
+    "DBP003": "PITR window is shorter than declared RPO — recovery window must cover the full RPO requirement",
+    "DBP004": "Backup retention period is shorter than PITR window or below compliance minimum for declared jurisdiction",
+    "DBP005": "Production instance missing geo-redundant backup — cross-region backup replication is required for production",
+    "DBP006": "WAL archiving not configured — continuous WAL archiving is required to enable point-in-time recovery"
+  }
+}

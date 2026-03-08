@@ -1,0 +1,15 @@
+{
+  "id": "analytics-contract",
+  "version": "1.0.0",
+  "compiler": "analytics-event",
+  "rules": [
+    { "id": "typed-events", "description": "Event types must be TypeScript interfaces or types" },
+    { "id": "track-typed", "description": "track() must be called with typed event objects" },
+    { "id": "exported-events", "description": "Event type definitions must be exported" },
+    { "id": "no-magic-strings", "description": "Event names must be constants, not inline strings" },
+    { "id": "no-pii", "description": "No PII fields (email, password, ssn, credit_card) in payloads" },
+    { "id": "screaming-snake", "description": "Event names must be SCREAMING_SNAKE_CASE" },
+    { "id": "required-base-props", "description": "Base type must include event_name, timestamp, session_id" },
+    { "id": "no-any", "description": "No explicit any in event types or track() calls" }
+  ]
+}

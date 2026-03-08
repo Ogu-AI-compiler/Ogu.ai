@@ -1,0 +1,133 @@
+{
+  "compiler_id": "compiler_backend-developer",
+  "role": "backend-developer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "engineering",
+    "display_name": "Backend Developer",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "design",
+      "implementation",
+      "testing",
+      "security-review",
+      "performance-check"
+    ],
+    "consumes": ["Spec.md", "Plan.json", "API contracts"],
+    "produces": ["source files", "migration files", "test files", "API implementation"]
+  },
+
+  "gates": [
+    {
+      "id": "implementation-exists",
+      "description": "At least one source file must be produced",
+      "type": "output_count",
+      "min": 1,
+      "severity": "error"
+    },
+    {
+      "id": "no-hardcoded-secrets",
+      "description": "No hardcoded passwords, tokens, or API keys",
+      "type": "file_not_contains",
+      "banned_string": "password123",
+      "severity": "error"
+    },
+    {
+      "id": "no-sql-injection-pattern",
+      "description": "No string-concatenated SQL queries",
+      "type": "file_not_contains",
+      "banned_string": "' + ",
+      "severity": "error"
+    },
+    {
+      "id": "error-handling-present",
+      "description": "Error handling must be present in implementation",
+      "type": "file_contains",
+      "required_string": "catch",
+      "severity": "error"
+    },
+    {
+      "id": "tests-exist",
+      "description": "Tests must be produced alongside implementation",
+      "type": "file_contains",
+      "required_string": "test(",
+      "severity": "error"
+    },
+    {
+      "id": "no-debug-statements",
+      "description": "No console.log or debug statements in production code",
+      "type": "file_not_contains",
+      "banned_string": "console.log(",
+      "severity": "warn"
+    },
+    {
+      "id": "input-validation-present",
+      "description": "Input validation must be present for API endpoints",
+      "type": "file_contains",
+      "required_string": "valid",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "god-service",
+      "description": "A single service class handling validation, business logic, data access, and notifications"
+    },
+    {
+      "id": "silent-failures",
+      "description": "Catching exceptions and returning a default value — errors become invisible"
+    },
+    {
+      "id": "business-logic-in-controllers",
+      "description": "Request handler applying business rules, querying DB, sending emails, and formatting response"
+    },
+    {
+      "id": "shared-mutable-state",
+      "description": "Global variables modified from multiple request handlers"
+    },
+    {
+      "id": "test-free-development",
+      "description": "Shipping without automated tests — no safety net for future changes"
+    }
+  ],
+
+  "escalation_triggers": [
+    "A database query cannot be optimized further and still doesn't meet latency SLA",
+    "A security vulnerability found in a dependency with no available patch",
+    "Business logic requires data from a service that doesn't expose it",
+    "Current architecture cannot support a new requirement without significant refactoring",
+    "Data inconsistency discovered in production with no clear root cause"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with API contracts and acceptance criteria",
+        "sealed": false
+      },
+      {
+        "type": "artifact_exists",
+        "pattern": "Plan.json",
+        "description": "Plan.json with implementation tasks",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "All API endpoints implemented per contract",
+      "Input validation present on all external inputs",
+      "No hardcoded secrets or credentials",
+      "Error handling: no swallowed exceptions",
+      "Tests exist for all business logic",
+      "No SQL injection vulnerabilities"
+    ]
+  }
+}

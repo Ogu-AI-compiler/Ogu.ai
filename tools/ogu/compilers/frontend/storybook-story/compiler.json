@@ -1,0 +1,40 @@
+{
+  "id": "storybook-story",
+  "title": "Storybook Story Compiler",
+  "version": "1.0.0",
+  "description": "Compiles CSF3 Storybook stories for a component. Enforces typed args, controls, a11y addon, and default story export.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "component-artifact.json",
+    "output_artifact": "story-artifact.json",
+    "identifier": "STORY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid"] },
+    { "id": 3, "name": "Implement", "gates": ["csf3-valid", "args-typed", "a11y-addon"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos"] },
+    { "id": 5, "name": "Cross-Compiler Verify", "gates": ["cross-component"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-story"] }
+  ],
+  "gates": [
+    { "id": "SB001", "name": "spec-valid",      "phase": 1 },
+    { "id": "SB002", "name": "ts-valid",        "phase": 2 },
+    { "id": "SB003", "name": "csf3-valid",      "phase": 3 },
+    { "id": "SB004", "name": "args-typed",      "phase": 3 },
+    { "id": "SB005", "name": "a11y-addon",      "phase": 3 },
+    { "id": "SB006", "name": "no-todos",        "phase": 4 },
+    { "id": "SB007", "name": "cross-component", "phase": 5 },
+    { "id": "SB008", "name": "contract-story",  "phase": 6 }
+  ],
+  "error_codes": {
+    "SB001": "Invalid story spec",
+    "SB002": "TypeScript compilation failed",
+    "SB003": "Not valid CSF3 format (missing default export or named story exports)",
+    "SB004": "Story args not typed with component Props type",
+    "SB005": "a11y addon parameters missing",
+    "SB006": "TODO/FIXME found",
+    "SB007": "component-artifact not found",
+    "SB008": "Contract violation"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "secret_bundle",
+  "title": "Secret Bundle Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Kubernetes secret manifests (SealedSecrets, ExternalSecrets). Enforces: no plaintext secret values in tracked files, every key maps to a declared env variable, target namespace unique per environment, all secret manager path refs are syntactically valid.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "env-schema-artifact.json",
+    "output_artifact": "secret-bundle-artifact.json",
+    "identifier": "SECRET_BUNDLE"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Key Mapping",             "gates": ["keys-mapped-to-env", "namespace-unique"] },
+    { "id": 3, "name": "Security Check",          "gates": ["no-plaintext-values", "secret-paths-valid"] },
+    { "id": 4, "name": "Quality",                 "gates": ["no-todos"] },
+    { "id": 5, "name": "Attest",                  "gates": ["contract-secret-bundle"] }
+  ],
+  "gates": [
+    { "id": "SB001", "name": "spec-valid",              "phase": 1 },
+    { "id": "SB002", "name": "keys-mapped-to-env",      "phase": 2 },
+    { "id": "SB003", "name": "namespace-unique",        "phase": 2 },
+    { "id": "SB004", "name": "no-plaintext-values",     "phase": 3 },
+    { "id": "SB005", "name": "secret-paths-valid",      "phase": 3 },
+    { "id": "SB006", "name": "no-todos",                "phase": 4 },
+    { "id": "SB007", "name": "contract-secret-bundle",  "phase": 5 }
+  ],
+  "error_codes": {
+    "SB001": "secret-bundle-spec.json missing or invalid — required: secrets[], namespace, environments[]",
+    "SB002": "Secret key not mapped to a declared env variable",
+    "SB003": "Duplicate namespace+environment combination — secret names must be unique per env",
+    "SB004": "Plaintext secret value found in tracked manifest file",
+    "SB005": "Secret manager path reference has invalid syntax",
+    "SB006": "TODO/FIXME/HACK found",
+    "SB007": "Secret bundle contract violation"
+  }
+}

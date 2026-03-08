@@ -1,0 +1,43 @@
+{
+  "id": "utility-fn",
+  "title": "Utility Function Compiler",
+  "version": "1.0.0",
+  "description": "Compiles pure TypeScript utility functions with 100% test coverage. No side effects, no DOM, no React, no network. Shared by frontend and backend.",
+  "tier": "shared",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "utility-artifact.json",
+    "identifier": "UTILITY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["no-side-effects", "no-react-import", "exported-fn"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass", "coverage-100"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-utility"] }
+  ],
+  "gates": [
+    { "id": "UF001", "name": "spec-valid",       "phase": 1 },
+    { "id": "UF002", "name": "ts-valid",         "phase": 2 },
+    { "id": "UF003", "name": "no-any",           "phase": 2 },
+    { "id": "UF004", "name": "no-side-effects",  "phase": 3 },
+    { "id": "UF005", "name": "no-react-import",  "phase": 3 },
+    { "id": "UF006", "name": "exported-fn",      "phase": 3 },
+    { "id": "UF007", "name": "no-todos",         "phase": 4 },
+    { "id": "UF008", "name": "tests-pass",       "phase": 4 },
+    { "id": "UF009", "name": "coverage-100",     "phase": 4 },
+    { "id": "UF010", "name": "contract-utility", "phase": 5 }
+  ],
+  "error_codes": {
+    "UF001": "Invalid utility spec",
+    "UF002": "TypeScript compilation failed",
+    "UF003": "Explicit 'any' found",
+    "UF004": "Side effect detected (DOM, network, storage, global mutation)",
+    "UF005": "React imported in utility function — utility-fn must be framework-agnostic",
+    "UF006": "Function not exported from the module",
+    "UF007": "TODO/FIXME found",
+    "UF008": "Tests failed",
+    "UF009": "Coverage below 100% — utility functions require full coverage",
+    "UF010": "Contract violation"
+  }
+}

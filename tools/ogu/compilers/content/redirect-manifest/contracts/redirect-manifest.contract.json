@@ -1,0 +1,31 @@
+{
+  "id": "redirect-manifest",
+  "version": "1.0.0",
+  "description": "A redirect manifest defines all URL redirects for the site: source URLs, destination URLs, and HTTP codes — enforced to ensure no loops, chains, or broken routing before deployment.",
+  "rules": [
+    {
+      "id": "spec-file-exists",
+      "description": "A redirect-manifest.spec.json must exist with a redirects array. Each entry needs 'from' and 'to' fields."
+    },
+    {
+      "id": "no-circular-loops",
+      "description": "No redirect may point back to a URL already in its own redirect path. Loops cause infinite redirect errors in all browsers."
+    },
+    {
+      "id": "no-chained-redirects",
+      "description": "A redirect destination may not itself be a redirect source (A→B where B→C is also defined). Chains add latency and violate HTTP semantics."
+    },
+    {
+      "id": "valid-http-status-codes",
+      "description": "Status codes must be 301 (permanent move), 302 (temporary move), or 410 (gone). Other codes are not valid redirect semantics. 410 must have no 'to' destination."
+    },
+    {
+      "id": "no-self-redirects",
+      "description": "from and to URLs must differ after trailing slash normalization. A self-redirect is an infinite loop."
+    },
+    {
+      "id": "relative-url-format",
+      "description": "URLs must start with '/' unless crossDomain:true is set. Absolute URLs in a site redirect manifest indicate a configuration error."
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "compiler_id": "compiler_product-manager",
+  "role": "product-manager",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "product",
+    "display_name": "Product Manager",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "problem-discovery",
+      "requirements-engineering",
+      "prd-creation",
+      "prioritization",
+      "release-planning"
+    ],
+    "consumes": ["user research", "business goals", "market data"],
+    "produces": ["PRD.md", "QA.md", "acceptance criteria", "roadmap"]
+  },
+
+  "gates": [
+    {
+      "id": "prd-exists",
+      "description": "PRD.md product requirements document must exist",
+      "type": "file_exists",
+      "pattern": "PRD.md",
+      "severity": "error"
+    },
+    {
+      "id": "problem-statement-present",
+      "description": "One-paragraph problem statement must be present",
+      "type": "file_contains",
+      "required_string": "problem",
+      "severity": "error"
+    },
+    {
+      "id": "success-metrics-defined",
+      "description": "Success metrics (KPIs) must be defined before development starts",
+      "type": "file_contains",
+      "required_string": "metric",
+      "severity": "error"
+    },
+    {
+      "id": "acceptance-criteria-present",
+      "description": "Acceptance criteria in Given/When/Then format must exist",
+      "type": "file_contains",
+      "required_string": "Given",
+      "severity": "error"
+    },
+    {
+      "id": "scope-boundaries-defined",
+      "description": "Out-of-scope items must be explicitly documented",
+      "type": "file_contains",
+      "required_string": "NOT included",
+      "severity": "warn"
+    },
+    {
+      "id": "edge-cases-documented",
+      "description": "At least 5 edge cases with expected behavior must be documented",
+      "type": "file_contains",
+      "required_string": "edge case",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "feature-factory",
+      "description": "Building features without measuring outcomes — every release needs a hypothesis"
+    },
+    {
+      "id": "specification-by-committee",
+      "description": "Requirements written by 10 people satisfying nobody"
+    },
+    {
+      "id": "infinite-backlog",
+      "description": "A backlog with 200+ items — it's a graveyard, not a plan"
+    },
+    {
+      "id": "gold-plating",
+      "description": "Adding nice-to-have features before validating core functionality"
+    },
+    {
+      "id": "proxy-ownership",
+      "description": "Deferring every decision to stakeholders or data — PM has no judgment"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Requirements conflict with existing contractual obligations or legal constraints",
+    "Two stakeholders give contradictory requirements after mediation attempt fails",
+    "Engineering estimates exceed budget by more than 2x after scope reduction",
+    "Security or compliance review reveals a blocking issue with no clear workaround",
+    "User research shows the proposed solution does not address the actual problem",
+    "A P0 feature is at risk of missing a committed external deadline"
+  ],
+
+  "handoff": {
+    "input_requirements": [],
+    "output_certifications": [
+      "PRD.md exists with one-paragraph problem statement",
+      "Success metrics defined with baselines before development starts",
+      "Acceptance criteria in Given/When/Then format for every must-have requirement",
+      "Scope boundaries explicit (what is NOT included)",
+      "At least 5 edge cases documented with expected behavior",
+      "Rollback plan defined if feature fails in production"
+    ]
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "id": "react-component",
+  "version": "1.0.0",
+  "title": "React Component Compiler",
+  "description": "Formal compiler for React components: parse intent → scaffold → implement → test → verify → attest",
+  "ir_prefix": "COMPONENT",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract component spec from description: name, props, variants, a11y requirements",
+      "model": "haiku",
+      "outputs": ["component-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "scaffold",
+      "title": "Scaffold",
+      "description": "Generate file structure: component file, index, types, stories stub",
+      "model": "haiku",
+      "outputs": ["{name}.tsx", "{name}.types.ts", "{name}.stories.tsx", "index.ts"],
+      "gates": ["spec-valid", "export-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "implement",
+      "title": "Implement",
+      "description": "Write full component implementation with design tokens, a11y, variants",
+      "model": "sonnet",
+      "outputs": ["{name}.tsx"],
+      "gates": ["typescript", "no-todos", "design-tokens"]
+    },
+    {
+      "phase": 3,
+      "id": "test",
+      "title": "Test",
+      "description": "Write and run unit tests: render, props, variants, a11y, interactions",
+      "model": "sonnet",
+      "outputs": ["{name}.test.tsx"],
+      "gates": ["render", "a11y", "coverage"]
+    },
+    {
+      "phase": 4,
+      "id": "verify",
+      "title": "Verify",
+      "description": "Cross-check component against spec, contracts, and IR",
+      "model": "haiku",
+      "outputs": ["verification.json"],
+      "gates": ["props", "contract-shape", "contract-a11y", "cross-schema"]
+    },
+    {
+      "phase": 5,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed attestation artifact for the registry",
+      "model": "haiku",
+      "outputs": ["component-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "component-spec.json exists and has required fields: name, props, variants",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "export-valid",
+      "title": "Export Valid",
+      "description": "index.ts exports the component as named and default export",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "typescript",
+      "title": "TypeScript Clean",
+      "description": "tsc --noEmit passes with zero errors",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-todos",
+      "title": "No TODOs",
+      "description": "No TODO/FIXME/HACK/PLACEHOLDER in implementation files",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "design-tokens",
+      "title": "Design Tokens",
+      "description": "No hardcoded hex/rgb colors or raw px values — only CSS vars or token references",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "render",
+      "title": "Renders Without Error",
+      "description": "Component renders in JSDOM with all required props without throwing",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "a11y",
+      "title": "Accessibility",
+      "description": "axe-core reports zero violations on rendered component",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "coverage",
+      "title": "Test Coverage",
+      "description": "≥80% line coverage for the component file",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "props",
+      "title": "Props Contract",
+      "description": "All declared props in spec are present in TypeScript interface with correct types",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "contract-shape",
+      "title": "Shape Contract",
+      "description": "Component shape matches component-shape.contract.json",
+      "phase": 4,
+      "required": true,
+      "contract": "component-shape"
+    },
+    {
+      "id": "contract-a11y",
+      "title": "A11y Contract",
+      "description": "A11y attributes match a11y.contract.json requirements",
+      "phase": 4,
+      "required": true,
+      "contract": "a11y"
+    },
+    {
+      "id": "cross-schema",
+      "title": "Schema Alignment",
+      "description": "If schema-artifact.json exists, component data props must align with schema fields. Schema is the source of truth.",
+      "phase": 4,
+      "required": false
+    }
+  ],
+  "contracts": [
+    {
+      "id": "component-shape",
+      "file": "contracts/component-shape.contract.json",
+      "description": "Structural requirements for all compiled components"
+    },
+    {
+      "id": "a11y",
+      "file": "contracts/a11y.contract.json",
+      "description": "Accessibility requirements for compiled components"
+    }
+  ],
+  "ir": {
+    "identifiers": [
+      "COMPONENT:{name}",
+      "TEST:{name}",
+      "STORY:{name}"
+    ],
+    "output_artifact": "component-artifact.json",
+    "artifact_schema": "component-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.50
+  },
+  "attestation": {
+    "schema": "component-artifact-v1",
+    "fields": ["name", "version", "props", "variants", "gates_passed", "coverage", "a11y_clean", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "RC001": "component-spec.json missing or invalid",
+    "RC002": "TypeScript compilation failed",
+    "RC003": "Component renders with errors",
+    "RC004": "Accessibility violations found",
+    "RC005": "Test coverage below threshold",
+    "RC006": "Hardcoded design values detected",
+    "RC007": "Props interface mismatch",
+    "RC008": "Shape contract violation",
+    "RC009": "A11y contract violation",
+    "RC010": "Export structure invalid",
+    "RC011": "Component props conflict with schema fields"
+  }
+}

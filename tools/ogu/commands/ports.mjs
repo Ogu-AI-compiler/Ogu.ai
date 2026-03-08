@@ -9,7 +9,7 @@
  *   register <project> <ports>    Register ports for a named project (JSON)
  *   clear                         Clear all ports for the current project
  *
- * The registry lives at ~/.ogu/port-registry.json and is read by Ogu Studio
+ * The registry lives at ~/.ogu/port-registry.json and is read by Kadima
  * to prevent new projects from claiming ports that belong to existing projects.
  */
 

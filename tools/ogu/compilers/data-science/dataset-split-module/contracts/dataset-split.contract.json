@@ -1,0 +1,11 @@
+{
+  "id": "dataset-split-module",
+  "version": "1.0.0",
+  "description": "Contract rules for dataset split modules",
+  "rules": [
+    { "id": "random-state", "description": "train_test_split must use random_state" },
+    { "id": "no-fit-on-test", "description": "No .fit() on test set" },
+    { "id": "split-before-transform", "description": "Data split occurs before any fitting" },
+    { "id": "ratios-sum-to-one", "description": "Train/val/test ratios must sum to 1.0" }
+  ]
+}

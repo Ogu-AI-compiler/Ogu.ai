@@ -1,0 +1,23 @@
+{
+  "id": "theme-manifest",
+  "version": "1.0.0",
+  "description": "A valid theme manifest declares light mode as the base, has surface and text tokens, maps all tokens per mode, and maintains token name stability across modes.",
+  "rules": [
+    {
+      "id": "light-mode-required",
+      "description": "Light mode must always be declared. It is the universal fallback for systems that do not support prefers-color-scheme and the baseline for all mode derivations."
+    },
+    {
+      "id": "minimum-ten-tokens",
+      "description": "A meaningful theme system requires at least 10 semantic tokens: surface, text, border, interactive, destructive, success, warning, info, disabled, and focus are the minimum viable set."
+    },
+    {
+      "id": "surface-and-text",
+      "description": "At least one surface token and one text/fg/foreground token must be declared. Without these, components cannot establish basic visual layering."
+    },
+    {
+      "id": "mappings-match-modes",
+      "description": "Every mode declared in the modes array must have a corresponding entry in the mappings object. A declared mode with no mapping is a broken theme variant."
+    }
+  ]
+}

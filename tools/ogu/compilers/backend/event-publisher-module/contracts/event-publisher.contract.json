@@ -1,0 +1,9 @@
+{
+  "id": "event-publisher-contract", "version": "1.0.0",
+  "rules": [
+    { "id": "EVENT_PUBLISHER-001", "description": "Events wrapped in typed envelope", "enforcement": "gate:envelope-typed" },
+    { "id": "EVENT_PUBLISHER-002", "description": "Channel name from constants — not hardcoded", "enforcement": "gate:channel-from-spec" },
+    { "id": "EVENT_PUBLISHER-003", "description": "No business logic in publisher (pure dispatch)", "enforcement": "gate:no-business-logic" },
+    { "id": "EVENT_PUBLISHER-004", "description": "Publish calls awaited", "enforcement": "gate:publish-awaited" }
+  ]
+}

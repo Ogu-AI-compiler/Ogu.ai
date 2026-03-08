@@ -157,6 +157,19 @@ function gateJsonValid(root, touches) {
   return errors;
 }
 
+function getTsconfigAliasPrefixes(root) {
+  const tsconfig = parseSafeJson(join(root, 'tsconfig.json')) || parseSafeJson(join(root, 'jsconfig.json')) || {};
+  const paths = tsconfig?.compilerOptions?.paths || {};
+  const prefixes = [];
+  for (const key of Object.keys(paths)) {
+    let prefix = key;
+    if (prefix.endsWith('/*')) prefix = prefix.slice(0, -1);
+    else if (prefix.endsWith('*')) prefix = prefix.slice(0, -1);
+    if (prefix) prefixes.push(prefix);
+  }
+  return uniq(prefixes);
+}
+
 function gateImports(root, touches) {
   const errors = [];
   const codeFiles = touches.filter(t => /\.(ts|tsx|js|jsx|mjs)$/.test(t) && !t.includes('.test.') && !t.includes('.spec.'));
@@ -170,6 +183,8 @@ function gateImports(root, touches) {
   ]);
   if (allDeps.size === 0) return errors;
 
+  const aliasPrefixes = getTsconfigAliasPrefixes(root);
+
   for (const touch of codeFiles) {
     const content = readSafe(join(root, touch));
     if (!content) continue;
@@ -180,6 +195,7 @@ function gateImports(root, touches) {
     for (const m of importMatches) {
       const specifier = m[1];
       if (specifier.startsWith('.') || specifier.startsWith('/') || specifier.startsWith('node:')) continue;
+      if (aliasPrefixes.length > 0 && aliasPrefixes.some((p) => specifier.startsWith(p))) continue;
       const pkgName = specifier.startsWith('@')
         ? specifier.split('/').slice(0, 2).join('/')
         : specifier.split('/')[0];
@@ -326,6 +342,20 @@ function runNpmInstall(root) {
     return null;
   } catch (e) {
     const out = (e.stdout?.toString() || '') + (e.stderr?.toString() || '');
+    // Optional fallback for npm peer-dep conflicts
+    const pm = existsSync(join(root, 'pnpm-lock.yaml')) ? 'pnpm'
+      : existsSync(join(root, 'yarn.lock')) ? 'yarn'
+      : 'npm';
+    if (pm === 'npm' && process.env.OGU_NPM_LEGACY_FALLBACK !== '0' && /ERESOLVE|peer dependency/i.test(out)) {
+      try {
+        console.warn('[gates] npm install failed; retrying with --legacy-peer-deps');
+        execSync('npm install --legacy-peer-deps', { cwd: root, stdio: 'pipe', timeout: 120_000 });
+        return null;
+      } catch (e2) {
+        const out2 = (e2.stdout?.toString() || '') + (e2.stderr?.toString() || '');
+        return `npm install failed:\n${out2.slice(-600)}`;
+      }
+    }
     return `npm install failed:\n${out.slice(-600)}`;
   }
 }
@@ -506,6 +536,7 @@ export function buildTaskFixNote(task, gateResult, root) {
     if (missingPkgMatch) {
       lines.push(`   -> FIX: Add '${missingPkgMatch[1]}' to package.json dependencies, then re-implement using it.`);
       lines.push(`   -> In package.json, add: "${missingPkgMatch[1]}": "latest" under "dependencies".`);
+      lines.push('   -> If package-lock.json exists, update it after changing dependencies (npm install).');
     }
 
     if (err.includes('jsdom')) {

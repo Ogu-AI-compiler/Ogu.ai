@@ -1,0 +1,46 @@
+{
+  "id": "accessibility-policy",
+  "version": "1.0.0",
+  "description": "Accessibility policy contract — validates WCAG standard, CI enforcement, exclusion limits, manual checkpoints, and disabled rule justifications",
+  "rules": [
+    {
+      "id": "A11Y-C01",
+      "description": "wcagVersion must be 2.1 or 2.2 — 2.0 is outdated",
+      "required": true,
+      "enum": ["2.1", "2.2"]
+    },
+    {
+      "id": "A11Y-C02",
+      "description": "wcagLevel must be AA or AAA — Level A alone is insufficient",
+      "required": true,
+      "enum": ["AA", "AAA"]
+    },
+    {
+      "id": "A11Y-C03",
+      "description": "ciEnforcement.failOn must include 'critical'",
+      "required": true
+    },
+    {
+      "id": "A11Y-C04",
+      "description": "spec.exclude must have ≤ 10 selectors; no broad selectors like 'body', 'main', 'div'",
+      "required": false,
+      "max": 10
+    },
+    {
+      "id": "A11Y-C05",
+      "description": "At least 3 manual testing checkpoints must be defined",
+      "required": true,
+      "min": 3
+    },
+    {
+      "id": "A11Y-C06",
+      "description": "Every disabled rule must have a documented reason (object with ruleId + reason)",
+      "required": false
+    }
+  ],
+  "artifact": {
+    "file": "accessibility-policy-artifact.json",
+    "ir_id_prefix": "ACCESSIBILITY_POLICY:",
+    "required_fields": ["ir_id", "tool", "wcagVersion", "wcagLevel", "attestation"]
+  }
+}

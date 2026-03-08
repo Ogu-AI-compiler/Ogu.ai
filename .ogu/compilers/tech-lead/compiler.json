@@ -1,0 +1,112 @@
+{
+  "compiler_id": "compiler_tech-lead",
+  "role": "tech-lead",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "engineering",
+    "display_name": "Tech Lead",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "technical-direction",
+      "problem-decomposition",
+      "risk-mitigation",
+      "code-review",
+      "tech-debt-review"
+    ],
+    "consumes": ["Spec.md", "Plan.json", "PRD.md"],
+    "produces": ["technical-approach.md", "ADR files", "code-review feedback", "decomposed tasks"]
+  },
+
+  "gates": [
+    {
+      "id": "technical-approach-exists",
+      "description": "Technical approach document or ADR must exist",
+      "type": "file_exists",
+      "pattern": "technical",
+      "severity": "error"
+    },
+    {
+      "id": "risks-identified",
+      "description": "Major technical risks must be identified and documented",
+      "type": "file_contains",
+      "required_string": "risk",
+      "severity": "error"
+    },
+    {
+      "id": "trade-offs-documented",
+      "description": "Architecture decision must document trade-offs",
+      "type": "file_contains",
+      "required_string": "trade-off",
+      "severity": "error"
+    },
+    {
+      "id": "work-decomposed",
+      "description": "Work must be decomposed into reviewable pieces",
+      "type": "file_contains",
+      "required_string": "task",
+      "severity": "warn"
+    },
+    {
+      "id": "no-old-todos",
+      "description": "No TODOs older than 2 sprints in reviewed code",
+      "type": "file_not_contains",
+      "banned_string": "// TODO: OLD",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "bottleneck-lead",
+      "description": "Every PR goes through the tech lead — team can't move without approval"
+    },
+    {
+      "id": "ivory-tower-lead",
+      "description": "Making technical decisions without input from the team that implements them"
+    },
+    {
+      "id": "coding-lead",
+      "description": "Spending 90% of time coding with no time for reviews, design, or team support"
+    },
+    {
+      "id": "perfectionist-lead",
+      "description": "Blocking PRs for style preferences — requesting rewrites for non-issues"
+    },
+    {
+      "id": "technical-ego",
+      "description": "Insisting on your approach because you came up with it"
+    }
+  ],
+
+  "escalation_triggers": [
+    "A technical decision has business implications beyond the team (timeline, cost, capabilities)",
+    "Two senior engineers disagree on approach and structured debate hasn't resolved it",
+    "Technical debt has accumulated to the point where feature velocity is materially affected",
+    "A dependency on another team is blocking progress and direct communication hasn't resolved it",
+    "The team needs headcount, tooling, or infrastructure investment to meet commitments"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with requirements for technical planning",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Technical approach documented with trade-off analysis",
+      "Major risks identified with mitigation plans",
+      "Work decomposed into independently implementable pieces",
+      "ADR created for any irreversible architectural decision",
+      "Team aligned on the technical direction"
+    ]
+  }
+}

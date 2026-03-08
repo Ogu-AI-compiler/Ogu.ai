@@ -1,0 +1,76 @@
+{
+  "id": "kubernetes_service",
+  "version": "1.0.0",
+  "description": "Validates Kubernetes Service manifests for port validity, allowed service types, selector correctness, and namespace isolation",
+  "rules": [
+    {
+      "id": "KS001",
+      "gate": "spec-valid",
+      "description": "k8s-service-spec.json must exist, be valid JSON, and declare name, selector, and a non-empty ports array",
+      "required": true,
+      "mandatoryFields": ["name", "selector", "ports"]
+    },
+    {
+      "id": "KS002",
+      "gate": "selector-resolves",
+      "description": "The Service selector must correspond to labels declared on a known workload artifact (k8s-workload-artifact.json) in the project. A selector with no matching workload routes traffic to zero pods",
+      "required": false,
+      "note": "Skipped when no k8s-workload-artifact.json is present in the project"
+    },
+    {
+      "id": "KS003",
+      "gate": "ports-valid",
+      "description": "Every port entry must declare a valid port number (1–65535), a targetPort or port name, and if protocol is set it must be TCP, UDP, or SCTP",
+      "required": true,
+      "fields": {
+        "port":       { "type": "integer", "min": 1, "max": 65535 },
+        "targetPort": { "type": "integer", "min": 1, "max": 65535 },
+        "protocol":   { "enum": ["TCP", "UDP", "SCTP"] }
+      }
+    },
+    {
+      "id": "KS004",
+      "gate": "no-duplicate-ports",
+      "description": "No two entries in the ports array may declare the same port number. Duplicates cause the Kubernetes API server to reject the manifest",
+      "required": true
+    },
+    {
+      "id": "KS005",
+      "gate": "service-type-allowed",
+      "description": "Service type must be one of: ClusterIP, NodePort, LoadBalancer, ExternalName, Headless. LoadBalancer and NodePort carry security warnings — they expose ports outside the cluster",
+      "required": true,
+      "enum": ["ClusterIP", "NodePort", "LoadBalancer", "ExternalName", "Headless"],
+      "warnings": {
+        "LoadBalancer": "creates a public internet-facing LB by default — add annotations to restrict",
+        "NodePort":     "exposes a port on every cluster node — prefer Ingress for external traffic",
+        "ExternalName": "routes to an external DNS target — verify the target is intentional"
+      }
+    },
+    {
+      "id": "KS006",
+      "gate": "no-todos",
+      "description": "k8s-service-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "KS007",
+      "gate": "contract-k8s-service",
+      "description": "namespace must be declared (default namespace is an antipattern in shared clusters). LoadBalancer Services must include cloud-specific annotations — without them the cloud controller creates a public internet-facing LB",
+      "required": true,
+      "mandatoryFields": ["namespace"],
+      "conditionalRules": [
+        {
+          "when": "type === 'LoadBalancer'",
+          "requires": "annotations",
+          "hint": "Add cloud-specific annotations, e.g. { \"service.beta.kubernetes.io/aws-load-balancer-internal\": \"true\" }"
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "file": "k8s-service-artifact.json",
+    "ir_id_prefix": "K8S_SERVICE:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

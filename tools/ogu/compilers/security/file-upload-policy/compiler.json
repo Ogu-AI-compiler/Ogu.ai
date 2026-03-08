@@ -1,0 +1,34 @@
+{
+  "id": "file-upload-policy",
+  "title": "File Upload Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the file upload security policy. Enforces: no public-read as default storage ACL, dangerous file extensions blocked, malware scanning declared before files are accessible.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "input-validation-policy.compiled.json",
+    "output_artifact": "file-upload-policy.compiled.json",
+    "identifier": "FILE_UPLOAD_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Storage & Extension Checks", "gates": ["no-public-read-default", "dangerous-extensions-blocked", "content-type-validated"] },
+    { "id": 3, "name": "Malware Gate",          "gates": ["malware-scan-declared"] },
+    { "id": 4, "name": "Quality",               "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "FU001", "name": "spec-valid",                   "phase": 1 },
+    { "id": "FU002", "name": "no-public-read-default",       "phase": 2 },
+    { "id": "FU003", "name": "dangerous-extensions-blocked", "phase": 2 },
+    { "id": "FU004", "name": "malware-scan-declared",        "phase": 3 },
+    { "id": "FU005", "name": "no-todos",                     "phase": 4 },
+    { "id": "FU006", "name": "content-type-validated",       "phase": 2 }
+  ],
+  "error_codes": {
+    "FU001": "file-upload-spec.json missing or invalid — required fields: allowedExtensions[], maxSizeBytes, storageAcl, malwareScan",
+    "FU002": "Default storage ACL is public-read — uploads must be private until explicitly shared",
+    "FU003": "Dangerous file extensions not blocked — must deny: .exe, .sh, .bat, .cmd, .ps1, .php, .phar, .jar, .py scripts",
+    "FU004": "Malware scan not declared in upload pipeline — files must be scanned before being made accessible to other users",
+    "FU005": "TODO/FIXME/HACK comment found",
+    "FU006": "Upload surface missing server-side MIME type validation — allowed_mime_types[] must be declared and checked server-side, not inferred from file extension"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "id": "config-validation-module",
+  "title": "Config Validation Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a typed, validated config module from an env contract. Enforces that every key is schema-validated, secrets are marked, unknown keys are handled explicitly, and invalid config causes startup failure.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "config-artifact.json",
+    "identifier": "CONFIG"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Schema Check",
+      "gates": ["exports-valid", "schema-complete"]
+    },
+    {
+      "id": 3,
+      "name": "Security Check",
+      "gates": ["no-env-leak", "secret-marked"]
+    },
+    {
+      "id": 4,
+      "name": "Behavior Check",
+      "gates": ["startup-fail", "no-unknown-keys"]
+    },
+    {
+      "id": 5,
+      "name": "Quality",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-config"]
+    }
+  ],
+  "gates": [
+    { "id": "CV001", "name": "spec-valid",       "phase": 1 },
+    { "id": "CV002", "name": "exports-valid",    "phase": 2 },
+    { "id": "CV003", "name": "schema-complete",  "phase": 2 },
+    { "id": "CV004", "name": "no-env-leak",      "phase": 3 },
+    { "id": "CV005", "name": "secret-marked",    "phase": 3 },
+    { "id": "CV006", "name": "startup-fail",     "phase": 4 },
+    { "id": "CV007", "name": "no-unknown-keys",  "phase": 4 },
+    { "id": "CV008", "name": "no-todos",         "phase": 5 },
+    { "id": "CV009", "name": "tests-pass",       "phase": 5 },
+    { "id": "CV010", "name": "contract-config",  "phase": 6 }
+  ],
+  "error_codes": {
+    "CV001": "config-spec.json missing or invalid — required fields: envKeys[], unknownKeyPolicy",
+    "CV002": "Exported config key not present in validation schema",
+    "CV003": "Schema key has neither 'required: true' nor a 'default' value",
+    "CV004": "Direct process.env access detected outside the config module boundary",
+    "CV005": "Secret key not marked with 'secret: true' in spec metadata",
+    "CV006": "Schema does not enforce startup failure for missing required keys",
+    "CV007": "Unknown env key policy not declared (must be 'reject' or 'ignore')",
+    "CV008": "TODO/FIXME/HACK comment found",
+    "CV009": "Tests failed",
+    "CV010": "Config contract violation"
+  }
+}

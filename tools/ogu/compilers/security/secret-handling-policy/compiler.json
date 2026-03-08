@@ -1,0 +1,38 @@
+{
+  "id": "secret-handling-policy",
+  "title": "Secret Handling Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the secret management policy for a project. Enforces: no env vars in production for sensitive secrets, rotation schedules defined, no plaintext secrets in logs, consumers scoped to minimum access, staging/prod secret separation, and no hardcoded values.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "secret-handling-policy.compiled.json",
+    "identifier": "SECRET_HANDLING_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Storage & Logging",      "gates": ["no-env-vars-prod", "no-plaintext-logging", "no-hardcoded-values"] },
+    { "id": 3, "name": "Rotation & Scoping",     "gates": ["rotation-defined", "consumers-scoped", "staging-prod-separation"] },
+    { "id": 4, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "SH001", "name": "spec-valid",                "phase": 1 },
+    { "id": "SH002", "name": "no-env-vars-prod",          "phase": 2 },
+    { "id": "SH003", "name": "rotation-defined",          "phase": 3 },
+    { "id": "SH004", "name": "no-plaintext-logging",      "phase": 2 },
+    { "id": "SH005", "name": "consumers-scoped",          "phase": 3 },
+    { "id": "SH006", "name": "staging-prod-separation",   "phase": 3 },
+    { "id": "SH007", "name": "no-hardcoded-values",       "phase": 2 },
+    { "id": "SH008", "name": "no-todos",                  "phase": 4 }
+  ],
+  "error_codes": {
+    "SH001": "secret-spec.json missing or invalid — required fields: secrets[], storage, rotation",
+    "SH002": "Production secret stored in environment variable — use a secret manager (Vault, AWS SSM, GCP Secret Manager)",
+    "SH003": "Secret has no rotation schedule defined — all secrets must declare rotationDays",
+    "SH004": "Secret value may appear in logs — ensure secrets are masked in all log outputs",
+    "SH005": "Secret consumer has access to more secrets than it needs — scope each service to its minimum required secrets",
+    "SH006": "Staging and production share the same secret — environments must use separate secret values",
+    "SH007": "Hardcoded secret value found in spec — reference secrets by name only, never embed values",
+    "SH008": "TODO/FIXME/HACK comment found"
+  }
+}

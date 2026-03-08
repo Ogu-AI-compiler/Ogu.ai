@@ -1,0 +1,120 @@
+{
+  "compiler_id": "compiler_integration-architect",
+  "role": "integration-architect",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "architecture",
+    "display_name": "Integration Architect",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "integration-strategy",
+      "contract-design",
+      "resilience-planning",
+      "transformation-design",
+      "monitoring-plan"
+    ],
+    "consumes": ["Spec.md", "system inventory", "API contracts"],
+    "produces": ["integration-design.md", "interface-contracts.md", "error-handling-spec.md"]
+  },
+
+  "gates": [
+    {
+      "id": "integration-design-exists",
+      "description": "Integration design document must exist",
+      "type": "file_exists",
+      "pattern": "integration",
+      "severity": "error"
+    },
+    {
+      "id": "integration-pattern-justified",
+      "description": "Integration pattern selection (sync/async/event) must be justified",
+      "type": "file_contains",
+      "required_string": "pattern",
+      "severity": "error"
+    },
+    {
+      "id": "error-handling-defined",
+      "description": "Error handling and retry policy must be defined for each integration",
+      "type": "file_contains",
+      "required_string": "retry",
+      "severity": "error"
+    },
+    {
+      "id": "idempotency-defined",
+      "description": "Idempotency mechanism must be in place for all writes",
+      "type": "file_contains",
+      "required_string": "idempoten",
+      "severity": "error"
+    },
+    {
+      "id": "monitoring-defined",
+      "description": "Monitoring metrics per integration must be specified",
+      "type": "file_contains",
+      "required_string": "monitor",
+      "severity": "warn"
+    },
+    {
+      "id": "no-shared-database",
+      "description": "No shared database integration pattern in the design",
+      "type": "file_not_contains",
+      "banned_string": "shared database",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "point-to-point-spaghetti",
+      "description": "Every system calls every other system directly — N² potential connections"
+    },
+    {
+      "id": "chatty-integrations",
+      "description": "System A makes 50 API calls to System B to display one page"
+    },
+    {
+      "id": "leaky-integration",
+      "description": "Internal system details (DB IDs, error codes) exposed through the integration API"
+    },
+    {
+      "id": "synchronous-everything",
+      "description": "All integrations are synchronous request-response — one slow system blocks everything"
+    },
+    {
+      "id": "ignoring-unhappy-path",
+      "description": "Integration works when everything is up, no plan for when systems are down"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Two systems have incompatible data models with no clean transformation possible",
+    "An integration partner changes their contract without notice",
+    "Message queue backlog growing faster than being processed for >24 hours",
+    "Critical integration error rate exceeds 5% for more than 1 hour",
+    "Cross-team disagreement on who owns the contract between two systems"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with integration requirements",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Integration design document exists",
+      "Integration pattern selected and justified for each integration point",
+      "Error handling and retry policy defined",
+      "Idempotency mechanism specified for all write operations",
+      "Monitoring metrics defined per integration",
+      "No shared database pattern used"
+    ]
+  }
+}

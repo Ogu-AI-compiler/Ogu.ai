@@ -17,7 +17,7 @@ kadima:start → daemon.mjs (port 4200)
   ├─ Scheduler Loop — polls queue, dispatches tasks to runners
   ├─ State Machine Loop — auto-transitions features through pipeline
   ├─ Runner Pool — concurrent agent execution with isolation
-  └─ SSE Event Stream — real-time updates to Studio
+  └─ SSE Event Stream — real-time updates to UI (/api/events)
 ```
 
 ## Configuration

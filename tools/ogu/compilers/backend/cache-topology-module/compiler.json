@@ -1,0 +1,59 @@
+{
+  "id": "cache-topology-module",
+  "title": "Cache Topology Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the project-wide cache keyspace registry: namespaced keys, explicit TTL or no-expiry policy, deterministic key builders, declared serializers, and no duplicate key builders for the same resource.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "config-artifact.json",
+    "output_artifact": "cache-topology-artifact.json",
+    "identifier": "CACHE_TOPOLOGY"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Topology Check",
+      "gates": ["namespaces-valid", "ttl-declared", "no-duplicate-keys"]
+    },
+    {
+      "id": 3,
+      "name": "Determinism Check",
+      "gates": ["key-builders-deterministic"]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": ["contract-cache-topology"]
+    }
+  ],
+  "gates": [
+    { "id": "CT001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "CT002", "name": "namespaces-valid",            "phase": 2 },
+    { "id": "CT003", "name": "ttl-declared",                "phase": 2 },
+    { "id": "CT004", "name": "no-duplicate-keys",           "phase": 2 },
+    { "id": "CT005", "name": "key-builders-deterministic",  "phase": 3 },
+    { "id": "CT006", "name": "no-todos",                    "phase": 4 },
+    { "id": "CT007", "name": "tests-pass",                  "phase": 4 },
+    { "id": "CT008", "name": "contract-cache-topology",     "phase": 5 }
+  ],
+  "error_codes": {
+    "CT001": "cache-topology-spec.json missing or invalid",
+    "CT002": "Cache family missing namespace or namespace is not unique",
+    "CT003": "Cache family has neither ttl nor noExpiry:true declared",
+    "CT004": "Duplicate key builder for the same resource",
+    "CT005": "Cache key builder is non-deterministic (depends on Date.now(), Math.random(), etc.)",
+    "CT006": "TODO/FIXME/HACK comment found",
+    "CT007": "Tests failed",
+    "CT008": "Cache topology contract violation"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "eda-notebook",
+  "version": "1.0.0",
+  "description": "Contract rules for EDA notebooks",
+  "rules": [
+    { "id": "has-missing-analysis", "description": "Missing value analysis present" },
+    { "id": "has-distributions", "description": "Distribution analysis present" },
+    { "id": "has-correlations", "description": "Correlation analysis present" },
+    { "id": "no-raw-write", "description": "No writes to /raw/ directory" },
+    { "id": "has-findings", "description": "Key findings documented in markdown" }
+  ]
+}

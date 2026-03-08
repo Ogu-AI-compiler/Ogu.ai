@@ -1,0 +1,10 @@
+{
+  "id": "job-worker-contract",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "JOB_WORKER-001", "description": "Payload validated on receipt before processing", "enforcement": "gate:payload-validated-on-receipt" },
+    { "id": "JOB_WORKER-002", "description": "Idempotency key checked if declared in spec", "enforcement": "gate:idempotency-checked" },
+    { "id": "JOB_WORKER-003", "description": "Errors classified as retryable vs non-retryable (UnrecoverableError)", "enforcement": "gate:errors-typed" },
+    { "id": "JOB_WORKER-004", "description": "No unawaited async calls in processor", "enforcement": "gate:no-uncaught-rejection" }
+  ]
+}

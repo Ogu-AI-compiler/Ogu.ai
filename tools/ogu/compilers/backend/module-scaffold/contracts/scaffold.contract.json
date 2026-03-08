@@ -1,0 +1,37 @@
+{
+  "id": "scaffold-contract-v1",
+  "compiler": "module-scaffold",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "MOD-001",
+      "description": "Module must have a name that matches its folder name",
+      "severity": "error"
+    },
+    {
+      "id": "MOD-002",
+      "description": "Module must declare at least one capability",
+      "severity": "error"
+    },
+    {
+      "id": "MOD-003",
+      "description": "Module must have exactly one public entrypoint (index.ts)",
+      "severity": "error"
+    },
+    {
+      "id": "MOD-004",
+      "description": "Cross-module imports must go through the target module's index.ts",
+      "severity": "error"
+    },
+    {
+      "id": "MOD-005",
+      "description": "No circular imports across module boundaries",
+      "severity": "error"
+    },
+    {
+      "id": "MOD-006",
+      "description": "Internal folders must be declared in capabilities[] — no undeclared sprawl",
+      "severity": "warning"
+    }
+  ]
+}

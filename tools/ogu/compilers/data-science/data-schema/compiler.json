@@ -1,0 +1,37 @@
+{
+  "id": "data-schema",
+  "title": "Data Schema Compiler",
+  "version": "1.0.0",
+  "description": "Compiles typed data schema contracts for datasets. Enforces column typing, nullable handling, range constraints, categorical constraints, PII annotation, and primary key definition. Integrates with pandera and Great Expectations.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": null, "output_artifact": "schema-ds-artifact.json", "identifier": "DATA_SCHEMA" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Schema Structure", "gates": ["schema-typed", "no-nullable-silent", "primary-key-defined"] },
+    { "id": 3, "name": "Constraints", "gates": ["range-constraints", "categorical-constraints", "no-pii-unmasked"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-schema"] }
+  ],
+  "gates": [
+    { "id": "DS001", "name": "spec-valid",            "phase": 1 },
+    { "id": "DS002", "name": "schema-typed",          "phase": 2 },
+    { "id": "DS003", "name": "no-nullable-silent",    "phase": 2 },
+    { "id": "DS004", "name": "primary-key-defined",   "phase": 2 },
+    { "id": "DS005", "name": "range-constraints",     "phase": 3 },
+    { "id": "DS006", "name": "categorical-constraints","phase": 3 },
+    { "id": "DS007", "name": "no-pii-unmasked",       "phase": 3 },
+    { "id": "DS008", "name": "no-todos",              "phase": 4 },
+    { "id": "DS009", "name": "contract-schema",       "phase": 4 }
+  ],
+  "error_codes": {
+    "DS001": "Invalid data schema spec",
+    "DS002": "Column missing explicit dtype — every column must declare its Python/pandas dtype",
+    "DS003": "Nullable column has no null-handling strategy documented",
+    "DS004": "No primary key or unique identifier defined for dataset",
+    "DS005": "Numeric column missing range constraints (min/max)",
+    "DS006": "Categorical column missing allowed_values list",
+    "DS007": "PII column (email/SSN/phone/DOB) lacks masking/anonymization annotation",
+    "DS008": "TODO/FIXME found",
+    "DS009": "Schema contract violation"
+  }
+}

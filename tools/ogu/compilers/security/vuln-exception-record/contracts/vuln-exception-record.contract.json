@@ -1,0 +1,11 @@
+{
+  "id": "vuln-exception-record",
+  "version": "1.0.0",
+  "description": "A vuln-exception-record artifact documents a time-bounded, approved exception for a known vulnerability with compensating controls and a named approver.",
+  "rules": [
+    { "id": "required-fields-present", "description": "Record must declare: id, vulnerability_id, affected_component, justification, mitigation_context, expiry_date, and approver." },
+    { "id": "expiry-within-90-days", "description": "expiry_date must be a future date no more than 90 days from the current date." },
+    { "id": "mitigation-context-is-meaningful", "description": "mitigation_context must describe real compensating controls in at least 30 characters — placeholder values (N/A, TBD, TODO) are rejected." },
+    { "id": "approver-is-named-person", "description": "approver must be a real named individual (name or email) — system, automated, or placeholder values are rejected." }
+  ]
+}

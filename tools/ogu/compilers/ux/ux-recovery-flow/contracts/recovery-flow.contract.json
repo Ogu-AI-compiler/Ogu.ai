@@ -1,0 +1,47 @@
+{
+  "id": "ux-recovery-flow",
+  "version": "1.0.0",
+  "description": "A recovery flow artifact is valid when every failure state has a declared recovery action, critical failures provide escape routes, retry counts are bounded, backoff is declared for multi-retry paths, and user-facing error messages are specific and actionable.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "recovery-flow-spec.json must exist with a failures array. Features without a recovery spec have undefined error behavior."
+    },
+    {
+      "id": "at-least-one-failure",
+      "description": "The failures array must contain at least one entry. A recovery flow compiler with no failures has nothing to enforce."
+    },
+    {
+      "id": "unique-failure-ids",
+      "description": "All failure ids must be unique within the spec. Duplicate ids create ambiguous recovery routing."
+    },
+    {
+      "id": "all-failures-have-recovery-action",
+      "description": "Every failure must declare a recovery object with at least one of: retry, redirect, fallback, or contactSupport. An empty recovery leaves users stranded."
+    },
+    {
+      "id": "critical-failures-have-escape-hatch",
+      "description": "Failures with severity=critical or fatal must declare an escapeHatch (string action id). Users in critical failure states must have a path back to safety."
+    },
+    {
+      "id": "network-failures-have-fallback",
+      "description": "Failures with triggers containing 'offline' or 'network' must declare a fallback. Offline users need a degraded but functional experience."
+    },
+    {
+      "id": "retry-bounded",
+      "description": "Any recovery with retry:true must declare maxRetries between 1 and 10. Infinite retry loops degrade servers and frustrate users."
+    },
+    {
+      "id": "multi-retry-has-backoff",
+      "description": "Recoveries with retry:true and maxRetries > 1 must declare backoff as linear, exponential, or fixed. Rapid-fire retries without backoff can cause cascading server failures."
+    },
+    {
+      "id": "user-messages-specific",
+      "description": "Every failure must declare a userMessage that is specific and actionable. Generic messages like 'Something went wrong' give users no recovery information."
+    },
+    {
+      "id": "version-declared",
+      "description": "version must be declared for change tracking and spec migration."
+    }
+  ]
+}

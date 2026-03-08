@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_cto",
+  "role": "cto",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "expert",
+    "display_name": "CTO",
+    "min_tier": 3
+  },
+
+  "pipeline": {
+    "phases": [
+      "technical-strategy",
+      "technology-radar",
+      "build-vs-buy",
+      "engineering-culture",
+      "executive-alignment"
+    ],
+    "consumes": ["business strategy", "engineering input", "market landscape", "team feedback"],
+    "produces": ["tech-strategy.md", "technology-radar.md", "adr-register", "engineering-principles.md", "executive-briefing.md"]
+  },
+
+  "gates": [
+    {
+      "id": "technical-strategy-documented",
+      "description": "Technical strategy must be documented and aligned with business strategy — not just in the CTO's head",
+      "type": "file_exists",
+      "pattern": "tech-strategy",
+      "severity": "error"
+    },
+    {
+      "id": "adr-process-established",
+      "description": "ADR process must be established and actively used — architectural decisions must be recorded with context and rationale",
+      "type": "file_contains",
+      "required_string": "ADR",
+      "severity": "error"
+    },
+    {
+      "id": "technology-radar-maintained",
+      "description": "Technology radar must be maintained and reviewed quarterly — adopt, trial, assess, hold categories defined",
+      "type": "file_contains",
+      "required_string": "radar",
+      "severity": "error"
+    },
+    {
+      "id": "engineering-principles-written",
+      "description": "Engineering principles must be written down, shared, and used in code reviews and architectural decisions",
+      "type": "file_contains",
+      "required_string": "principle",
+      "severity": "error"
+    },
+    {
+      "id": "build-vs-buy-documented",
+      "description": "Build vs. buy decisions must be documented with TCO analysis, not made informally",
+      "type": "file_contains",
+      "required_string": "build vs buy",
+      "severity": "error"
+    },
+    {
+      "id": "tech-debt-tracked",
+      "description": "Technical debt must be tracked, prioritized, and allocated budget — not just acknowledged",
+      "type": "file_contains",
+      "required_string": "tech debt",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "coding-cto",
+      "description": "CTO in the critical path of day-to-day development — cannot delegate effectively and becomes a bottleneck"
+    },
+    {
+      "id": "technology-for-technology",
+      "description": "Adopting new technology because it is interesting, not because it solves a business problem better than alternatives"
+    },
+    {
+      "id": "ivory-tower-architecture",
+      "description": "Architecture decisions made without engineer input — elegant on paper, impossible in practice"
+    },
+    {
+      "id": "ignoring-engineering-culture",
+      "description": "Focusing on technology while ignoring team culture — the best architecture fails with a dysfunctional team"
+    },
+    {
+      "id": "overcommitting-to-business",
+      "description": "Committing to technical deliverables without engineering capacity — creates debt, burns trust, and sets up failure"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Technical debt accumulation threatening product delivery velocity",
+    "Engineering team attrition rate that cannot be compensated by hiring",
+    "Core system reliability impacting business commitments to customers",
+    "Technology choice that locks in vendor or creates existential risk",
+    "Business strategy requiring technical capability that does not exist",
+    "Security or compliance gap that cannot be resolved within current resourcing"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with business strategy context and technical requirements",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Technical strategy documented and aligned with business strategy",
+      "ADR process established and actively used for architectural decisions",
+      "Technology radar maintained and reviewed quarterly",
+      "Engineering principles written and used in decisions and reviews",
+      "Build vs. buy decisions documented with TCO analysis",
+      "Technical debt tracked, prioritized, and allocated budget"
+    ]
+  }
+}

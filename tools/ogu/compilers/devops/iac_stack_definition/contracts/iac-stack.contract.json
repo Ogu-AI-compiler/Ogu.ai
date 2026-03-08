@@ -1,0 +1,88 @@
+{
+  "id": "iac_stack_definition",
+  "version": "1.0.0",
+  "description": "Validates IaC stack definitions for platform and cloud validity, typed inputs, output coverage, no unresolved module refs, secret hygiene, approved providers, and environment completeness",
+  "rules": [
+    {
+      "id": "IAC001",
+      "gate": "spec-valid",
+      "description": "iac-spec.json must exist, be valid JSON, and declare platform, cloud, a non-empty environments array, and stateBackend. Both platform and cloud must be from the supported enum",
+      "required": true,
+      "mandatoryFields": ["platform", "cloud", "environments", "stateBackend"],
+      "fields": {
+        "platform": { "enum": ["terraform", "pulumi", "cdk", "ansible", "crossplane"] },
+        "cloud":    { "enum": ["aws", "gcp", "azure", "digitalocean", "cloudflare", "multi"] }
+      }
+    },
+    {
+      "id": "IAC002",
+      "gate": "inputs-declared",
+      "description": "For Terraform: every input declared in spec.inputs must have a matching variable block with a type annotation in the .tf files. For Pulumi/CDK: inputs must declare a type in the spec. Untyped inputs cause plan failures at the worst moment",
+      "required": false,
+      "note": "Skipped when spec.inputs is empty or absent",
+      "mandatoryInputFields": ["name", "type"],
+      "terraformConstraint": "Each input must have a corresponding variable block with a type = annotation in .tf files"
+    },
+    {
+      "id": "IAC003",
+      "gate": "outputs-declared",
+      "description": "For Terraform: every output declared in spec.outputs must have a corresponding output block in the .tf files. Missing outputs break downstream modules and deployment scripts that reference them",
+      "required": false,
+      "note": "Skipped when spec.outputs is empty or absent; skipped for non-Terraform platforms"
+    },
+    {
+      "id": "IAC004",
+      "gate": "no-unresolved-refs",
+      "description": "For Terraform: every module block in .tf files must declare a source attribute. A module block without a source is a syntax error that terraform init rejects before plan or apply can run",
+      "required": false,
+      "note": "Skipped for non-Terraform platforms and when no .tf files are present"
+    },
+    {
+      "id": "IAC005",
+      "gate": "no-hardcoded-credentials",
+      "description": "All IaC files (.tf, .yaml, .ts, .py) must not contain hardcoded credentials. Detected patterns include access_key, secret_key, api_key, password, token assignments with long literal values, and AWS Access Key ID patterns (AKIA*). Use variable references or secret managers instead",
+      "required": true,
+      "note": "Skipped when no IaC files are found",
+      "detectedPatterns": ["access_key = \"...\"", "secret_key = \"...\"", "AKIA[A-Z0-9]{16}"]
+    },
+    {
+      "id": "IAC006",
+      "gate": "provider-allowed",
+      "description": "For Terraform: all providers declared in required_providers blocks must be on the approved list for the target cloud. Unapproved providers introduce unreviewed integrations that bypass cost controls, security policies, and compliance boundaries",
+      "required": false,
+      "note": "Skipped for non-Terraform platforms and when no .tf files are present",
+      "allowedProviders": {
+        "aws":          ["aws", "hashicorp/aws", "archive", "null", "random", "local", "tls"],
+        "gcp":          ["google", "hashicorp/google", "google-beta", "archive", "null", "random"],
+        "azure":        ["azurerm", "hashicorp/azurerm", "azuread", "archive", "null", "random"],
+        "digitalocean": ["digitalocean", "archive", "null", "random"],
+        "cloudflare":   ["cloudflare", "archive", "null", "random"],
+        "multi":        ["aws", "google", "azurerm", "archive", "null", "random", "tls", "local"]
+      }
+    },
+    {
+      "id": "IAC007",
+      "gate": "no-todos",
+      "description": "iac-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "IAC008",
+      "gate": "contract-iac",
+      "description": "stateBackend must be a non-empty string (remote state required for team environments). environments must include both a production env (production/prod) AND a non-production env (staging/stage/dev/test). All object-typed inputs must have a description",
+      "required": true,
+      "constraints": {
+        "stateBackend": "Must be non-empty — remote state is required for multi-person teams",
+        "production-env": "environments must include 'production' or 'prod'",
+        "non-prod-env": "environments must include a staging/stage/dev/test environment",
+        "inputs-description": "All object-typed inputs must declare a non-empty description"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "iac-artifact.json",
+    "ir_id_prefix": "IAC_STACK:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

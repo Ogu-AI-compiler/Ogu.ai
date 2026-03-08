@@ -1,0 +1,75 @@
+{
+  "id": "background_worker_runtime",
+  "version": "1.0.0",
+  "description": "Validates that a background worker spec declares safe concurrency bounds, retry policy, dead-letter queue, timeout, image pinning, and queue bindings",
+  "rules": [
+    {
+      "id": "BW001",
+      "gate": "spec-valid",
+      "description": "bg-worker-spec.json must exist, be valid JSON, and declare name, image, and a non-empty queues array",
+      "required": true,
+      "mandatoryFields": ["name", "image", "queues"]
+    },
+    {
+      "id": "BW002",
+      "gate": "image-refs-valid",
+      "description": "The container image must be pinned to a specific version tag or SHA digest. Mutable tags cause non-deterministic worker behaviour across restarts",
+      "required": true,
+      "forbiddenTags": [":latest", ":dev", ":main", ":master", ":edge", "(implicit — no tag)"]
+    },
+    {
+      "id": "BW003",
+      "gate": "queue-bindings-valid",
+      "description": "Every queue entry must declare a name (the queue address) and a connection reference (the env var name pointing to the broker URL). A missing connection causes a runtime startup failure",
+      "required": true,
+      "mandatoryQueueFields": ["name", "connection"]
+    },
+    {
+      "id": "BW004",
+      "gate": "grace-period-set",
+      "description": "A graceful shutdown period (terminationGracePeriodSeconds or shutdownTimeoutMs) must be declared. Without it, in-flight messages are interrupted mid-processing when the worker is restarted or scaled down",
+      "required": true
+    },
+    {
+      "id": "BW005",
+      "gate": "worker-not-exposed",
+      "description": "Background workers must not declare HTTP ports or expose a public endpoint. A worker with an exposed port is a service, not a worker, and belongs in a different compiler",
+      "required": true
+    },
+    {
+      "id": "BW006",
+      "gate": "autoscaling-bounds-valid",
+      "description": "When autoscaling is declared (hpa or keda), minReplicas must be >= 1 and maxReplicas must be > minReplicas. Zero minReplicas causes cold-start latency under burst load",
+      "required": false,
+      "note": "Skipped when no autoscaling config is declared",
+      "constraints": {
+        "minReplicas": { "min": 1 },
+        "maxReplicas": { "greaterThan": "minReplicas" }
+      }
+    },
+    {
+      "id": "BW007",
+      "gate": "no-todos",
+      "description": "bg-worker-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "BW008",
+      "gate": "contract-worker-runtime",
+      "description": "deadLetterQueue must be configured (messages exceeding maxRetries are silently dropped otherwise). owner is required for accountability. maxRetries must be a non-negative integer. concurrency must be declared to prevent resource exhaustion",
+      "required": true,
+      "mandatoryFields": ["deadLetterQueue", "owner", "maxRetries", "concurrency"],
+      "fields": {
+        "maxRetries":   { "type": "integer", "min": 0 },
+        "concurrency":  { "type": "integer", "min": 1 }
+      },
+      "note": "concurrency check can be skipped with skipConcurrencyCheck: true when broker enforces this externally"
+    }
+  ],
+  "artifact": {
+    "file": "worker-runtime-artifact.json",
+    "ir_id_prefix": "WORKER_RUNTIME:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

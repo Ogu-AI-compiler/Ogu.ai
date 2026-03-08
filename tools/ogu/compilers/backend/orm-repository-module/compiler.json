@@ -1,0 +1,72 @@
+{
+  "id": "orm-repository-module",
+  "title": "ORM Repository Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a typed ORM repository from a data access spec. Enforces: no HTTP framework imports, fully typed signatures (no any), paginated reads require stable ordering, mutating methods return typed results, no raw SQL unless explicitly escaped, no external network calls.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "migration-artifact.json",
+    "output_artifact": "repository-artifact.json",
+    "identifier": "REPOSITORY"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid", "cross-migration"]
+    },
+    {
+      "id": 2,
+      "name": "Type Check",
+      "gates": ["ts-valid", "no-any"]
+    },
+    {
+      "id": 3,
+      "name": "Boundary Check",
+      "gates": ["no-http-imports", "no-network-calls", "paginated-ordered"]
+    },
+    {
+      "id": 4,
+      "name": "Return Types",
+      "gates": ["typed-returns", "no-raw-sql"]
+    },
+    {
+      "id": 5,
+      "name": "Quality",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-repository"]
+    }
+  ],
+  "gates": [
+    { "id": "OR001", "name": "spec-valid",       "phase": 1 },
+    { "id": "OR002", "name": "cross-migration",  "phase": 1 },
+    { "id": "OR003", "name": "ts-valid",         "phase": 2 },
+    { "id": "OR004", "name": "no-any",           "phase": 2 },
+    { "id": "OR005", "name": "no-http-imports",  "phase": 3 },
+    { "id": "OR006", "name": "no-network-calls", "phase": 3 },
+    { "id": "OR007", "name": "paginated-ordered","phase": 3 },
+    { "id": "OR008", "name": "typed-returns",    "phase": 4 },
+    { "id": "OR009", "name": "no-raw-sql",       "phase": 4 },
+    { "id": "OR010", "name": "no-todos",         "phase": 5 },
+    { "id": "OR011", "name": "tests-pass",       "phase": 5 },
+    { "id": "OR012", "name": "contract-repository", "phase": 6 }
+  ],
+  "error_codes": {
+    "OR001": "repository-spec.json missing or invalid",
+    "OR002": "Repository entity not found in migration-artifact — compile db-migration first",
+    "OR003": "TypeScript compilation failed",
+    "OR004": "Explicit 'any' type found in repository",
+    "OR005": "Repository imports HTTP framework types (express, fastify, Request, Response)",
+    "OR006": "Repository makes external network call (fetch, axios, http.request)",
+    "OR007": "Paginated repository method lacks stable ordering (ORDER BY required)",
+    "OR008": "Mutating method has no typed return (void or undefined not allowed for writes)",
+    "OR009": "Raw SQL without explicit escape hatch comment",
+    "OR010": "TODO/FIXME/HACK comment found",
+    "OR011": "Tests failed",
+    "OR012": "Repository contract violation"
+  }
+}

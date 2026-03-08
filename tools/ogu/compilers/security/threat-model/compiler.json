@@ -1,0 +1,41 @@
+{
+  "id": "threat-model",
+  "title": "Threat Model Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a structured threat model for a feature or system. Enforces: STRIDE categories used correctly, risk scores are valid, all high-risk threats have mitigations, every asset has at least one threat, trust boundaries are named, mitigations reference a downstream security compiler, and LLM/AI surfaces are addressed if present.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "threat-model.compiled.json",
+    "identifier": "THREAT_MODEL"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Threat Coverage",         "gates": ["stride-categories-valid", "risk-score-valid", "every-asset-has-threat"] },
+    { "id": 3, "name": "Mitigation & Boundaries", "gates": ["high-risk-mitigated", "trust-boundaries-named", "mitigations-reference-compiler"] },
+    { "id": 4, "name": "LLM Surfaces",            "gates": ["llm-surfaces-addressed"] },
+    { "id": 5, "name": "Quality",                 "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "TM001", "name": "spec-valid",                      "phase": 1 },
+    { "id": "TM002", "name": "stride-categories-valid",         "phase": 2 },
+    { "id": "TM003", "name": "risk-score-valid",                "phase": 2 },
+    { "id": "TM004", "name": "high-risk-mitigated",             "phase": 3 },
+    { "id": "TM005", "name": "every-asset-has-threat",          "phase": 2 },
+    { "id": "TM006", "name": "trust-boundaries-named",          "phase": 3 },
+    { "id": "TM007", "name": "mitigations-reference-compiler",  "phase": 3 },
+    { "id": "TM008", "name": "llm-surfaces-addressed",          "phase": 4 },
+    { "id": "TM009", "name": "no-todos",                        "phase": 5 }
+  ],
+  "error_codes": {
+    "TM001": "threat-model-spec.json missing or invalid — required fields: assets[], threats[], trustBoundaries[]",
+    "TM002": "Threat uses invalid STRIDE category — must be one of: Spoofing, Tampering, Repudiation, InformationDisclosure, DenialOfService, ElevationOfPrivilege",
+    "TM003": "Risk score format invalid — use likelihood (1-5) × impact (1-5) = total (1-25), or CVSS 0.0-10.0",
+    "TM004": "High-risk threat (score ≥15 or CVSS ≥7.0) has no mitigation — all high threats require a documented mitigation",
+    "TM005": "One or more assets have no associated threat — every asset in scope must have at least one threat enumerated",
+    "TM006": "Trust boundaries not named or not associated with threats — name all trust boundaries and link relevant threats",
+    "TM007": "Mitigation does not reference a security compiler output — mitigations must point to: authz-policy, input-validation-policy, rate-limit-policy, etc.",
+    "TM008": "System includes LLM/AI surfaces but no prompt injection or model abuse threats are documented",
+    "TM009": "TODO/FIXME/HACK comment found"
+  }
+}

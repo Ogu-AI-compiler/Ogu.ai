@@ -1,0 +1,35 @@
+{
+  "id": "role-privilege-policy",
+  "title": "Role Privilege Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the database role privilege policy. Enforces: no superuser application roles, no DDL privileges (DROP/TRUNCATE/ALTER) for app roles, no ALL PRIVILEGES wildcard, PII tables require row-level security flag, migration roles are separated from application roles, and analytics roles are strictly read-only.",
+  "tier": "database-admin",
+  "ir": {
+    "input_artifact": "db-provisioning-spec-artifact.json",
+    "output_artifact": "role-privilege-policy-artifact.json",
+    "identifier": "ROLE_PRIVILEGE_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",    "gates": ["spec-valid"] },
+    { "id": 2, "name": "Privilege Hardening",       "gates": ["no-superuser", "no-ddl-privileges", "no-all-privileges"] },
+    { "id": 3, "name": "PII & Role Separation",     "gates": ["pii-row-level-security", "migration-role-separation", "analytics-readonly"] }
+  ],
+  "gates": [
+    { "id": "RPP001", "name": "spec-valid",                 "phase": 1 },
+    { "id": "RPP002", "name": "no-superuser",               "phase": 2 },
+    { "id": "RPP003", "name": "no-ddl-privileges",          "phase": 2 },
+    { "id": "RPP004", "name": "no-all-privileges",          "phase": 2 },
+    { "id": "RPP005", "name": "pii-row-level-security",     "phase": 3 },
+    { "id": "RPP006", "name": "migration-role-separation",  "phase": 3 },
+    { "id": "RPP007", "name": "analytics-readonly",         "phase": 3 }
+  ],
+  "error_codes": {
+    "RPP001": "role-privilege-policy.json missing or invalid — required fields: roles[] with name, privileges[], tables[]",
+    "RPP002": "Application service role has superuser: true — application roles must never have superuser privileges",
+    "RPP003": "Application role has DDL privilege (DROP, TRUNCATE, ALTER, CREATE) — only migration roles may hold DDL rights",
+    "RPP004": "Role uses ALL PRIVILEGES wildcard — enumerate specific privileges explicitly; wildcards make auditing impossible",
+    "RPP005": "Role accesses PII-tier table without row_level_security: required flag — RLS is mandatory for all PII table access",
+    "RPP006": "Migration role and application role share the same account — migration and runtime credentials must be separate",
+    "RPP007": "Analytics role has write privileges (INSERT, UPDATE, DELETE) — analytics roles must be strictly SELECT-only"
+  }
+}

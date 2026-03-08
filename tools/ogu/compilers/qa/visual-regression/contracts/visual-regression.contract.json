@@ -1,0 +1,41 @@
+{
+  "id": "visual-regression",
+  "version": "1.0.0",
+  "description": "Visual regression spec contract — validates tool, viewport coverage, diff threshold, approval workflow, and Storybook integration",
+  "rules": [
+    {
+      "id": "VR-C01",
+      "description": "tool must be one of: chromatic, percy, applitools, playwright-vrt, backstop, lost-pixel, reg-suit, storyshots",
+      "required": true,
+      "enum": ["chromatic", "percy", "applitools", "playwright-vrt", "backstop", "lost-pixel", "reg-suit", "storyshots"]
+    },
+    {
+      "id": "VR-C02",
+      "description": "diffThreshold must be between 0.001 and 0.05 (0.1%–5%)",
+      "required": true,
+      "type": "number",
+      "min": 0.001,
+      "max": 0.05
+    },
+    {
+      "id": "VR-C03",
+      "description": "At least one mobile viewport (width ≤ 768px) must be present",
+      "required": true
+    },
+    {
+      "id": "VR-C04",
+      "description": "approvalWorkflow.mode must not be 'auto-approve-all', 'skip', 'none', or 'ignore'",
+      "required": true
+    },
+    {
+      "id": "VR-C05",
+      "description": "storybookBuildDir must be declared when stories[] is non-empty",
+      "required": false
+    }
+  ],
+  "artifact": {
+    "file": "visual-regression-artifact.json",
+    "ir_id_prefix": "VISUAL_REGRESSION:",
+    "required_fields": ["ir_id", "tool", "viewports", "diffThreshold", "attestation"]
+  }
+}

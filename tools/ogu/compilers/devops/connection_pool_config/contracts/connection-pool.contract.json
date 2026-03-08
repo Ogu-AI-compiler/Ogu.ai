@@ -1,0 +1,75 @@
+{
+  "id": "connection_pool_config",
+  "version": "1.0.0",
+  "description": "Validates connection pool configurations for positive numeric limits, client connection headroom, host reference declarations, recognised auth/TLS modes, and failover policy",
+  "rules": [
+    {
+      "id": "CP001",
+      "gate": "spec-valid",
+      "description": "connection-pool-spec.json must exist, be valid JSON, and declare pooler, maxClientConn, poolSize, and host",
+      "required": true,
+      "mandatoryFields": ["pooler", "maxClientConn", "poolSize", "host"]
+    },
+    {
+      "id": "CP002",
+      "gate": "limits-positive",
+      "description": "maxClientConn, poolSize, and maxConnections (when declared) must be positive integers. Non-positive or non-integer values are rejected by PgBouncer/pgpool at startup with a configuration parse error",
+      "required": true,
+      "fields": {
+        "maxClientConn":  { "type": "integer", "min": 1 },
+        "poolSize":       { "type": "integer", "min": 1 },
+        "maxConnections": { "type": "integer", "min": 1 }
+      }
+    },
+    {
+      "id": "CP003",
+      "gate": "client-conn-sufficient",
+      "description": "maxClientConn must be >= poolSize. If maxClientConn < poolSize, the pool exhausts available connections immediately. Additionally, headroom below 10% of maxClientConn causes queueing under normal load spikes (overridable with skipHeadroomCheck: true)",
+      "required": false,
+      "note": "Skipped when maxClientConn or poolSize is absent",
+      "constraints": {
+        "maxClientConn >= poolSize": "Required — otherwise pool is immediately saturated",
+        "headroom >= 10%": "Advisory — less than 10% headroom causes load-spike queueing"
+      }
+    },
+    {
+      "id": "CP004",
+      "gate": "auth-tls-valid",
+      "description": "authType and tlsMode, when declared, must use recognised values. An unrecognised authType causes PgBouncer to reject the config at startup. An invalid tlsMode silently falls back to the default, which may be weaker than intended",
+      "required": true,
+      "fields": {
+        "authType": { "enum": ["md5", "scram-sha-256", "trust", "peer", "cert", "password"] },
+        "tlsMode":  { "enum": ["require", "prefer", "disable", "verify-ca", "verify-full"] }
+      },
+      "note": "Skipped for fields that are absent"
+    },
+    {
+      "id": "CP005",
+      "gate": "host-refs-declared",
+      "description": "The host field must reference a hostname or env var rather than a literal IP address. Literal IPs in connection pool configs are fragile — they break on DB primary failover",
+      "required": true
+    },
+    {
+      "id": "CP006",
+      "gate": "no-todos",
+      "description": "connection-pool-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "CP007",
+      "gate": "contract-connection-pool",
+      "description": "TLS must not be disabled (tlsMode: disable) without a disableTlsJustification. A failoverPolicy must be declared to handle DB primary failover without manual pool restart",
+      "required": true,
+      "constraints": {
+        "tls-disable": "tlsMode: 'disable' requires disableTlsJustification to be set",
+        "failoverPolicy": "Must be declared — e.g. 'reconnect-on-error' or 'read-replica-fallback'"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "connection-pool-artifact.json",
+    "ir_id_prefix": "CONNECTION_POOL:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

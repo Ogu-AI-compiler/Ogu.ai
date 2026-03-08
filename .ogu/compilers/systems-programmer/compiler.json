@@ -1,0 +1,120 @@
+{
+  "compiler_id": "compiler_systems-programmer",
+  "role": "systems-programmer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "engineering",
+    "display_name": "Systems Programmer",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "design",
+      "implementation",
+      "memory-safety-review",
+      "concurrency-review",
+      "performance-benchmarking"
+    ],
+    "consumes": ["Spec.md", "Plan.json", "performance requirements"],
+    "produces": ["system source files", "benchmarks", "sanitizer reports"]
+  },
+
+  "gates": [
+    {
+      "id": "source-files-exist",
+      "description": "At least one system-level source file must be produced",
+      "type": "output_count",
+      "min": 1,
+      "severity": "error"
+    },
+    {
+      "id": "no-undefined-behavior",
+      "description": "No use-after-free, buffer overflows, or undefined behavior patterns",
+      "type": "file_not_contains",
+      "banned_string": "free(ptr); ptr",
+      "severity": "error"
+    },
+    {
+      "id": "ownership-documented",
+      "description": "Memory ownership semantics must be documented",
+      "type": "file_contains",
+      "required_string": "owner",
+      "severity": "error"
+    },
+    {
+      "id": "error-handling-present",
+      "description": "All error paths must be handled — no ignored return values",
+      "type": "file_contains",
+      "required_string": "error",
+      "severity": "error"
+    },
+    {
+      "id": "benchmark-exists",
+      "description": "Performance benchmarks must be produced for hot paths",
+      "type": "file_contains",
+      "required_string": "bench",
+      "severity": "warn"
+    },
+    {
+      "id": "no-global-mutable-state",
+      "description": "No unprotected global mutable state",
+      "type": "file_not_contains",
+      "banned_string": "global_state",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "premature-optimization",
+      "description": "Micro-optimizing code that runs once per request while the real bottleneck is elsewhere"
+    },
+    {
+      "id": "lock-everything",
+      "description": "Protecting every shared variable with a mutex — contention kills parallelism"
+    },
+    {
+      "id": "ignoring-platform-differences",
+      "description": "Code works on Linux but segfaults on macOS due to different ABI conventions"
+    },
+    {
+      "id": "manual-string-management",
+      "description": "Buffer overflows, off-by-one errors, null-terminator bugs from unsafe string ops"
+    },
+    {
+      "id": "abstraction-allergies",
+      "description": "Rejecting all abstractions as 'slow' — correctness beats performance 99% of the time"
+    }
+  ],
+
+  "escalation_triggers": [
+    "A hardware bug or OS kernel bug is suspected",
+    "Performance requirements cannot be met without custom hardware or kernel modifications",
+    "Memory corruption detected with no reproducible test case",
+    "Thread starvation or deadlock in production with no clear root cause",
+    "System approaching hardware limits (network bandwidth, disk I/O, CPU cycles)"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with system-level requirements and performance targets",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Memory ownership semantics documented for all allocations",
+      "No use-after-free or double-free patterns",
+      "All error paths handled or explicitly propagated",
+      "Performance benchmarks produced for critical paths",
+      "No data races (verified via sanitizers or analysis)",
+      "No unprotected global mutable state"
+    ]
+  }
+}

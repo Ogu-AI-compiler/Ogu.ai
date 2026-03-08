@@ -1,0 +1,40 @@
+{
+  "id": "experiment-variant-wrapper",
+  "title": "Experiment Variant Wrapper Compiler",
+  "version": "1.0.0",
+  "description": "Compiles A/B experiment variant wrappers with deterministic allocation, single exposure event per session, and required fallback variant.",
+  "tier": "frontend",
+  "ir": { "input_artifact": "flag-artifact.json", "output_artifact": "experiment-artifact.json", "identifier": "EXPERIMENT" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["fallback-variant", "single-exposure", "no-branching-sprawl"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Cross-Compiler Verify", "gates": ["cross-flag"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-experiment"] }
+  ],
+  "gates": [
+    { "id": "EV001", "name": "spec-valid",          "phase": 1 },
+    { "id": "EV002", "name": "ts-valid",            "phase": 2 },
+    { "id": "EV003", "name": "no-any",              "phase": 2 },
+    { "id": "EV004", "name": "fallback-variant",    "phase": 3 },
+    { "id": "EV005", "name": "single-exposure",     "phase": 3 },
+    { "id": "EV006", "name": "no-branching-sprawl", "phase": 3 },
+    { "id": "EV007", "name": "no-todos",            "phase": 4 },
+    { "id": "EV008", "name": "tests-pass",          "phase": 4 },
+    { "id": "EV009", "name": "cross-flag",          "phase": 5 },
+    { "id": "EV010", "name": "contract-experiment", "phase": 6 }
+  ],
+  "error_codes": {
+    "EV001": "Invalid experiment spec",
+    "EV002": "TypeScript compilation failed",
+    "EV003": "Explicit 'any' found",
+    "EV004": "No fallback/control variant — all experiments must have a defined default",
+    "EV005": "Exposure event not deduplicated per session — can double-fire",
+    "EV006": "Experiment branching scattered across files — must be in single wrapper",
+    "EV007": "TODO/FIXME found",
+    "EV008": "Tests failed",
+    "EV009": "flag-artifact not found — compile feature-flag first",
+    "EV010": "Contract violation"
+  }
+}

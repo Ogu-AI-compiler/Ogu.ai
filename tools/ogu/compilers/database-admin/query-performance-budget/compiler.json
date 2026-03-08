@@ -1,0 +1,33 @@
+{
+  "id": "query-performance-budget",
+  "title": "Query Performance Budget Compiler",
+  "version": "1.0.0",
+  "description": "Compiles per-feature query performance budgets. Enforces: all workload classes defined, transaction durations within spec, replica timeouts are tighter than primary timeouts, declared latency is within SLA, and no vague (non-numeric) timeout values.",
+  "tier": "database-admin",
+  "ir": {
+    "input_artifact": "index-advisory-spec-artifact.json",
+    "output_artifact": "query-performance-budget-artifact.json",
+    "identifier": "QUERY_PERFORMANCE_BUDGET"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Workload & Timeouts",    "gates": ["workload-classes", "max-transaction-duration", "no-vague-timeouts"] },
+    { "id": 3, "name": "SLA & Routing",          "gates": ["replica-timeout-tighter", "latency-within-sla"] }
+  ],
+  "gates": [
+    { "id": "QPB001", "name": "spec-valid",               "phase": 1 },
+    { "id": "QPB002", "name": "workload-classes",         "phase": 2 },
+    { "id": "QPB003", "name": "max-transaction-duration", "phase": 2 },
+    { "id": "QPB004", "name": "replica-timeout-tighter",  "phase": 3 },
+    { "id": "QPB005", "name": "latency-within-sla",       "phase": 3 },
+    { "id": "QPB006", "name": "no-vague-timeouts",        "phase": 2 }
+  ],
+  "error_codes": {
+    "QPB001": "query-performance-budget.json missing or invalid — required fields: workload_classes[], sla{}, budgets[]",
+    "QPB002": "Not all workload classes are defined — every declared query type (OLTP, OLAP, batch, migration) must have a budget entry",
+    "QPB003": "Transaction duration exceeds maximum allowed — long-running transactions hold locks and block vacuum",
+    "QPB004": "Replica timeout is not tighter than primary timeout — replica queries must time out sooner to allow primary fallback",
+    "QPB005": "Declared latency budget exceeds SLA — the query performance budget must fit within the declared service-level objective",
+    "QPB006": "Vague (non-numeric) timeout value found — all timeouts must be expressed as integer milliseconds or seconds"
+  }
+}

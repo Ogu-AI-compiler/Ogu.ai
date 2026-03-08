@@ -1,0 +1,13 @@
+{
+  "id": "data-pipeline-script",
+  "version": "1.0.0",
+  "description": "Contract rules for data pipeline scripts",
+  "rules": [
+    { "id": "uses-pathlib", "description": "No hardcoded absolute paths" },
+    { "id": "has-logging", "description": "Use logging module" },
+    { "id": "schema-validated", "description": "Schema validated at pipeline boundaries" },
+    { "id": "has-main-guard", "description": "if __name__ == __main__: guard present" },
+    { "id": "idempotent", "description": "Pipeline is idempotent — no append-mode writes" },
+    { "id": "no-bare-except", "description": "No bare except: blocks" }
+  ]
+}

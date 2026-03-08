@@ -1,0 +1,190 @@
+{
+  "id": "auth-middleware",
+  "version": "1.0.0",
+  "title": "Auth Middleware Compiler",
+  "description": "Formal compiler for authentication middleware: token verification, expiry, refresh, rate limiting, and secret hygiene. Foundational — no upstream dependencies.",
+  "ir_prefix": "AUTH",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract auth spec: strategy (JWT/session/API key), token shape, expiry policy, refresh policy, rate limits",
+      "model": "haiku",
+      "outputs": ["auth-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "scaffold",
+      "title": "Scaffold",
+      "description": "Generate middleware.ts, token.ts, errors.ts, and types.ts stubs",
+      "model": "haiku",
+      "outputs": ["middleware.ts", "token.ts", "errors.ts", "types.ts"],
+      "gates": ["spec-valid", "exports-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "implement",
+      "title": "Implement",
+      "description": "Full auth implementation: verify token, check expiry, handle refresh, enforce rate limits",
+      "model": "sonnet",
+      "outputs": ["middleware.ts", "token.ts"],
+      "gates": ["no-hardcoded-secrets", "expiry-checked", "no-todos", "error-typed"]
+    },
+    {
+      "phase": 3,
+      "id": "test",
+      "title": "Test",
+      "description": "Unit tests: valid token, expired token, malformed token, missing token, refresh flow, rate limit hit",
+      "model": "sonnet",
+      "outputs": ["middleware.test.ts"],
+      "gates": ["tests-pass", "coverage"]
+    },
+    {
+      "phase": 4,
+      "id": "verify",
+      "title": "Verify",
+      "description": "Security contract verification: no secrets leaked, timing-safe comparisons, proper error messages",
+      "model": "haiku",
+      "outputs": ["verification.json"],
+      "gates": ["timing-safe", "no-secret-leak", "contract-auth"]
+    },
+    {
+      "phase": 5,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed auth-artifact.json for downstream compilers (api-route cross-check)",
+      "model": "haiku",
+      "outputs": ["auth-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "auth-spec.json exists with required fields: strategy, tokenShape, expiry, refresh",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "exports-valid",
+      "title": "Exports Valid",
+      "description": "middleware.ts exports requireAuth, optionalAuth. token.ts exports signToken, verifyToken.",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-hardcoded-secrets",
+      "title": "No Hardcoded Secrets",
+      "description": "No JWT secrets, API keys, or passwords hardcoded in source — must use process.env or secret broker",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "expiry-checked",
+      "title": "Expiry Checked",
+      "description": "Token verification explicitly checks expiry — no jwt.decode() without verify(), no ignoring exp claim",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-todos",
+      "title": "No TODOs",
+      "description": "No TODO/FIXME/HACK/PLACEHOLDER in auth implementation files",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "error-typed",
+      "title": "Typed Auth Errors",
+      "description": "Auth errors use typed classes (AuthError, TokenExpiredError, InvalidTokenError) — not generic Error",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "tests-pass",
+      "title": "Tests Pass",
+      "description": "All auth unit tests pass: valid/expired/malformed/missing token, refresh, rate limit",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "coverage",
+      "title": "Test Coverage",
+      "description": "≥85% line coverage for middleware.ts and token.ts (higher bar than default — auth is critical path)",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "timing-safe",
+      "title": "Timing-Safe Comparisons",
+      "description": "API key or secret comparisons use crypto.timingSafeEqual — never === or string comparison",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "no-secret-leak",
+      "title": "No Secret Leak",
+      "description": "Error messages and logs never include token values, secrets, or raw credentials",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "contract-auth",
+      "title": "Auth Contract",
+      "description": "Middleware matches auth.contract.json: requireAuth signature, error envelope shape, header extraction",
+      "phase": 4,
+      "required": true,
+      "contract": "auth"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "auth",
+      "file": "contracts/auth.contract.json",
+      "description": "Structural and security requirements for all compiled auth middleware"
+    }
+  ],
+  "ir": {
+    "identifiers": [
+      "AUTH:requireAuth",
+      "AUTH:optionalAuth",
+      "AUTH:signToken",
+      "AUTH:verifyToken",
+      "AUTH:refreshToken"
+    ],
+    "output_artifact": "auth-artifact.json",
+    "artifact_schema": "auth-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 1,
+    "budget_limit_usd": 0.50
+  },
+  "attestation": {
+    "schema": "auth-artifact-v1",
+    "fields": [
+      "strategy", "tokenShape", "expiry", "refresh",
+      "exports", "gates_passed", "coverage",
+      "timing_safe", "no_secret_leak",
+      "compiled_at", "compiler_version"
+    ]
+  },
+  "error_codes": {
+    "AM001": "auth-spec.json missing or invalid",
+    "AM002": "Required exports missing (requireAuth, verifyToken, etc.)",
+    "AM003": "Hardcoded secret detected in source",
+    "AM004": "Token expiry not checked during verification",
+    "AM005": "TODO/FIXME found in auth implementation",
+    "AM006": "Generic Error used instead of typed AuthError",
+    "AM007": "Auth tests failed",
+    "AM008": "Coverage below 85% threshold",
+    "AM009": "String comparison used instead of timingSafeEqual",
+    "AM010": "Token or secret value exposed in error message or log",
+    "AM011": "Auth contract violation"
+  }
+}

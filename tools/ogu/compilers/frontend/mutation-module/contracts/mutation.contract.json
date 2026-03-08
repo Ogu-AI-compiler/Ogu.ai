@@ -1,0 +1,41 @@
+{
+  "id": "mutation-module",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "typed-generics",
+      "description": "useMutation must declare all three generics: <ResponseType, ErrorType, VariablesType>",
+      "severity": "error"
+    },
+    {
+      "id": "on-error-handler",
+      "description": "Every mutation must have explicit error handling via onError or typed error generic",
+      "severity": "error"
+    },
+    {
+      "id": "invalidates-on-success",
+      "description": "onSuccess must call invalidateQueries or setQueryData to keep cache consistent",
+      "severity": "error"
+    },
+    {
+      "id": "no-direct-state",
+      "description": "Do not call setState inside onSuccess — use query cache for derived state",
+      "severity": "warning"
+    },
+    {
+      "id": "typed-variables",
+      "description": "Mutation variables must have explicit TypeScript types (no implicit any payload)",
+      "severity": "error"
+    },
+    {
+      "id": "optimistic-rollback",
+      "description": "If onMutate is used for optimistic updates, onError must restore previous state via context",
+      "severity": "error"
+    },
+    {
+      "id": "name-ends-with-mutation",
+      "description": "Hook name must end with 'Mutation' for clear intent (e.g., useUpdateUserMutation)",
+      "severity": "warning"
+    }
+  ]
+}

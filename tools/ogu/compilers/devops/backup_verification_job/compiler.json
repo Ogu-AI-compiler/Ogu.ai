@@ -1,0 +1,97 @@
+{
+  "id": "backup_verification_job",
+  "title": "Backup Verification Job Compiler",
+  "version": "1.0.0",
+  "description": "Compiles backup restore-and-verify jobs. Enforces: job config validates, restore target is non-production, latest backup restore completes in verification env, verification queries pass, result artifact emitted.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "db-backup-artifact.json",
+    "output_artifact": "backup-verify-artifact.json",
+    "identifier": "BACKUP_VERIFY"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "target-non-production",
+        "verify-queries-defined"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "result-artifact-path",
+        "schedule-or-trigger"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-backup-verify"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "BV001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "BV002",
+      "name": "target-non-production",
+      "phase": 2
+    },
+    {
+      "id": "BV003",
+      "name": "verify-queries-defined",
+      "phase": 2
+    },
+    {
+      "id": "BV004",
+      "name": "result-artifact-path",
+      "phase": 3
+    },
+    {
+      "id": "BV005",
+      "name": "schedule-or-trigger",
+      "phase": 3
+    },
+    {
+      "id": "BV006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "BV007",
+      "name": "contract-backup-verify",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "BV001": "backup-verify-spec.json missing — required: backupSource, restoreTarget, verifyQueries[]",
+    "BV002": "Restore target is production — verification must use a non-production environment",
+    "BV003": "No verification queries defined — cannot confirm backup integrity",
+    "BV004": "No result artifact output path defined",
+    "BV005": "No schedule or trigger defined for verification job",
+    "BV006": "TODO/FIXME found",
+    "BV007": "Backup verification job contract violation"
+  }
+}

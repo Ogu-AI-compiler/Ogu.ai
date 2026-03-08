@@ -1,0 +1,34 @@
+{
+  "id": "audit-log-policy",
+  "title": "Audit Log Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the audit log policy for a feature or service. Enforces: required event fields in schema, no raw PII in log payloads, all high-risk actions have explicit log rules, and retention period is defined.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "threat-model.compiled.json",
+    "output_artifact": "audit-log-policy.compiled.json",
+    "identifier": "AUDIT_LOG_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Schema & Coverage",       "gates": ["required-fields-in-schema", "high-risk-actions-logged"] },
+    { "id": 3, "name": "Privacy & Retention",     "gates": ["no-pii-in-logs", "retention-defined"] },
+    { "id": 4, "name": "Quality",                 "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "AL001", "name": "spec-valid",                "phase": 1 },
+    { "id": "AL002", "name": "required-fields-in-schema", "phase": 2 },
+    { "id": "AL003", "name": "no-pii-in-logs",           "phase": 3 },
+    { "id": "AL004", "name": "high-risk-actions-logged",  "phase": 2 },
+    { "id": "AL005", "name": "retention-defined",         "phase": 3 },
+    { "id": "AL006", "name": "no-todos",                  "phase": 4 }
+  ],
+  "error_codes": {
+    "AL001": "audit-log-spec.json missing or invalid — required fields: schema, actions[], retentionDays",
+    "AL002": "Audit log schema missing required fields — must include: eventId, timestamp, actorId, action, resource, outcome",
+    "AL003": "Raw PII found in log field mapping — mask or hash PII fields before logging",
+    "AL004": "One or more high-risk actions (DELETE, admin ops, auth events) have no audit log rule",
+    "AL005": "Retention period not defined — specify retentionDays or reference a retention policy",
+    "AL006": "TODO/FIXME/HACK comment found"
+  }
+}

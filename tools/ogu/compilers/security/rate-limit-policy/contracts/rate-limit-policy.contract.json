@@ -1,0 +1,11 @@
+{
+  "id": "rate-limit-policy",
+  "version": "1.0.0",
+  "description": "A rate-limit-policy artifact defines per-endpoint throttling rules that protect against brute force, DoS, and abuse. Every public endpoint has per-IP limits; auth endpoints are strictly bounded.",
+  "rules": [
+    { "id": "spec-has-feature-and-endpoints", "description": "Policy must declare feature and a non-empty endpoints array with path, method, and sensitivity per entry." },
+    { "id": "public-endpoints-have-per-ip-limit", "description": "Endpoints with sensitivity 'public' or 'unauthenticated' must declare per_ip_rpm or per_ip_rps." },
+    { "id": "auth-endpoints-are-strict", "description": "Login, signin, password reset, and OTP endpoints must have per_ip_rpm ≤ 20 and must be more restrictive than standard GET endpoints." },
+    { "id": "all-non-internal-endpoints-have-limits", "description": "Every non-internal endpoint must declare at least a sustained rate limit (rpm or per_ip_rpm)." }
+  ]
+}

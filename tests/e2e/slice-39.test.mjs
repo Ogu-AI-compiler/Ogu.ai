@@ -59,8 +59,8 @@ assert("registerService adds a service to the registry", () => {
 assert("registerService supports multiple services", () => {
   svcMod.registerService({
     root: tmp,
-    id: "studio",
-    name: "Ogu Studio",
+    id: "kadima-ui",
+    name: "Kadima UI",
     port: 5173,
     protocol: "http",
     healthEndpoint: "/api/health",

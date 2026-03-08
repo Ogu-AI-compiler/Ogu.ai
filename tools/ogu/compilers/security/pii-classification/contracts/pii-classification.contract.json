@@ -1,0 +1,15 @@
+{
+  "id": "pii-classification",
+  "version": "1.0.0",
+  "description": "A pii-classification artifact maps every sensitive data field to its classification level, logging restrictions, encryption requirements, and applicable privacy jurisdictions.",
+  "rules": [
+    { "id": "spec-has-project", "description": "The manifest must declare a project name." },
+    { "id": "spec-has-fields", "description": "The fields array must contain at least one entry." },
+    { "id": "every-field-has-required-fields", "description": "Each field entry must declare: id, entity, field_name, and classification_level." },
+    { "id": "classification-level-is-valid", "description": "classification_level must be one of: public, internal, sensitive, highly_sensitive." },
+    { "id": "highly-sensitive-has-encryption", "description": "Fields classified as highly_sensitive must declare encryption_key_ref and set storage_encrypted: true." },
+    { "id": "sensitive-has-log-handling", "description": "Fields classified as sensitive or highly_sensitive must declare a log_handling mode (mask, exclude, hash, truncate, or redact) and must not set log_in_plaintext: true." },
+    { "id": "no-duplicate-ids", "description": "Every field id (or entity.field_name combination) must be unique within the manifest." },
+    { "id": "pii-has-jurisdiction", "description": "Fields marked is_pii: true must declare a non-empty jurisdictions array using known values: gdpr, ccpa, hipaa, pipeda, lgpd, pdpa, global." }
+  ]
+}

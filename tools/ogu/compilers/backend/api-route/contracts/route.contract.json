@@ -1,0 +1,39 @@
+{
+  "id": "route",
+  "version": "1.0.0",
+  "description": "Structural requirements for all compiled API route handlers",
+  "rules": [
+    {
+      "id": "named-handler",
+      "description": "Handler must be exported as a named async function: export async function handle(...)"
+    },
+    {
+      "id": "input-schema-export",
+      "description": "schema.ts must export InputSchema and OutputSchema as named exports"
+    },
+    {
+      "id": "error-envelope",
+      "description": "All error responses must use shape: { error: string, code?: string, details?: unknown }"
+    },
+    {
+      "id": "success-envelope",
+      "description": "All success responses must use shape: { data: T } or { data: T, meta: { total, page, ... } }"
+    },
+    {
+      "id": "no-raw-request",
+      "description": "req.body, req.query, req.params must be accessed only after schema.parse() — never directly"
+    },
+    {
+      "id": "auth-before-logic",
+      "description": "Auth check must occur before any business logic or DB calls on protected routes"
+    },
+    {
+      "id": "async-handler",
+      "description": "Handler must be async and all awaited operations must be wrapped in try/catch"
+    },
+    {
+      "id": "content-type",
+      "description": "Handler must set Content-Type: application/json on all responses"
+    }
+  ]
+}

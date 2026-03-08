@@ -1,0 +1,34 @@
+{
+  "id": "restore-verification-spec",
+  "title": "Restore Verification Spec Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the restore verification specification. Enforces: RTO is a quantitative value, integrity checks are defined, drill schedule is set, checksum method is declared, and a no-todos quality check.",
+  "tier": "database-admin",
+  "ir": {
+    "input_artifact": "backup-policy-artifact.json",
+    "output_artifact": "restore-verification-spec-artifact.json",
+    "identifier": "RESTORE_VERIFICATION_SPEC"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",    "gates": ["spec-valid"] },
+    { "id": 2, "name": "RTO & Integrity",          "gates": ["rto-quantitative", "integrity-checks"] },
+    { "id": 3, "name": "Schedule & Checksum",      "gates": ["drill-schedule", "checksum-method"] },
+    { "id": 4, "name": "Quality",                  "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "RVS001", "name": "spec-valid",         "phase": 1 },
+    { "id": "RVS002", "name": "rto-quantitative",   "phase": 2 },
+    { "id": "RVS003", "name": "integrity-checks",   "phase": 2 },
+    { "id": "RVS004", "name": "drill-schedule",     "phase": 3 },
+    { "id": "RVS005", "name": "checksum-method",    "phase": 3 },
+    { "id": "RVS006", "name": "no-todos",           "phase": 4 }
+  ],
+  "error_codes": {
+    "RVS001": "restore-verification-spec.json missing or invalid — required fields: rto_hours, drill_schedule, integrity_checks[], checksum_method",
+    "RVS002": "RTO value is not quantitative — rto_hours must be a positive numeric value, not a string like 'fast' or 'acceptable'",
+    "RVS003": "No integrity checks defined — restore verification must include specific table-level or schema-level integrity check steps",
+    "RVS004": "Restore drill schedule not defined — drills must be scheduled at a declared cadence (monthly/quarterly/etc.)",
+    "RVS005": "Checksum method not declared — specify the verification method: pg_dump checksum, file hash, or row-count comparison",
+    "RVS006": "TODO/FIXME/HACK comment found in restore verification spec files"
+  }
+}

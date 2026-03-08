@@ -1,0 +1,12 @@
+{
+  "id": "feature-pipeline",
+  "version": "1.0.0",
+  "description": "Contract rules for feature engineering pipelines",
+  "rules": [
+    { "id": "sklearn-pipeline", "description": "sklearn Pipeline or ColumnTransformer used" },
+    { "id": "no-ix-indexer", "description": "No deprecated .ix[] indexer" },
+    { "id": "type-hints", "description": "Functions have type hints" },
+    { "id": "no-fit-on-test", "description": "No .fit(X_test) calls" },
+    { "id": "no-target-leakage", "description": "Target column not used as feature" }
+  ]
+}

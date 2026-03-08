@@ -1,0 +1,20 @@
+{
+  "contract": "e2e-spec",
+  "version": "1.0.0",
+  "ir_prefix": "E2E_SPEC",
+  "description": "E2E specification contract — critical paths defined, flows span multiple routes, selectors accessible, no hardcoded credentials",
+  "rules": [
+    { "id": "E2E-C01", "title": "Critical paths declared", "description": "At least one flow marked criticalPath: true for pre-deploy gate", "gate": "QA021" },
+    { "id": "E2E-C02", "title": "Flows span multiple routes", "description": "Every flow covers ≥2 routes — single-route flows are component tests", "gate": "QA022" },
+    { "id": "E2E-C03", "title": "Base URL from environment", "description": "baseUrl must use ${ENV_VAR} syntax — no hardcoded localhost", "gate": "QA023" },
+    { "id": "E2E-C04", "title": "No hardcoded credentials", "description": "passwords/tokens must not appear as literal values in spec", "gate": "QA024" },
+    { "id": "E2E-C05", "title": "Local retries forbidden", "description": "retries.local must be 0 — local retries hide flaky tests", "gate": "QA025" },
+    { "id": "E2E-C06", "title": "Accessible selectors only", "description": "Page objects must use getByRole/getByLabel, not CSS selectors", "gate": "QA026" },
+    { "id": "E2E-C07", "title": "Screenshots on failure", "description": "failureArtifacts.screenshot must be true for CI diagnosis", "gate": "QA027" }
+  ],
+  "artifact": {
+    "file": "e2e-spec-artifact.json",
+    "required_fields": ["ir_id", "framework", "userFlows", "criticalPaths", "attestation"],
+    "ir_id_pattern": "^E2E_SPEC:.+"
+  }
+}

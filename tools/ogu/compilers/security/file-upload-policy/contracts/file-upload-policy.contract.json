@@ -1,0 +1,12 @@
+{
+  "id": "file-upload-policy",
+  "version": "1.0.0",
+  "description": "A file-upload-policy artifact defines allowed MIME types, size limits, storage access controls, and scanning rules for every file upload surface.",
+  "rules": [
+    { "id": "spec-has-upload-surfaces", "description": "Policy must declare at least one upload_surface with id, allowed_mime_types, and max_size." },
+    { "id": "no-public-read-by-default", "description": "public_read must not be true and storage_acl must not be 'public-read' — files must be private by default." },
+    { "id": "no-dangerous-mime-types", "description": "Executable and script MIME types (application/x-executable, text/html, application/javascript, etc.) must not be in allowed_mime_types." },
+    { "id": "no-dangerous-extensions", "description": "Extensions like .exe, .sh, .php, .asp, .js, .html must not be in allowed_extensions." },
+    { "id": "malware-scan-for-public-surfaces", "description": "Upload surfaces accessible to untrusted users must declare malware_scan: true or scanning provider." }
+  ]
+}

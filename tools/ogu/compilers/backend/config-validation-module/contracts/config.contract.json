@@ -1,0 +1,37 @@
+{
+  "id": "config-validation-contract-v1",
+  "compiler": "config-validation-module",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "CONFIG-001",
+      "description": "All exported config keys must be declared in the validation schema",
+      "severity": "error"
+    },
+    {
+      "id": "CONFIG-002",
+      "description": "Unknown environment key policy must be explicitly declared as 'reject' or 'ignore'",
+      "severity": "error"
+    },
+    {
+      "id": "CONFIG-003",
+      "description": "At least one environment key must be required (otherwise config module provides no startup guarantee)",
+      "severity": "warning"
+    },
+    {
+      "id": "CONFIG-004",
+      "description": "Keys whose names suggest secrets (password, token, secret, key) must be marked with secret:true",
+      "severity": "error"
+    },
+    {
+      "id": "CONFIG-005",
+      "description": "The config module must be the only place in the codebase that reads from process.env",
+      "severity": "error"
+    },
+    {
+      "id": "CONFIG-006",
+      "description": "Invalid or missing required config must cause startup failure (non-zero exit or thrown error)",
+      "severity": "error"
+    }
+  ]
+}

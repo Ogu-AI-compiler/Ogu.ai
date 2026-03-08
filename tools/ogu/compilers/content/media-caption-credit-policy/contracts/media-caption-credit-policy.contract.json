@@ -1,0 +1,35 @@
+{
+  "id": "media-caption-credit-policy",
+  "version": "1.0.0",
+  "description": "A media caption/credit policy defines per-media-type attribution rules: whether captions and credits are required, credit template format, license requirements for external sources, attribution placement, and expiry monitoring for time-limited assets.",
+  "rules": [
+    {
+      "id": "spec-file-exists",
+      "description": "A media-caption-credit-policy.spec.json must exist with a non-empty mediaTypes array where each entry has a 'type' field."
+    },
+    {
+      "id": "caption-credit-required-declared",
+      "description": "Every media type must explicitly declare captionRequired and creditRequired as booleans. Undeclared policy means enforcement is inconsistent across content authors."
+    },
+    {
+      "id": "credit-template-when-required",
+      "description": "When creditRequired is true, a creditTemplate string must be defined. Without a template, credit formatting is inconsistent and non-auditable."
+    },
+    {
+      "id": "credit-template-uses-declared-variables",
+      "description": "creditTemplate variables (in {braces}) must be declared in spec.templateVariables. Undefined variables produce blank or broken credit strings at runtime."
+    },
+    {
+      "id": "external-media-requires-license",
+      "description": "Any media type with source:'external' must declare licenseRequired:true. External media published without license tracking creates copyright liability."
+    },
+    {
+      "id": "attribution-placement-is-enum",
+      "description": "When creditRequired is true, attributionPlacement must be 'inline', 'footer', or 'metadata-only'. Undeclared placement means credits may never appear in the rendered output."
+    },
+    {
+      "id": "time-limited-license-requires-expiry-monitoring",
+      "description": "Media types with licenseRequired:true and timeLimited:true must declare expiryMonitoring:true. Expired licensed content that remains published creates immediate legal exposure."
+    }
+  ]
+}

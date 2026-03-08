@@ -1,0 +1,72 @@
+{
+  "id": "kubernetes_ingress_gateway",
+  "version": "1.0.0",
+  "description": "Validates Kubernetes Ingress and Gateway API manifests for TLS enforcement, valid host declarations, backend resolution, and ingress class isolation",
+  "rules": [
+    {
+      "id": "KI001",
+      "gate": "spec-valid",
+      "description": "k8s-ingress-spec.json must exist, be valid JSON, declare name and a non-empty rules array. kind must be one of: Ingress, Gateway, HTTPRoute, GRPCRoute",
+      "required": true,
+      "fields": {
+        "kind": { "enum": ["Ingress", "Gateway", "HTTPRoute", "GRPCRoute"] }
+      },
+      "mandatoryFields": ["name", "rules"]
+    },
+    {
+      "id": "KI002",
+      "gate": "hostnames-valid",
+      "description": "Every rule must declare a hostname. Catch-all rules (no host) expose all traffic unconditionally. Duplicate hostnames across rules produce undefined routing behaviour",
+      "required": true
+    },
+    {
+      "id": "KI003",
+      "gate": "path-rules-valid",
+      "description": "Every path rule must declare a non-empty path, a pathType from Prefix/Exact/ImplementationSpecific, and a backend with service name and port. Missing backends produce 502 errors",
+      "required": true,
+      "fields": {
+        "pathType": { "enum": ["Prefix", "Exact", "ImplementationSpecific"] }
+      }
+    },
+    {
+      "id": "KI004",
+      "gate": "tls-consistent",
+      "description": "When TLS is configured: every TLS entry must have a secretName; every TLS host must have a matching rule. A TLS entry for a host with no rule means the certificate is served but requests return 404",
+      "required": false,
+      "note": "Skipped when spec.tls is absent"
+    },
+    {
+      "id": "KI005",
+      "gate": "backends-resolve",
+      "description": "All backend service names referenced in path rules must be declared in spec.backends. Undeclared backends create routing rules that point to nothing, producing silent 503 errors",
+      "required": false,
+      "note": "Skipped when spec.backends is absent"
+    },
+    {
+      "id": "KI006",
+      "gate": "no-todos",
+      "description": "k8s-ingress-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "KI007",
+      "gate": "contract-k8s-ingress",
+      "description": "Public-facing hosts (rules with a host field) must have TLS configured — serving HTTP without HTTPS exposes traffic to interception. ingressClass must be declared to prevent multiple controllers from managing the same resource",
+      "required": true,
+      "mandatoryFields": ["ingressClass (or annotation kubernetes.io/ingress.class)"],
+      "conditionalRules": [
+        {
+          "when": "rules[].host is defined",
+          "requires": "tls",
+          "exemption": "skipTlsCheck: true for internal-only routes"
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "file": "k8s-ingress-artifact.json",
+    "ir_id_prefix": "K8S_INGRESS:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

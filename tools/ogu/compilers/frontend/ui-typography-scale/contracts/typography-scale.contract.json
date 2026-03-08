@@ -1,0 +1,23 @@
+{
+  "id": "typography-scale",
+  "version": "1.0.0",
+  "description": "A valid typography scale declares heading and body steps with readable sizes, a base font size, and valid font weights.",
+  "rules": [
+    {
+      "id": "heading-and-body-declared",
+      "description": "The scale must include at minimum h1, h2, and body steps. Without these, hierarchy cannot be established and cross-compiler checks fail."
+    },
+    {
+      "id": "font-family-declared",
+      "description": "At least one fontFamily must be declared. This is the source of truth for font stack generation across components."
+    },
+    {
+      "id": "valid-font-weights",
+      "description": "Every step fontWeight must be a valid CSS value: 100–900 numeric or named keywords (thin, regular, bold, etc.)."
+    },
+    {
+      "id": "base-size-declared",
+      "description": "A baseSize or base field must be declared so that the mathematical relationship between scale steps can be verified. Without it, the scale is opaque."
+    }
+  ]
+}

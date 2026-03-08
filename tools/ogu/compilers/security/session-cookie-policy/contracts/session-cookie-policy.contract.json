@@ -1,0 +1,13 @@
+{
+  "id": "session-cookie-policy",
+  "version": "1.0.0",
+  "description": "A session-cookie-policy artifact declares secure cookie attributes, session timeouts, and CSRF protection mode for all authentication cookies.",
+  "rules": [
+    { "id": "spec-has-app-and-cookies", "description": "Policy must declare app and at least one cookie with name and purpose." },
+    { "id": "http-only-true", "description": "http_only must be true on all cookies to prevent JavaScript access." },
+    { "id": "secure-true", "description": "secure must be true on all cookies to prevent transmission over HTTP." },
+    { "id": "same-site-declared", "description": "same_site must be Strict, Lax, or None." },
+    { "id": "session-cookies-have-timeouts", "description": "Session/auth cookies must declare idle_timeout and absolute_timeout." },
+    { "id": "same-site-none-requires-csrf", "description": "Cookies with same_site=None must declare an explicit csrf_protection mode." }
+  ]
+}

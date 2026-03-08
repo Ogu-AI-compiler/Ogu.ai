@@ -1,0 +1,139 @@
+{
+  "id": "ux-search-filter-sort",
+  "version": "1.0.0",
+  "title": "UX Search Filter Sort Compiler",
+  "description": "Validates search, filter, and sort interaction specs: filter type validity, no-results states, sort direction declarations, loading states, filter persistence, and contract attestation. Produces search-filter-sort-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "USS",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract search-filter-sort-spec.json from feature brief and entity definitions",
+      "model": "haiku",
+      "outputs": ["search-filter-sort-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape, required fields, and filter type validity",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "filter-types-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "behavior",
+      "title": "Behavior",
+      "description": "Validate no-results state, sort direction, and loading state declarations",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["no-results-state", "sort-direction", "partial-results"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate filter persistence behavior",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["filter-persistence"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["search-filter-sort-artifact.json"],
+      "gates": ["contract-search-filter-sort"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "search-filter-sort-spec.json exists with entity(string), filters(array), sorts(array); each filter has id+label+type; each sort has id+label+field",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "filter-types-valid",
+      "title": "Filter Types Valid",
+      "description": "Every filter.type must be one of: text, select, multi-select, range, date-range, boolean, tag",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-results-state",
+      "title": "No Results State",
+      "description": "Spec must declare noResultsState with message and at least one action; escape hatch: noResultsHandledGlobally:true",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "sort-direction",
+      "title": "Sort Direction",
+      "description": "Every sort entry must declare defaultDirection: asc or desc",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "partial-results",
+      "title": "Partial Results / Loading State",
+      "description": "Spec must declare loadingState with type: skeleton, spinner, or progressive; escape hatch: loadingHandledGlobally:true",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "filter-persistence",
+      "title": "Filter Persistence",
+      "description": "Spec must declare persistence: session, url, none, or user-preference",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-search-filter-sort",
+      "title": "Search Filter Sort Contract",
+      "description": "Version, entity declared, unique filter ids, unique sort ids",
+      "phase": 4,
+      "required": true,
+      "contract": "search-filter-sort"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "search-filter-sort",
+      "file": "contracts/search-filter-sort.contract.json",
+      "description": "Structural requirements for all compiled search, filter, and sort specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["USS:{entity}", "USS:{entity}:{filterId}", "USS:{entity}:{sortId}"],
+    "output_artifact": "search-filter-sort-artifact.json",
+    "artifact_schema": "search-filter-sort-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "search-filter-sort-artifact-v1",
+    "fields": ["version", "entity", "filter_count", "sort_count", "persistence", "loading_type", "has_no_results_state", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "USS001": "search-filter-sort-spec.json missing or invalid — entity, filters, sorts required",
+    "USS002": "noResultsState missing or invalid — message and clearFiltersAction or suggestionsEnabled required",
+    "USS003": "Invalid filter type — must be text, select, multi-select, range, date-range, boolean, or tag",
+    "USS004": "Sort entry missing defaultDirection — must be asc or desc",
+    "USS005": "loadingState missing or invalid — type must be skeleton, spinner, or progressive",
+    "USS006": "persistence missing — must be session, url, none, or user-preference",
+    "USS007": "Search filter sort contract violation — version, entity, unique filter ids, unique sort ids required"
+  }
+}

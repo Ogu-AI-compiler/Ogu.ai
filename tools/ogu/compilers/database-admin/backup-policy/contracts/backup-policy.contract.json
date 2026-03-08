@@ -1,0 +1,13 @@
+{
+  "id": "backup-policy",
+  "version": "1.0.0",
+  "description": "A backup policy defines the full recovery posture for a PostgreSQL database — snapshot schedule, PITR window, WAL archiving, geo-redundancy, and compliance-based retention.",
+  "rules": [
+    { "id": "required-fields-present", "description": "The spec must declare snapshot_frequency, pitr_window, retention_days, rpo_hours, rto_hours, geo_redundant, and wal_archiving." },
+    { "id": "pitr-window-declared", "description": "pitr_window must be a concrete duration string (e.g., 7d, 24h) and must be at least as long as rpo_hours. PITR is the only mechanism for recovery to an arbitrary point in time — without it, only full snapshot restores are possible." },
+    { "id": "snapshot-frequency-meets-rpo", "description": "When WAL archiving is disabled, snapshot_frequency must be <= rpo_hours. A longer snapshot interval than the RPO means the backup cannot meet the recovery objective." },
+    { "id": "retention-meets-compliance-minimum", "description": "retention_days must meet the minimum for the declared compliance_tier: baseline=7, soc2=90, pci_dss=90, hipaa=365, gdpr=30. Non-compliant retention exposes the project to regulatory violations." },
+    { "id": "geo-redundant-for-production", "description": "Production backup storage must be geo_redundant: true. A backup in the same region as the primary is destroyed by the same disaster that takes out the database." },
+    { "id": "wal-archiving-for-short-rpo", "description": "When rpo_hours < 24, wal_archiving must be true and wal_archive_target must be declared. Without WAL archiving, the RPO is bounded by snapshot frequency, not continuous data protection." }
+  ]
+}

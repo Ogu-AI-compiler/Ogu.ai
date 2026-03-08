@@ -1,0 +1,77 @@
+{
+  "id": "rightsizing_profile",
+  "version": "1.0.0",
+  "description": "Validates Kubernetes workload resource profiles for complete requests/limits declarations, node capacity bounds, request-limit consistency, HPA bound validity, and named workload/container identity",
+  "rules": [
+    {
+      "id": "RS001",
+      "gate": "spec-valid",
+      "description": "rightsizing-spec.json must exist, be valid JSON, and declare service and a non-empty workloads array",
+      "required": true,
+      "mandatoryFields": ["service", "workloads"],
+      "constraints": {
+        "workloads": "must be a non-empty array"
+      }
+    },
+    {
+      "id": "RS002",
+      "gate": "requests-limits-present",
+      "description": "Every container in every workload must declare requests.cpu, requests.memory, limits.cpu, and limits.memory. A container without requests is scheduled on any node, causing noisy-neighbor CPU starvation. A container without limits can exhaust all node resources",
+      "required": true,
+      "mandatoryContainerFields": ["requests.cpu", "requests.memory", "limits.cpu", "limits.memory"]
+    },
+    {
+      "id": "RS003",
+      "gate": "limits-not-exceed-node",
+      "description": "When nodeLimits are declared, container limits must not exceed node capacity. A container limit greater than the node maximum means the pod can never be scheduled — Kubernetes keeps it in Pending forever. Gate is skipped when nodeLimits is not declared",
+      "required": true,
+      "note": "Skipped automatically when spec.nodeLimits is absent"
+    },
+    {
+      "id": "RS004",
+      "gate": "requests-lte-limits",
+      "description": "Resource requests must not exceed limits for any container. Kubernetes rejects pods at admission time when requests > limits — the pod will never start",
+      "required": true,
+      "constraints": {
+        "cpu": "requests.cpu must be ≤ limits.cpu",
+        "memory": "requests.memory must be ≤ limits.memory"
+      }
+    },
+    {
+      "id": "RS005",
+      "gate": "hpa-bounds-valid",
+      "description": "When an HPA is configured on a workload, minReplicas must be ≥ 1 (scale-to-zero is unexpected for most services) and ≤ maxReplicas (inverted bounds put HPA in error state). targetCPUUtilizationPercentage must be between 1 and 100",
+      "required": true,
+      "fields": {
+        "minReplicas": { "type": "integer", "min": 1 },
+        "maxReplicas": { "type": "integer", "min": 1 },
+        "targetCPUUtilizationPercentage": { "type": "integer", "min": 1, "max": 100 }
+      },
+      "constraints": {
+        "min-lte-max": "minReplicas must be ≤ maxReplicas"
+      }
+    },
+    {
+      "id": "RS006",
+      "gate": "no-todos",
+      "description": "rightsizing-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers. Placeholder CPU/memory values produce invalid resource specs that Kubernetes rejects at admission time",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "RS007",
+      "gate": "contract-rightsizing",
+      "description": "Every workload must declare a name field, and every container within each workload must declare a name field. Anonymous workloads and containers cannot be targeted by kubectl, HPA, or monitoring selectors",
+      "required": true,
+      "constraints": {
+        "workload-name": "every workload must have a name field",
+        "container-name": "every container must have a name field"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "rightsizing-artifact.json",
+    "ir_id_prefix": "RIGHTSIZING_PROFILE:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "graphql-resolver-module",
+  "title": "GraphQL Resolver Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles GraphQL resolvers. Enforces: N+1 guarded by DataLoader/batching, no direct DB access in resolvers (service layer only), authorization checked per resolver, error mapped to GraphQL errors (not raw exceptions), no circular resolver calls.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "graphql-schema-artifact.json",
+    "output_artifact": "graphql-resolver-artifact.json",
+    "identifier": "GRAPHQL_RESOLVER"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid", "cross-schema"] },
+    { "id": 2, "name": "Data Access", "gates": ["no-direct-db", "n-plus-one-guarded"] },
+    { "id": 3, "name": "Security", "gates": ["authorization-checked"] },
+    { "id": 4, "name": "Error Handling", "gates": ["errors-mapped-to-graphql"] },
+    { "id": 5, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-graphql-resolver"] }
+  ],
+  "gates": [
+    { "id": "GR001", "name": "spec-valid",                "phase": 1 },
+    { "id": "GR002", "name": "cross-schema",              "phase": 1 },
+    { "id": "GR003", "name": "no-direct-db",              "phase": 2 },
+    { "id": "GR004", "name": "n-plus-one-guarded",        "phase": 2 },
+    { "id": "GR005", "name": "authorization-checked",     "phase": 3 },
+    { "id": "GR006", "name": "errors-mapped-to-graphql",  "phase": 4 },
+    { "id": "GR007", "name": "no-todos",                  "phase": 5 },
+    { "id": "GR008", "name": "tests-pass",                "phase": 5 },
+    { "id": "GR009", "name": "contract-graphql-resolver", "phase": 6 }
+  ],
+  "error_codes": {
+    "GR001": "graphql-resolver-spec.json missing or invalid",
+    "GR002": "graphql-schema-artifact.json not found — compile schema first",
+    "GR003": "Direct DB access (prisma/db) in resolver — use service layer",
+    "GR004": "List resolver has no DataLoader or batch loading pattern",
+    "GR005": "Resolver missing authorization check (no context.user, no guard)",
+    "GR006": "Non-GraphQL error thrown from resolver (raw Error instead of GraphQLError)",
+    "GR007": "TODO/FIXME/HACK comment found",
+    "GR008": "Tests failed",
+    "GR009": "GraphQL resolver contract violation"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "eda-notebook",
+  "title": "EDA Notebook Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Exploratory Data Analysis Jupyter notebooks. Enforces mandatory sections (missing values, distributions, correlations, key findings), no raw data mutation, reproducibility via random seeds, and documented insights.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "schema-ds-artifact.json", "output_artifact": "eda-artifact.json", "identifier": "EDA_NOTEBOOK" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Structure", "gates": ["notebook-sections", "no-raw-mutation", "reproducible"] },
+    { "id": 3, "name": "Analysis Coverage", "gates": ["missing-value-analysis", "distribution-analysis", "correlation-analysis", "findings-documented"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-eda"] }
+  ],
+  "gates": [
+    { "id": "EN001", "name": "spec-valid",             "phase": 1 },
+    { "id": "EN002", "name": "notebook-sections",      "phase": 2 },
+    { "id": "EN003", "name": "no-raw-mutation",        "phase": 2 },
+    { "id": "EN004", "name": "reproducible",           "phase": 2 },
+    { "id": "EN005", "name": "missing-value-analysis", "phase": 3 },
+    { "id": "EN006", "name": "distribution-analysis",  "phase": 3 },
+    { "id": "EN007", "name": "correlation-analysis",   "phase": 3 },
+    { "id": "EN008", "name": "findings-documented",    "phase": 3 },
+    { "id": "EN009", "name": "no-todos",               "phase": 4 },
+    { "id": "EN010", "name": "contract-eda",           "phase": 4 }
+  ],
+  "error_codes": {
+    "EN001": "Invalid EDA spec",
+    "EN002": "Notebook missing required sections: missing values, distributions, correlations, key findings",
+    "EN003": "EDA notebook writes to raw data directory — raw data is immutable",
+    "EN004": "No random seed set — EDA results are not reproducible",
+    "EN005": "No missing value analysis (isnull, isna, info, describe)",
+    "EN006": "No distribution analysis (hist, boxplot, describe, value_counts)",
+    "EN007": "No correlation analysis (corr, heatmap, pairplot, scatter)",
+    "EN008": "No key findings documented in markdown cell",
+    "EN009": "TODO/FIXME found",
+    "EN010": "EDA contract violation"
+  }
+}

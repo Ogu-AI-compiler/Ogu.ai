@@ -1,0 +1,9 @@
+{
+  "id": "webhook-processor-contract", "version": "1.0.0",
+  "rules": [
+    { "id": "WEBHOOK-001", "description": "Signature verified before payload parsing", "enforcement": "gate:signature-verified" },
+    { "id": "WEBHOOK-002", "description": "Raw body preserved for signature verification", "enforcement": "gate:raw-body-preserved" },
+    { "id": "WEBHOOK-003", "description": "HTTP 200/202 returned immediately (fast ack)", "enforcement": "gate:fast-ack" },
+    { "id": "WEBHOOK-004", "description": "Business logic handed off to queue/background (async)", "enforcement": "gate:async-handoff" }
+  ]
+}

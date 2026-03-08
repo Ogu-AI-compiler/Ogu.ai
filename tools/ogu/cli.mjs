@@ -31,7 +31,7 @@ import { migrate } from "./commands/migrate.mjs";
 import { clean } from "./commands/clean.mjs";
 import { wip, switchFeature } from "./commands/wip.mjs";
 import { status } from "./commands/status.mjs";
-import { studio } from "./commands/studio.mjs";
+import { ui } from "./commands/ui.mjs";
 import { brandScan } from "./commands/brand-scan.mjs";
 import { reference } from "./commands/reference.mjs";
 import { phase } from "./commands/phase.mjs";
@@ -39,6 +39,7 @@ import { ports } from "./commands/ports.mjs";
 import { specPatch } from "./commands/spec-patch.mjs";
 import { drift } from "./commands/drift.mjs";
 import { compile } from "./commands/compile.mjs";
+import { compileRole } from "./commands/compile-role.mjs";
 import { designShow } from "./commands/design-show.mjs";
 import { designPick } from "./commands/design-pick.mjs";
 import { orgInit, orgShow, orgValidate } from "./commands/org.mjs";
@@ -90,6 +91,7 @@ import { sandboxPolicy, sandboxCheck } from "./commands/sandbox-cmd.mjs";
 import { agentIdentity, agentRevoke, agentSessions, agentVerify } from "./commands/agent-identity-cmd.mjs";
 import { knowledgeIndex, knowledgeQuery } from "./commands/knowledge-cmd.mjs";
 import { agents } from "./commands/agents.mjs";
+import { run as compilerRun } from "./commands/compiler.mjs";
 
 // ── Phase 4E: Plugin System, Plugin Registry, Hook Registry ──
 import { createPluginSystem } from "./commands/lib/plugin-system.mjs";
@@ -139,7 +141,7 @@ const commands = {
   wip,
   switch: switchFeature,
   status,
-  studio,
+  ui,
   "brand-scan": brandScan,
   reference,
   phase,
@@ -147,6 +149,7 @@ const commands = {
   "spec:patch": specPatch,
   drift,
   compile,
+  "compile:role": compileRole,
   "design:show": designShow,
   "design:pick": designPick,
   "org:init": orgInit,
@@ -271,6 +274,7 @@ const commands = {
   "knowledge:index": knowledgeIndex,
   "knowledge:query": knowledgeQuery,
   agents,
+  compiler: () => compilerRun(),
 };
 
 if (!command || !commands[command]) {
@@ -345,8 +349,13 @@ if (!command || !commands[command]) {
   console.log("  ports register      Register ports for a named project (JSON)");
   console.log("  ports clear         Clear all ports for the current project");
   console.log("");
-  console.log("Studio:");
-  console.log("  studio              Launch Ogu Studio web dashboard (--port N, --no-open)");
+  console.log("Domain Compilers:");
+  console.log("  compiler list                           List registered domain compilers");
+  console.log("  compiler info <id>                      Show compiler phases and gates");
+  console.log("  compiler <id> <slug> [component]        Run compiler pipeline");
+  console.log("");
+  console.log("UI:");
+  console.log("  ui                  Launch Kadima UI dev server (--port N, --no-open)");
   console.log("");
   console.log("Maintenance:");
   console.log("  init                Create Ogu directory structure and templates");

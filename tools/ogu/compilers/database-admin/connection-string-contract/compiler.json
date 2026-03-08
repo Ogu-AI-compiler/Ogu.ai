@@ -1,0 +1,36 @@
+{
+  "id": "connection-string-contract",
+  "title": "Connection String Contract Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the per-environment, per-service connection string contract. Enforces: no literal passwords in connection strings (vault references only), SSL required for non-local environments, every environment and service has a host entry, services are isolated, and connect_timeout is defined.",
+  "tier": "database-admin",
+  "ir": {
+    "input_artifact": "connection-pool-config-artifact.json",
+    "output_artifact": "connection-string-contract-artifact.json",
+    "identifier": "CONNECTION_STRING_CONTRACT"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Credential Safety",       "gates": ["no-literal-passwords", "ssl-mode"] },
+    { "id": 3, "name": "Coverage & Isolation",    "gates": ["host-per-env", "per-service-isolation"] },
+    { "id": 4, "name": "Timeout & Consistency",   "gates": ["connect-timeout", "format-consistent"] }
+  ],
+  "gates": [
+    { "id": "CSC001", "name": "spec-valid",            "phase": 1 },
+    { "id": "CSC002", "name": "no-literal-passwords",  "phase": 2 },
+    { "id": "CSC003", "name": "ssl-mode",              "phase": 2 },
+    { "id": "CSC004", "name": "host-per-env",          "phase": 3 },
+    { "id": "CSC005", "name": "per-service-isolation", "phase": 3 },
+    { "id": "CSC006", "name": "connect-timeout",       "phase": 4 },
+    { "id": "CSC007", "name": "format-consistent",     "phase": 4 }
+  ],
+  "error_codes": {
+    "CSC001": "connection-string-contract.json missing or invalid — required fields: environments[], services[], connections[]",
+    "CSC002": "Literal password detected in connection string — use a vault path or environment variable reference (e.g. ${DB_PASSWORD} or vault://secret/db)",
+    "CSC003": "sslmode is not require or verify-full for a non-local environment — all non-local connections must enforce TLS",
+    "CSC004": "Environment is missing a host entry — every declared environment must have a database host defined",
+    "CSC005": "Services share a connection string — each service must have its own dedicated connection string for auditability and least-privilege",
+    "CSC006": "connect_timeout is not defined — all connection strings must declare a connect timeout to prevent indefinite hangs",
+    "CSC007": "Connection string format is inconsistent — all entries must use the same format (all URI or all DSN, not mixed)"
+  }
+}

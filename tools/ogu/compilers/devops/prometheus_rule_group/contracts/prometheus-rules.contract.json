@@ -1,0 +1,67 @@
+{
+  "id": "prometheus_rule_group",
+  "version": "1.0.0",
+  "description": "Validates Prometheus alert and recording rule groups for unique names, required fields, valid naming conventions, recognised severity labels, and contract-level alerting completeness",
+  "rules": [
+    {
+      "id": "PR001",
+      "gate": "spec-valid",
+      "description": "prometheus-rules-spec.json must exist, be valid JSON, and declare a non-empty groups array",
+      "required": true,
+      "mandatoryFields": ["groups"],
+      "constraints": {
+        "groups": "must be a non-empty array — an empty groups array loads without error but monitors nothing"
+      }
+    },
+    {
+      "id": "PR002",
+      "gate": "alert-names-unique",
+      "description": "Every alert name must be globally unique across all rule groups. Prometheus silently lets the second definition overwrite the first — one of the conditions is never evaluated or fired",
+      "required": true
+    },
+    {
+      "id": "PR003",
+      "gate": "alerts-have-required-fields",
+      "description": "Every alert rule must declare expr (the PromQL condition), labels.severity (routing label), and annotations.summary (human description). An alert without expr never fires. An alert without severity cannot be routed to the correct on-call channel. An alert without summary is unactionable",
+      "required": true,
+      "mandatoryAlertFields": ["expr", "labels.severity", "annotations.summary"]
+    },
+    {
+      "id": "PR004",
+      "gate": "recording-rule-names-valid",
+      "description": "Recording rule names must match [a-zA-Z_:][a-zA-Z0-9_:]* — the standard Prometheus metric naming pattern. Invalid names are rejected by Prometheus at rule load time with a parse error",
+      "required": true,
+      "pattern": "^[a-zA-Z_:][a-zA-Z0-9_:]*$",
+      "note": "Convention: use colon-separated namespace:metric:aggregation format (e.g. job:http_requests:rate5m)"
+    },
+    {
+      "id": "PR005",
+      "gate": "severity-labels-valid",
+      "description": "The severity label must use a recognised enum value. Unknown values break PagerDuty routing trees and Grafana alert panel filtering",
+      "required": true,
+      "enum": ["critical", "warning", "info", "page", "ticket"]
+    },
+    {
+      "id": "PR006",
+      "gate": "no-todos",
+      "description": "prometheus-rules-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers. Placeholder PromQL expressions parse but evaluate to nothing — the alert will never fire, creating a silent monitoring gap",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "PR007",
+      "gate": "contract-prometheus-rules",
+      "description": "The rule group must contain at least one alert rule (unless recordingOnly: true is set). Every alert must declare annotations.runbook_url or annotations.runbook — an alert without a runbook is unactionable at 3am",
+      "required": true,
+      "constraints": {
+        "alert-required": "at least one alert rule must be defined unless recordingOnly: true",
+        "runbook-required": "every alert must have annotations.runbook_url or annotations.runbook"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "prometheus-rules-artifact.json",
+    "ir_id_prefix": "PROMETHEUS_RULE_GROUP:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

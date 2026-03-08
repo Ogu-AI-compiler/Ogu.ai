@@ -1,0 +1,145 @@
+{
+  "id": "ui-token-system",
+  "version": "1.0.0",
+  "title": "UI Design Token System Compiler",
+  "description": "Verifies design token spec: naming convention, alias resolution, circular reference detection, tier hierarchy enforcement",
+  "ir_prefix": "UI_TOKEN",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract token taxonomy, naming convention, platform targets from brand primitives",
+      "model": "haiku",
+      "outputs": ["design-token-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "verify",
+      "title": "Verify Token System",
+      "description": "Run all gates: uniqueness, alias resolution, circular detection, tier hierarchy, naming convention",
+      "model": "haiku",
+      "outputs": ["token-artifact.json"],
+      "gates": [
+        "spec-valid",
+        "tokens-unique",
+        "alias-resolves",
+        "no-circular",
+        "semantic-aliases-only",
+        "component-aliases-semantic",
+        "naming-convention",
+        "no-todos",
+        "contract-tokens"
+      ]
+    },
+    {
+      "phase": 2,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed attestation artifact for downstream token consumers",
+      "model": "haiku",
+      "outputs": ["token-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "design-token-spec.json exists and every token has name, value, type, and tier",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "tokens-unique",
+      "title": "Tokens Unique",
+      "description": "Every token name is unique across the entire token set",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "alias-resolves",
+      "title": "Alias Resolves",
+      "description": "Every alias reference {token.name} resolves to an existing token in the spec",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-circular",
+      "title": "No Circular Aliases",
+      "description": "No circular alias chains exist in the token dependency graph",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "semantic-aliases-only",
+      "title": "Semantic Tokens Use Aliases",
+      "description": "Semantic-tier tokens must use alias references, not raw values",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "component-aliases-semantic",
+      "title": "Component Tokens Alias Semantic",
+      "description": "Component-tier tokens must alias a semantic token, not a primitive directly",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "naming-convention",
+      "title": "Naming Convention",
+      "description": "All token names follow the declared naming schema (dot-notation by default)",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-todos",
+      "title": "No TODOs",
+      "description": "No TODO/FIXME/HACK in any token spec files",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "contract-tokens",
+      "title": "Contract: Token System",
+      "description": "Artifact validates against token-system.contract.json: has-primitives, has-semantics, valid-types, valid-tiers",
+      "phase": 1,
+      "required": true
+    }
+  ],
+  "contracts": [
+    {
+      "id": "token-system",
+      "file": "contracts/token-system.contract.json",
+      "description": "Structural requirements for a valid design token system"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UI_TOKEN:design-token-system"],
+    "output_artifact": "token-artifact.json",
+    "artifact_schema": "ui-token-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "ui-token-artifact-v1",
+    "fields": ["token_count", "primitive_count", "semantic_count", "component_count", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UIT001": "design-token-spec.json missing or invalid structure",
+    "UIT002": "Duplicate token name detected",
+    "UIT003": "Token alias reference cannot be resolved",
+    "UIT004": "Circular token alias chain detected",
+    "UIT005": "Semantic token contains raw value instead of alias reference",
+    "UIT006": "Component token aliases primitive directly (must alias semantic)",
+    "UIT007": "Token name violates naming convention schema",
+    "UIT008": "TODO/FIXME/HACK found in token spec files",
+    "UIT009": "Token system contract violation"
+  }
+}

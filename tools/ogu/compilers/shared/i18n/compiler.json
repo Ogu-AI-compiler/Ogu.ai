@@ -1,0 +1,39 @@
+{
+  "id": "i18n",
+  "title": "i18n Compiler",
+  "version": "1.0.0",
+  "description": "Compiles translation files and type-safe accessor hooks. Enforces key parity across languages, interpolation consistency, and TypeScript key typing.",
+  "tier": "shared",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "i18n-artifact.json",
+    "identifier": "I18N"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid"] },
+    { "id": 3, "name": "Implement", "gates": ["key-parity", "interpolation-parity", "no-empty-values"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-i18n"] }
+  ],
+  "gates": [
+    { "id": "I1001", "name": "spec-valid",           "phase": 1 },
+    { "id": "I1002", "name": "ts-valid",             "phase": 2 },
+    { "id": "I1003", "name": "key-parity",           "phase": 3 },
+    { "id": "I1004", "name": "interpolation-parity", "phase": 3 },
+    { "id": "I1005", "name": "no-empty-values",      "phase": 3 },
+    { "id": "I1006", "name": "no-todos",             "phase": 4 },
+    { "id": "I1007", "name": "tests-pass",           "phase": 4 },
+    { "id": "I1008", "name": "contract-i18n",        "phase": 5 }
+  ],
+  "error_codes": {
+    "I1001": "Invalid i18n spec",
+    "I1002": "TypeScript compilation failed",
+    "I1003": "Key parity violation — language files have different key trees",
+    "I1004": "Interpolation variable missing in one or more language files",
+    "I1005": "Empty translation value found",
+    "I1006": "TODO/FIXME found",
+    "I1007": "Tests failed",
+    "I1008": "Contract violation"
+  }
+}

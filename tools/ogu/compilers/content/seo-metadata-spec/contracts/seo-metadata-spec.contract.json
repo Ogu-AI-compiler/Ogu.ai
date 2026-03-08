@@ -1,0 +1,35 @@
+{
+  "id": "seo-metadata-spec",
+  "version": "1.0.0",
+  "description": "An SEO metadata spec defines the per-content-type SEO rules: title templates, meta description constraints, OG image dimensions, robots directives, and hreflang — enforced before any page can go live.",
+  "rules": [
+    {
+      "id": "spec-file-exists",
+      "description": "An seo-metadata-spec.spec.json must exist with a non-empty contentTypes array where each entry has a typeId."
+    },
+    {
+      "id": "title-template-required",
+      "description": "Every content type must have a titleTemplate. Without it, SEO titles are hardcoded or blank across all pages of that type."
+    },
+    {
+      "id": "title-max-length-50-60",
+      "description": "titleMaxLength must be declared and between 50 and 60 characters. Outside this range, titles are truncated in SERPs or waste keyword space."
+    },
+    {
+      "id": "meta-description-max-length-120-155",
+      "description": "metaDescriptionMaxLength must be declared and between 120 and 155 characters. Outside this range, descriptions are truncated or too short to drive click-through."
+    },
+    {
+      "id": "og-image-min-1200x630",
+      "description": "ogImage must declare minWidth >= 1200 and minHeight >= 630. Below this, Open Graph images are rejected or downsampled by social platforms."
+    },
+    {
+      "id": "robots-directive-valid-enum",
+      "description": "robotsDirective must be one of: index,follow | index,nofollow | noindex,follow | noindex,nofollow. No other values are valid for meta robots."
+    },
+    {
+      "id": "hreflang-all-locales-covered",
+      "description": "Localized content types must declare hreflang for every locale in spec.locales. Missing hreflang for a locale causes duplicate content issues between language editions."
+    }
+  ]
+}

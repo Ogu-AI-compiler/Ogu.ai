@@ -1,0 +1,16 @@
+{
+  "id": "input-validation-policy",
+  "version": "1.0.0",
+  "description": "An input-validation-policy artifact defines type constraints, size limits, sanitization rules, and bounds for every user-supplied input field in an API or form.",
+  "rules": [
+    { "id": "spec-has-feature", "description": "Policy must declare the feature it covers." },
+    { "id": "spec-has-fields", "description": "fields array must be non-empty." },
+    { "id": "fields-have-id-name-type", "description": "Each field must declare id, name, and type." },
+    { "id": "string-fields-have-maxlength", "description": "Fields of type string, text, email, url, password, etc. must declare a positive maxLength to prevent buffer overflow and DoS via oversized input." },
+    { "id": "numeric-fields-have-bounds", "description": "Fields of numeric type must declare min and max to prevent overflow and business logic abuse." },
+    { "id": "high-risk-fields-sanitized", "description": "Fields of type html, markdown, sql, url, redirect_url, or with names like 'comment', 'body', 'search', 'query' must declare a sanitization strategy." },
+    { "id": "every-field-has-validation", "description": "Every field must declare at least one validation rule (required, maxLength, min/max, pattern, enum, format, or sanitize)." },
+    { "id": "file-fields-have-mime-and-size", "description": "File/upload fields must declare allowed_mime_types (non-empty array) and max_size_bytes or max_size_mb." },
+    { "id": "no-executable-extensions-allowed", "description": "File fields must not allow dangerous extensions: .exe, .sh, .bat, .php, .asp, .js, .html, etc." }
+  ]
+}

@@ -1,0 +1,53 @@
+[
+  {
+    "id": "shadcn-ui-setup",
+    "priority": 90,
+    "category": "frontend",
+    "match": {
+      "any": ["shadcn", "shadcn/ui"]
+    },
+    "hint": [
+      "SHADCN/UI:",
+      "- Do NOT run CLI tools. Edit files directly.",
+      "- Ensure Tailwind config includes content paths and tailwindcss-animate plugin.",
+      "- Add components.json if required by touches.",
+      "- Provide lib/utils.ts with cn() helper using clsx + tailwind-merge.",
+      "- Include at least one shadcn-style component (Button) with variants.",
+      "- Update package.json dependencies if the task is about installing."
+    ]
+  },
+  {
+    "id": "nextauth-v5",
+    "priority": 80,
+    "category": "auth",
+    "match": {
+      "any": ["nextauth", "auth.js", "authjs"]
+    },
+    "hint": [
+      "NEXTAUTH v5 (AUTH.JS):",
+      "- Use NextAuth from \"next-auth\" and export handlers/auth/signIn/signOut.",
+      "- Use Credentials provider for email/password (no TODOs).",
+      "- Use Google provider with GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET.",
+      "- Use session strategy \"jwt\" to avoid DB requirement.",
+      "- Use AUTH_SECRET from env. If needed, read DEMO_USER_EMAIL/DEMO_USER_PASSWORD for credentials.",
+      "- Ensure required route file exists (App Router: app/api/auth/[...nextauth]/route.ts)."
+    ]
+  },
+  {
+    "id": "sanity-v3",
+    "priority": 80,
+    "category": "cms",
+    "match": {
+      "any": ["sanity", "sanity.io", "sanity v3", "sanity studio"]
+    },
+    "hint": [
+      "SANITY V3:",
+      "- Do NOT run `sanity init`. Create config files manually.",
+      "- Create sanity.config.ts and sanity.cli.ts with env-based projectId/dataset.",
+      "- Add schemas/index.ts and at least one schema document.",
+      "- If Next.js App Router: create app/studio/[[...index]]/page.tsx using <Studio config={config} />.",
+      "- Ensure package.json includes sanity and (if Next.js) next-sanity.",
+      "- Prefer compatible, current versions (avoid old majors); if unsure, use \"latest\" for both sanity and next-sanity."
+    ]
+  }
+]

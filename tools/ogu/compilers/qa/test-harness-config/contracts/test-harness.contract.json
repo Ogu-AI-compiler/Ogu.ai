@@ -1,0 +1,43 @@
+{
+  "contract": "test-harness-config",
+  "version": "1.0.0",
+  "ir_prefix": "TEST_HARNESS_CONFIG",
+  "description": "Test harness configuration contract — runner pinned, coverage explicit, CI-ready reporters, no infinite timeouts",
+  "rules": [
+    {
+      "id": "TH-C01",
+      "title": "Runner version pinned",
+      "description": "Test runner must be in devDependencies with an exact version — no ^ or ~ range specifiers",
+      "gate": "QA002"
+    },
+    {
+      "id": "TH-C02",
+      "title": "Coverage provider explicit",
+      "description": "coverage.provider must be 'v8' or 'istanbul' — not left to runner default",
+      "gate": "QA003"
+    },
+    {
+      "id": "TH-C03",
+      "title": "No infinite timeouts",
+      "description": "All test environments must declare a finite timeout > 0",
+      "gate": "QA004"
+    },
+    {
+      "id": "TH-C04",
+      "title": "JUnit reporter required",
+      "description": "reporters array must include a JUnit-compatible reporter for CI ingestion",
+      "gate": "QA005"
+    },
+    {
+      "id": "TH-C05",
+      "title": "Mock strategy declared",
+      "description": "mockStrategy must be one of: msw, jest.mock, vi.spyOn, manual, nock, sinon",
+      "gate": "QA007"
+    }
+  ],
+  "artifact": {
+    "file": "test-harness-artifact.json",
+    "required_fields": ["ir_id", "runner", "environments", "coverage", "reporters", "attestation"],
+    "ir_id_pattern": "^TEST_HARNESS_CONFIG:.+"
+  }
+}

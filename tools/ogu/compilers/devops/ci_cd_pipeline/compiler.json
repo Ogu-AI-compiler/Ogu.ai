@@ -1,0 +1,40 @@
+{
+  "id": "ci_cd_pipeline",
+  "title": "CI/CD Pipeline Compiler",
+  "version": "1.0.0",
+  "description": "Compiles CI/CD pipeline definitions (GitHub Actions, GitLab CI, Jenkins). Enforces: at least one trigger, all jobs in valid stages, no cyclic dependencies, required quality gates present, no hardcoded secrets.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "ci-cd-artifact.json",
+    "identifier": "CI_CD"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Pipeline Structure",      "gates": ["trigger-defined", "jobs-staged", "no-cyclic-needs"] },
+    { "id": 3, "name": "Security Check",          "gates": ["no-secret-literals"] },
+    { "id": 4, "name": "Completeness",            "gates": ["required-quality-gates"] },
+    { "id": 5, "name": "Quality",                 "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                  "gates": ["contract-ci-cd"] }
+  ],
+  "gates": [
+    { "id": "CIP001", "name": "spec-valid",              "phase": 1 },
+    { "id": "CIP002", "name": "trigger-defined",         "phase": 2 },
+    { "id": "CIP003", "name": "jobs-staged",             "phase": 2 },
+    { "id": "CIP004", "name": "no-cyclic-needs",         "phase": 2 },
+    { "id": "CIP005", "name": "no-secret-literals",      "phase": 3 },
+    { "id": "CIP006", "name": "required-quality-gates",  "phase": 4 },
+    { "id": "CIP007", "name": "no-todos",                "phase": 5 },
+    { "id": "CIP008", "name": "contract-ci-cd",          "phase": 6 }
+  ],
+  "error_codes": {
+    "CIP001": "ci-cd-spec.json missing or invalid — required: platform, triggers[], stages[], jobs[]",
+    "CIP002": "No trigger defined — pipeline will never execute",
+    "CIP003": "Job references stage or dependency that does not exist",
+    "CIP004": "Cyclic job dependency detected",
+    "CIP005": "Hardcoded secret value found in pipeline definition",
+    "CIP006": "Required quality gate stage missing: must include build, test, or deploy stage",
+    "CIP007": "TODO/FIXME/HACK found in pipeline definition",
+    "CIP008": "CI/CD pipeline contract violation"
+  }
+}

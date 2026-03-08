@@ -1,0 +1,37 @@
+{
+  "id": "dataset-split-module",
+  "title": "Dataset Split Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles dataset splitting logic. Enforces split-before-transform ordering, stratified splits for classification, reproducible random state, no test set contamination, and correct temporal/group splits for time-series data.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "schema-ds-artifact.json", "output_artifact": "split-artifact.json", "identifier": "DATASET_SPLIT" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Split Integrity", "gates": ["split-before-transform", "reproducible-split", "no-test-contamination"] },
+    { "id": 3, "name": "Split Quality", "gates": ["stratified-if-classification", "temporal-aware-split", "split-ratios-documented"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-split"] }
+  ],
+  "gates": [
+    { "id": "SP001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "SP002", "name": "split-before-transform",      "phase": 2 },
+    { "id": "SP003", "name": "reproducible-split",          "phase": 2 },
+    { "id": "SP004", "name": "no-test-contamination",       "phase": 2 },
+    { "id": "SP005", "name": "stratified-if-classification","phase": 3 },
+    { "id": "SP006", "name": "temporal-aware-split",        "phase": 3 },
+    { "id": "SP007", "name": "split-ratios-documented",     "phase": 3 },
+    { "id": "SP008", "name": "no-todos",                    "phase": 4 },
+    { "id": "SP009", "name": "contract-split",              "phase": 4 }
+  ],
+  "error_codes": {
+    "SP001": "Invalid dataset split spec",
+    "SP002": "Transforms (fit/transform) applied before train/test split — data leakage",
+    "SP003": "No random_state set in train_test_split — split is not reproducible",
+    "SP004": "Test set accessed or transformed before final evaluation",
+    "SP005": "Classification task without stratify= parameter — class imbalance not preserved",
+    "SP006": "Time-series data not using TimeSeriesSplit or sorted chronological split",
+    "SP007": "Train/val/test ratios not documented in spec",
+    "SP008": "TODO/FIXME found",
+    "SP009": "Split contract violation"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "qa-test-harness-config",
+  "title": "QA Test Harness Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles and validates the project-level test harness configuration. Enforces: test runner declared and pinned, coverage provider explicit, reporters include JUnit for CI, no infinite timeouts, global setup file exists, mock strategy declared.",
+  "tier": "qa",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "qa-test-harness-artifact.json",
+    "identifier": "QA_TEST_HARNESS"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Runner Configuration", "gates": ["runner-version-pinned", "coverage-provider-explicit"] },
+    { "id": 3, "name": "Environment Policy", "gates": ["timeout-per-environment", "reporters-contain-junit"] },
+    { "id": 4, "name": "Setup & Mocks", "gates": ["global-setup-exists", "mock-strategy-declared"] },
+    { "id": 5, "name": "Quality", "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-harness"] }
+  ],
+  "gates": [
+    { "id": "QA001", "name": "spec-valid",                "phase": 1 },
+    { "id": "QA002", "name": "runner-version-pinned",     "phase": 2 },
+    { "id": "QA003", "name": "coverage-provider-explicit","phase": 2 },
+    { "id": "QA004", "name": "timeout-per-environment",   "phase": 3 },
+    { "id": "QA005", "name": "reporters-contain-junit",   "phase": 3 },
+    { "id": "QA006", "name": "global-setup-exists",       "phase": 4 },
+    { "id": "QA007", "name": "mock-strategy-declared",    "phase": 4 },
+    { "id": "QA008", "name": "no-todos",                  "phase": 5 },
+    { "id": "QA009", "name": "contract-harness",          "phase": 6 }
+  ],
+  "error_codes": {
+    "QA001": "test-harness-spec.json missing or invalid — required fields: runner, environments, coverage, reporters",
+    "QA002": "Test runner version not pinned — use exact version (e.g. '2.1.4', not '^2')",
+    "QA003": "coverage.provider not explicitly set — must be 'v8' or 'istanbul'",
+    "QA004": "One or more environments have no timeout or timeout set to 0 (infinite)",
+    "QA005": "reporters array does not include 'junit' — CI cannot ingest test results",
+    "QA006": "globalSetup file declared in spec but does not exist on disk",
+    "QA007": "mockStrategy not declared or not one of: msw, jest.mock, vi.spyOn, manual",
+    "QA008": "TODO/FIXME/HACK comment found in test harness config files",
+    "QA009": "Test harness artifact contract violation"
+  }
+}

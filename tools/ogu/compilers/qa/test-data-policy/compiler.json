@@ -1,0 +1,42 @@
+{
+  "id": "test-data-policy",
+  "name": "Test Data Policy Compiler",
+  "tier": "qa",
+  "version": "1.0.0",
+  "description": "Validates test data management policy — PII prohibitions, snapshot strategy, DB isolation, deterministic seeds, and factory framework configuration",
+  "spec_file": "test-data-policy-spec.json",
+  "artifact": "test-data-policy-artifact.json",
+  "ir_id_prefix": "TEST_DATA_POLICY:",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Spec Foundation",
+      "gates": ["spec-valid", "pii-forbidden"]
+    },
+    {
+      "phase": 2,
+      "name": "Data Strategy",
+      "gates": ["snapshot-policy-defined", "no-shared-db-isolation"]
+    },
+    {
+      "phase": 3,
+      "name": "Reproducibility",
+      "gates": ["deterministic-seed-defined", "factory-framework-specified"]
+    },
+    {
+      "phase": 4,
+      "name": "Contract",
+      "gates": ["no-todos", "contract-test-data"]
+    }
+  ],
+  "gates": [
+    { "code": "QA080", "name": "spec-valid",                 "phase": 1 },
+    { "code": "QA081", "name": "pii-forbidden",              "phase": 1 },
+    { "code": "QA082", "name": "snapshot-policy-defined",    "phase": 2 },
+    { "code": "QA083", "name": "no-shared-db-isolation",     "phase": 2 },
+    { "code": "QA084", "name": "deterministic-seed-defined", "phase": 3 },
+    { "code": "QA085", "name": "factory-framework-specified","phase": 3 },
+    { "code": "QA086", "name": "no-todos",                   "phase": 4 },
+    { "code": "QA087", "name": "contract-test-data",         "phase": 4 }
+  ]
+}

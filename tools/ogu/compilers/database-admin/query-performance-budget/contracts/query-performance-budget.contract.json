@@ -1,0 +1,13 @@
+{
+  "id": "query-performance-budget",
+  "version": "1.0.0",
+  "description": "A query performance budget defines concrete, enforceable latency and timeout limits per workload class, ensuring database behavior stays within API SLO requirements.",
+  "rules": [
+    { "id": "required-fields-present", "description": "The spec must declare workloads (object with at least one class) and max_transaction_duration." },
+    { "id": "workloads-have-quantitative-timeouts", "description": "Each workload class must declare statement_timeout as a concrete duration string (5s, 500ms, 2m). Vague values (high, acceptable, tbd) are rejected — they cannot be enforced by PostgreSQL." },
+    { "id": "max-transaction-duration-finite", "description": "max_transaction_duration must be a finite, concrete duration. unlimited or infinite are rejected. Long transactions hold locks, prevent autovacuum, and cause replication lag." },
+    { "id": "replica-timeouts-not-looser", "description": "Workloads with is_replica: true must have statement_timeout <= the primary write workload timeout. Looser replica timeouts can cause hot standby conflicts and replication lag." },
+    { "id": "latency-within-api-slo", "description": "When api_slo_ms is declared, each workload's p99_latency_ms must be <= api_slo_ms * 0.7. The database budget must leave headroom for the application layer." },
+    { "id": "all-timeouts-parseable", "description": "Every timeout field (statement_timeout, lock_timeout, idle_in_transaction_timeout) must be a parseable duration string. Vague strings cannot be converted to PostgreSQL GUC parameters." }
+  ]
+}

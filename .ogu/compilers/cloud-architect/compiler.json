@@ -1,0 +1,120 @@
+{
+  "compiler_id": "compiler_cloud-architect",
+  "role": "cloud-architect",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "architecture",
+    "display_name": "Cloud Architect",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "cloud-design",
+      "iac-authoring",
+      "cost-estimation",
+      "dr-planning",
+      "security-review"
+    ],
+    "consumes": ["Spec.md", "Plan.json", "infrastructure requirements"],
+    "produces": ["infrastructure-design.md", "IaC files", "cost-estimate.md", "DR plan"]
+  },
+
+  "gates": [
+    {
+      "id": "infrastructure-design-exists",
+      "description": "Cloud infrastructure design document must exist",
+      "type": "file_exists",
+      "pattern": "infrastructure",
+      "severity": "error"
+    },
+    {
+      "id": "multi-az-defined",
+      "description": "Multi-AZ deployment strategy must be defined for stateful components",
+      "type": "file_contains",
+      "required_string": "multi-az",
+      "severity": "error"
+    },
+    {
+      "id": "cost-estimate-present",
+      "description": "Cost estimate for expected and peak load must be provided",
+      "type": "file_contains",
+      "required_string": "cost",
+      "severity": "error"
+    },
+    {
+      "id": "no-secrets-in-code",
+      "description": "No hardcoded secrets in IaC files",
+      "type": "file_not_contains",
+      "banned_string": "password123",
+      "severity": "error"
+    },
+    {
+      "id": "rpo-rto-defined",
+      "description": "RPO and RTO must be defined for disaster recovery",
+      "type": "file_contains",
+      "required_string": "RTO",
+      "severity": "warn"
+    },
+    {
+      "id": "encryption-defined",
+      "description": "Encryption at rest and in transit strategy must be documented",
+      "type": "file_contains",
+      "required_string": "encryption",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "cloud-lifted-monolith",
+      "description": "Moving an on-premise monolith to EC2 without rearchitecting — same problems, higher bill"
+    },
+    {
+      "id": "service-sprawl",
+      "description": "Hundreds of Lambda functions and DynamoDB tables with no service catalog"
+    },
+    {
+      "id": "ignoring-the-bill",
+      "description": "No budget alerts or cost anomaly detection — surprise bills from runaway processes"
+    },
+    {
+      "id": "multi-cloud-for-sake-of-it",
+      "description": "Using AWS, GCP, and Azure simultaneously to avoid vendor lock-in — triples complexity"
+    },
+    {
+      "id": "console-cowboys",
+      "description": "Making production changes through the web console instead of IaC"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Cloud spend exceeds budget by >20% with no clear optimization path",
+    "A managed service has a known limitation blocking a critical business requirement",
+    "Security audit reveals a fundamental architecture flaw (misconfigured S3 with PII)",
+    "A regional outage exceeds the defined RTO and DR plan is not functioning",
+    "A compliance requirement cannot be met with current architecture"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with infrastructure requirements",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Cloud infrastructure design document exists",
+      "Multi-AZ deployment defined for all stateful components",
+      "Cost estimate provided for expected and peak load",
+      "No hardcoded secrets in IaC",
+      "RPO and RTO defined for disaster recovery",
+      "Encryption strategy documented (at rest and in transit)"
+    ]
+  }
+}

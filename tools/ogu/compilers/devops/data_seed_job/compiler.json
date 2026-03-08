@@ -1,0 +1,97 @@
+{
+  "id": "data_seed_job",
+  "title": "Data Seed Job Compiler",
+  "version": "1.0.0",
+  "description": "Compiles database seed jobs. Enforces: seed command exists and is executable, job validates, idempotency contract declared, target env allowlist excludes production, all DB config refs resolve.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "scheduled-job-artifact.json",
+    "output_artifact": "data-seed-artifact.json",
+    "identifier": "DATA_SEED"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "command-path-exists",
+        "idempotency-declared"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "no-production-target",
+        "db-refs-declared"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-data-seed"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "DS001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "DS002",
+      "name": "command-path-exists",
+      "phase": 2
+    },
+    {
+      "id": "DS003",
+      "name": "idempotency-declared",
+      "phase": 2
+    },
+    {
+      "id": "DS004",
+      "name": "no-production-target",
+      "phase": 3
+    },
+    {
+      "id": "DS005",
+      "name": "db-refs-declared",
+      "phase": 3
+    },
+    {
+      "id": "DS006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "DS007",
+      "name": "contract-data-seed",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "DS001": "data-seed-spec.json missing — required: name, command, targetEnvironments[]",
+    "DS002": "Seed command path not found in declared runtime paths",
+    "DS003": "Idempotency contract not declared — running seed twice may cause duplicate-key errors",
+    "DS004": "Production environment in targetEnvironments without explicit productionOverride flag",
+    "DS005": "DB or app config reference not declared in env schema or secrets",
+    "DS006": "TODO/FIXME found",
+    "DS007": "Data seed job contract violation"
+  }
+}

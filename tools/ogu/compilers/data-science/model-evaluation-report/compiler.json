@@ -1,0 +1,40 @@
+{
+  "id": "model-evaluation-report",
+  "title": "Model Evaluation Report Compiler",
+  "version": "1.0.0",
+  "description": "Compiles model evaluation scripts and reports. Enforces test-set-only evaluation, multiple metrics (not just accuracy), baseline comparison, confusion matrix or residual plots, confidence intervals, and documented findings. Guards against data leakage in evaluation.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "training-artifact.json", "output_artifact": "evaluation-artifact.json", "identifier": "MODEL_EVALUATION" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Evaluation Safety", "gates": ["test-set-only", "no-eval-leakage"] },
+    { "id": 3, "name": "Metric Coverage", "gates": ["multiple-metrics", "baseline-comparison", "confusion-matrix-or-residuals"] },
+    { "id": 4, "name": "Reporting", "gates": ["confidence-intervals", "findings-documented"] },
+    { "id": 5, "name": "Attest", "gates": ["no-todos", "contract-evaluation"] }
+  ],
+  "gates": [
+    { "id": "ME001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "ME002", "name": "test-set-only",               "phase": 2 },
+    { "id": "ME003", "name": "no-eval-leakage",             "phase": 2 },
+    { "id": "ME004", "name": "multiple-metrics",            "phase": 3 },
+    { "id": "ME005", "name": "baseline-comparison",         "phase": 3 },
+    { "id": "ME006", "name": "confusion-matrix-or-residuals","phase": 3 },
+    { "id": "ME007", "name": "confidence-intervals",        "phase": 4 },
+    { "id": "ME008", "name": "findings-documented",         "phase": 4 },
+    { "id": "ME009", "name": "no-todos",                    "phase": 5 },
+    { "id": "ME010", "name": "contract-evaluation",         "phase": 5 }
+  ],
+  "error_codes": {
+    "ME001": "Invalid evaluation spec",
+    "ME002": "Evaluation uses training or validation data — must evaluate on held-out test set only",
+    "ME003": "Test set fit/transformed separately — leaks test distribution into evaluation",
+    "ME004": "Only accuracy/MSE reported — need F1/precision/recall (classification) or MAE/R² (regression)",
+    "ME005": "No baseline model comparison (DummyClassifier/DummyRegressor or simple heuristic)",
+    "ME006": "No confusion matrix (classification) or residual analysis (regression)",
+    "ME007": "No confidence intervals or uncertainty quantification",
+    "ME008": "Model performance findings not documented in markdown/report",
+    "ME009": "TODO/FIXME found",
+    "ME010": "Evaluation contract violation"
+  }
+}

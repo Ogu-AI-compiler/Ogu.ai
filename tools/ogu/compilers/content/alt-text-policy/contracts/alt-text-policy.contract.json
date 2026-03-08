@@ -1,0 +1,35 @@
+{
+  "id": "alt-text-policy",
+  "version": "1.0.0",
+  "description": "An alt text policy defines the per-context accessibility rules for all image usage: what contexts require alt text, how decorative images are marked, length limits, prohibited phrases, and AI auto-generation rules.",
+  "rules": [
+    {
+      "id": "spec-file-exists",
+      "description": "An alt-text-policy.spec.json must exist with a non-empty contexts array where each context has a name."
+    },
+    {
+      "id": "alt-text-required-declared",
+      "description": "Every image context must explicitly declare altTextRequired as true or false. Undeclared policy means enforcement is inconsistent across content authors."
+    },
+    {
+      "id": "decorative-images-properly-marked",
+      "description": "Contexts with altTextRequired:false must also declare emptyAltPermitted:true and ariaHidden:true. Decorative images without ariaHidden leak meaningless filenames to screen readers."
+    },
+    {
+      "id": "max-length-defined",
+      "description": "Every non-decorative context must define maxLength. Without a length limit, alt text degrades into verbose descriptions that reduce a11y quality."
+    },
+    {
+      "id": "prohibited-phrases-cover-defaults",
+      "description": "prohibitedPhrases must be declared and must include: 'image of', 'photo of', 'picture of'. These are the most common useless patterns inserted by content authors."
+    },
+    {
+      "id": "cms-field-referenced",
+      "description": "Every context must declare a cmsField reference. Without it, there is no way to know which CMS field stores the alt text for enforcement."
+    },
+    {
+      "id": "auto-generation-binary",
+      "description": "autoGeneration must be 'allowed' or 'not-allowed'. An absent or undefined value means the policy is unknown, which prevents consistent enforcement."
+    }
+  ]
+}

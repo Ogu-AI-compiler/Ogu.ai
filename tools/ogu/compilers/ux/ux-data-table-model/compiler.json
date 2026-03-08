@@ -1,0 +1,147 @@
+{
+  "id": "ux-data-table-model",
+  "version": "1.0.0",
+  "title": "UX Data Table Model Compiler",
+  "description": "Validates data table specs: column definitions, pagination requirements, selection state, loading state, empty state, sortable column alignment, bulk action confirmations, and contract attestation. Produces data-table-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "UDT",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract data-table-spec.json from feature brief and column definitions",
+      "model": "haiku",
+      "outputs": ["data-table-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape, loading state, and empty state declarations",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "loading-state", "empty-table"]
+    },
+    {
+      "phase": 2,
+      "id": "interaction",
+      "title": "Interaction",
+      "description": "Validate paging requirements, selection state, and sortable column alignment",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["paging-required", "selection-state", "sortable-columns-valid"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate bulk action confirmation requirements",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["bulk-actions-confirmation"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["data-table-artifact.json"],
+      "gates": ["contract-data-table"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "data-table-spec.json exists with table_id(string), columns(array), pagination(object); each column has id+label+field; pagination has pageSize(number)",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "loading-state",
+      "title": "Loading State",
+      "description": "Spec must declare loadingState: skeleton, spinner, or overlay",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "empty-table",
+      "title": "Empty Table State",
+      "description": "Spec must declare emptyState with message(string) — blank table with no feedback is a violation",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "paging-required",
+      "title": "Paging Required",
+      "description": "If estimatedRowCount > 25 or pagination.required:true, pageSize must be > 0 and <= 100",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "selection-state",
+      "title": "Selection State",
+      "description": "If selectable:true, selectionState must declare maxSelection and bulkActions array",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "sortable-columns-valid",
+      "title": "Sortable Columns Valid",
+      "description": "Any column with sortable:true must be listed in spec.sortableColumns or have a corresponding sort spec",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "bulk-actions-confirmation",
+      "title": "Bulk Actions Confirmation",
+      "description": "Any bulkAction with destructive:true must declare confirmation object with message(string)",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-data-table",
+      "title": "Data Table Contract",
+      "description": "Version, unique column ids, pagination.pageSize > 0",
+      "phase": 4,
+      "required": true,
+      "contract": "data-table"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "data-table",
+      "file": "contracts/data-table.contract.json",
+      "description": "Structural requirements for all compiled data table specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UDT:{table_id}", "UDT:{table_id}:{columnId}"],
+    "output_artifact": "data-table-artifact.json",
+    "artifact_schema": "data-table-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "data-table-artifact-v1",
+    "fields": ["version", "table_id", "column_count", "sortable_column_count", "selectable", "loading_state", "page_size", "has_empty_state", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UDT001": "data-table-spec.json missing or invalid — table_id, columns, pagination required",
+    "UDT002": "Pagination not declared for large dataset — pageSize must be 1-100",
+    "UDT003": "selectable:true but selectionState missing maxSelection or bulkActions",
+    "UDT004": "loadingState missing — must be skeleton, spinner, or overlay",
+    "UDT005": "emptyState missing or missing message — blank tables must have feedback",
+    "UDT006": "Sortable column has no sort definition — column.sortable:true requires a sort spec entry",
+    "UDT007": "Destructive bulkAction missing confirmation message",
+    "UDT008": "Data table contract violation — version, unique column ids, or pageSize invalid"
+  }
+}

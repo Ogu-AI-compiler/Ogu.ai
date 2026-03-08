@@ -1,0 +1,128 @@
+{
+  "compiler_id": "compiler_mobile-developer",
+  "role": "mobile-developer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "engineering",
+    "display_name": "Mobile Developer",
+    "min_tier": 1
+  },
+
+  "pipeline": [
+    "feature-implementation",
+    "offline-handling",
+    "performance-profiling",
+    "accessibility-check",
+    "platform-testing"
+  ],
+
+  "pipeline": {
+    "phases": [
+      "feature-implementation",
+      "offline-handling",
+      "performance-profiling",
+      "accessibility-check",
+      "platform-testing"
+    ],
+    "consumes": ["Spec.md", "Plan.json", "DESIGN.md"],
+    "produces": ["mobile source files", "test files", "release notes"]
+  },
+
+  "gates": [
+    {
+      "id": "source-files-exist",
+      "description": "At least one mobile source file must be produced",
+      "type": "output_count",
+      "min": 1,
+      "severity": "error"
+    },
+    {
+      "id": "offline-behavior-defined",
+      "description": "Offline handling must be addressed in implementation or docs",
+      "type": "file_contains",
+      "required_string": "offline",
+      "severity": "error"
+    },
+    {
+      "id": "error-states-handled",
+      "description": "Network failure and error states must be handled",
+      "type": "file_contains",
+      "required_string": "error",
+      "severity": "error"
+    },
+    {
+      "id": "tests-exist",
+      "description": "Tests must be produced",
+      "type": "file_contains",
+      "required_string": "test(",
+      "severity": "error"
+    },
+    {
+      "id": "no-hardcoded-secrets",
+      "description": "No hardcoded API keys or secrets in mobile source",
+      "type": "file_not_contains",
+      "banned_string": "password123",
+      "severity": "error"
+    },
+    {
+      "id": "loading-state-handled",
+      "description": "Loading states shown during async operations",
+      "type": "file_contains",
+      "required_string": "loading",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "web-app-in-wrapper",
+      "description": "Building a web app and wrapping it in WebView — users notice, platform features unavailable"
+    },
+    {
+      "id": "ignoring-lifecycle",
+      "description": "App crashes when returning from background — lifecycle events not handled"
+    },
+    {
+      "id": "always-online-app",
+      "description": "App shows blank screen when offline — no local caching or offline fallback"
+    },
+    {
+      "id": "notification-spam",
+      "description": "Sending push notifications for every event — users disable or uninstall"
+    },
+    {
+      "id": "ignoring-app-store-guidelines",
+      "description": "Submitting features violating app store policies — rejection delays release"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Platform OS update introduces a breaking change in the next release",
+    "App store rejection for a policy reason affecting core functionality",
+    "Performance degradation that cannot be fixed without architectural changes",
+    "Third-party SDK has a critical bug and vendor is unresponsive",
+    "Push notification delivery rate drops below acceptable threshold"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with mobile feature requirements",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Mobile feature implemented per platform guidelines",
+      "Offline behavior defined and implemented",
+      "Loading and error states handled",
+      "No hardcoded credentials",
+      "Tests exist for critical flows",
+      "App lifecycle events handled correctly"
+    ]
+  }
+}

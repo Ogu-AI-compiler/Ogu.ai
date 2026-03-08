@@ -1,0 +1,73 @@
+{
+  "id": "env_schema",
+  "version": "1.0.0",
+  "description": "Validates environment variable schemas for type safety, unique names, typed defaults, secret hygiene, and operational accountability",
+  "rules": [
+    {
+      "id": "ES001",
+      "gate": "spec-valid",
+      "description": "env-schema-spec.json must exist, be valid JSON, and declare a non-empty envKeys array and an unknownKeyPolicy. Every key must have a name and a recognised type",
+      "required": true,
+      "mandatoryFields": ["envKeys", "unknownKeyPolicy"],
+      "fields": {
+        "unknownKeyPolicy": { "enum": ["reject", "ignore"] },
+        "envKeys[].type": { "enum": ["string", "number", "boolean", "url", "port", "email", "json", "base64"] }
+      }
+    },
+    {
+      "id": "ES002",
+      "gate": "unique-names",
+      "description": "No two entries in envKeys may share the same name. Duplicate env var names cause silent runtime ambiguity — the last declaration wins and the schema contract becomes unreliable",
+      "required": true
+    },
+    {
+      "id": "ES003",
+      "gate": "type-valid",
+      "description": "Every env key must declare a recognised type and must explicitly declare either required: true or a default value. A key with neither is ambiguous — the runtime cannot know how to behave when the variable is absent",
+      "required": true,
+      "fields": {
+        "type": { "enum": ["string", "number", "boolean", "url", "port", "email", "json", "base64"] }
+      },
+      "constraints": {
+        "optionality": "Each key must have required: true OR a default value — neither is rejected as ambiguous"
+      }
+    },
+    {
+      "id": "ES004",
+      "gate": "defaults-typed",
+      "description": "Default values must conform to the key's declared type. A default that fails its own type rule is a silent spec-time bug — the validator rejects it at startup with no warning at authoring time",
+      "required": true,
+      "note": "Skipped for keys that have no default value"
+    },
+    {
+      "id": "ES005",
+      "gate": "no-secret-default",
+      "description": "Keys marked secret: true must not have a literal default value in the spec, and must not have a literal value committed in any .env file (excluding .env.example). A secret with a literal default is a hardcoded credential that will appear in source control and container image layers",
+      "required": false,
+      "note": "Skipped when no keys declare secret: true",
+      "excludedFiles": [".env.example"]
+    },
+    {
+      "id": "ES006",
+      "gate": "no-todos",
+      "description": "env-schema-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "ES007",
+      "gate": "contract-env-schema",
+      "description": "Every env key must have a non-empty description (undescribed keys are opaque to operators during incidents). Required keys must not declare a default value — a required key with a default is self-contradicting and causes inconsistent validator behaviour at runtime",
+      "required": true,
+      "constraints": {
+        "description": "All keys must declare a non-empty description string",
+        "required-no-default": "Keys with required: true must not also declare a default value"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "env-schema-artifact.json",
+    "ir_id_prefix": "ENV_SCHEMA:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

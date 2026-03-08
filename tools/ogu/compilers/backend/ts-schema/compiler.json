@@ -1,0 +1,188 @@
+{
+  "id": "ts-schema",
+  "version": "1.0.0",
+  "title": "TypeScript Schema Compiler",
+  "description": "Formal compiler for Zod schemas: the shared contract between UI and API. Verifies type safety, OpenAPI compatibility, and cross-compiler alignment.",
+  "ir_prefix": "SCHEMA",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract schema spec: entity name, fields with types/constraints, relationships, variants, validation rules",
+      "model": "haiku",
+      "outputs": ["schema-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "scaffold",
+      "title": "Scaffold",
+      "description": "Generate schema.ts, types.ts, and openapi-schema.json stubs with correct structure",
+      "model": "haiku",
+      "outputs": ["schema.ts", "types.ts", "openapi-schema.json"],
+      "gates": ["spec-valid", "zod-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "implement",
+      "title": "Implement",
+      "description": "Write full Zod schemas with constraints, refinements, transforms, and discriminated unions",
+      "model": "sonnet",
+      "outputs": ["schema.ts", "types.ts"],
+      "gates": ["no-any", "types-exported", "no-todos", "exhaustive-unions", "refinements-documented"]
+    },
+    {
+      "phase": 3,
+      "id": "coverage-check",
+      "title": "Coverage Check",
+      "description": "Verify schema is complete enough to serve as source of truth: all fields have types, no placeholder fields",
+      "model": "haiku",
+      "outputs": ["coverage-check.json"],
+      "gates": ["field-coverage"]
+    },
+    {
+      "phase": 4,
+      "id": "verify",
+      "title": "Verify",
+      "description": "Validate OpenAPI compatibility, no circular dependencies, contract compliance",
+      "model": "haiku",
+      "outputs": ["verification.json"],
+      "gates": ["openapi-compatible", "no-circular", "contract-schema"]
+    },
+    {
+      "phase": 5,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed schema-artifact.json with full field registry",
+      "model": "haiku",
+      "outputs": ["schema-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "schema-spec.json exists with required fields: entity, fields[], relationships[]",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "zod-valid",
+      "title": "Zod Valid",
+      "description": "schema.ts imports from 'zod', exports named schemas, balanced syntax",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-any",
+      "title": "No Any",
+      "description": "No TypeScript 'any', no z.any(), no z.unknown() without justification comment",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "types-exported",
+      "title": "Types Exported",
+      "description": "Every Zod schema has a corresponding exported TypeScript type via z.infer<>",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-todos",
+      "title": "No TODOs",
+      "description": "No TODO/FIXME/HACK/PLACEHOLDER in schema or types files",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "exhaustive-unions",
+      "title": "Exhaustive Unions",
+      "description": "Discriminated object unions use z.discriminatedUnion(), not z.union() with overlapping objects",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "refinements-documented",
+      "title": "Refinements Documented",
+      "description": "Every .refine() or .superRefine() call has a descriptive error message (no empty strings)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "field-coverage",
+      "title": "Field Coverage",
+      "description": "All fields in schema-spec.json have a corresponding Zod definition in schema.ts. No field is declared but not implemented.",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "openapi-compatible",
+      "title": "OpenAPI Compatible",
+      "description": "openapi-schema.json is valid JSON Schema (draft-07 or OAS3) — no custom Zod transforms that break serialization",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "no-circular",
+      "title": "No Circular Deps",
+      "description": "No circular schema references (A references B which references A)",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "contract-schema",
+      "title": "Schema Contract",
+      "description": "Schema matches schema.contract.json rules: naming, export structure, no raw objects",
+      "phase": 4,
+      "required": true,
+      "contract": "schema"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "schema",
+      "file": "contracts/schema.contract.json",
+      "description": "Structural rules for all compiled TypeScript schemas"
+    }
+  ],
+  "ir": {
+    "identifiers": [
+      "SCHEMA:{EntityName}",
+      "SCHEMA:{EntityName}Input",
+      "SCHEMA:{EntityName}Partial",
+      "SCHEMA:{EntityName}List"
+    ],
+    "output_artifact": "schema-artifact.json",
+    "artifact_schema": "schema-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.30
+  },
+  "attestation": {
+    "schema": "schema-artifact-v1",
+    "fields": [
+      "entity", "fields", "relationships", "schemas_exported",
+      "types_exported", "openapi_path", "gates_passed",
+      "cross_component_aligned", "cross_route_aligned",
+      "compiled_at", "compiler_version"
+    ]
+  },
+  "error_codes": {
+    "SC001": "schema-spec.json missing or invalid",
+    "SC002": "schema.ts missing Zod import or invalid structure",
+    "SC003": "TypeScript 'any' or z.any() detected",
+    "SC004": "Schema exported without corresponding TypeScript type",
+    "SC005": "TODO/FIXME found in schema files",
+    "SC006": "Discriminated union uses z.union() instead of z.discriminatedUnion()",
+    "SC007": ".refine() has empty or missing error message",
+    "SC008": "Schema spec declares fields not implemented in schema.ts",
+    "SC010": "OpenAPI JSON Schema invalid or has non-serializable transforms",
+    "SC011": "Circular schema reference detected"
+  }
+}

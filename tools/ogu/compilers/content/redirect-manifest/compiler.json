@@ -1,0 +1,36 @@
+{
+  "id": "redirect-manifest",
+  "title": "Redirect Manifest Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the URL redirect manifest. Enforces: no redirect loops, no redirect chains (A→B→C), valid HTTP status codes (301/302/307/308/410), no self-redirects, and proper URL format for all source and destination entries.",
+  "tier": "content",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "redirect-manifest.json",
+    "identifier": "REDIRECT_MANIFEST"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Loop & Chain Detection", "gates": ["no-redirect-loops", "no-redirect-chains"] },
+    { "id": 3, "name": "Status & Format",        "gates": ["valid-status-codes", "no-self-redirect", "url-format-valid"] },
+    { "id": 4, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "RDR001", "name": "spec-valid",           "phase": 1 },
+    { "id": "RDR002", "name": "no-redirect-loops",    "phase": 2 },
+    { "id": "RDR003", "name": "no-redirect-chains",   "phase": 2 },
+    { "id": "RDR004", "name": "valid-status-codes",   "phase": 3 },
+    { "id": "RDR005", "name": "no-self-redirect",     "phase": 3 },
+    { "id": "RDR006", "name": "url-format-valid",     "phase": 3 },
+    { "id": "RDR007", "name": "no-todos",             "phase": 4 }
+  ],
+  "error_codes": {
+    "RDR001": "redirect-manifest.json missing or invalid — required fields: redirects[] with from, to, status",
+    "RDR002": "Redirect loop detected — A redirects to B which redirects back to A; loops cause browser errors",
+    "RDR003": "Redirect chain detected — A redirects to B which redirects to C; flatten chains to single-hop redirects",
+    "RDR004": "Invalid HTTP status code — redirect status must be one of: 301, 302, 307, 308, 410",
+    "RDR005": "Self-redirect detected — source and destination URL are identical; remove this entry",
+    "RDR006": "Invalid URL format — source and destination must be valid absolute or root-relative URLs",
+    "RDR007": "TODO/FIXME/HACK comment found"
+  }
+}

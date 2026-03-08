@@ -1,0 +1,13 @@
+{
+  "id": "webhook-verification-policy",
+  "version": "1.0.0",
+  "description": "A webhook-verification-policy artifact defines how incoming webhook payloads are cryptographically verified, preventing spoofed events and replay attacks.",
+  "rules": [
+    { "id": "spec-has-webhooks", "description": "Policy must declare at least one webhook with provider and signing_algorithm." },
+    { "id": "constant-time-comparison-required", "description": "Every webhook must declare constant_time_comparison: true to prevent timing-based HMAC key extraction." },
+    { "id": "replay-window-bounded", "description": "replay_protection_window_seconds must be declared and must not exceed 300 seconds." },
+    { "id": "signature-never-optional", "description": "signature_required must not be false and signature_optional must not be true." },
+    { "id": "approved-signing-algorithm", "description": "signing_algorithm must be one of: hmac-sha256, hmac-sha512, rsa-sha256, ed25519." },
+    { "id": "secret-referenced-not-hardcoded", "description": "secret_ref must reference a key in the secret-handling-policy — the signing secret must never be hardcoded in the policy." }
+  ]
+}

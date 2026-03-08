@@ -1,0 +1,35 @@
+{
+  "id": "session-cookie-policy",
+  "title": "Session Cookie Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles session and cookie security configuration. Enforces: HttpOnly and Secure flags set, expiration defined, CSRF protection declared.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "authz-policy.compiled.json",
+    "output_artifact": "session-cookie-policy.compiled.json",
+    "identifier": "SESSION_COOKIE_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Cookie Flags",          "gates": ["secure-flags-set", "expiration-defined"] },
+    { "id": 3, "name": "CSRF Protection",       "gates": ["csrf-protection-declared"] },
+    { "id": 4, "name": "Session Fixation",      "gates": ["token-rotation-on-auth"] },
+    { "id": 5, "name": "Quality",               "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "SK001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "SK002", "name": "secure-flags-set",            "phase": 2 },
+    { "id": "SK003", "name": "expiration-defined",          "phase": 2 },
+    { "id": "SK004", "name": "csrf-protection-declared",    "phase": 3 },
+    { "id": "SK005", "name": "no-todos",                    "phase": 5 },
+    { "id": "SK006", "name": "token-rotation-on-auth",      "phase": 4 }
+  ],
+  "error_codes": {
+    "SK001": "session-spec.json missing or invalid — required fields: cookie{}, csrf{}, session{}",
+    "SK002": "Session cookie missing HttpOnly or Secure flag — both are required to prevent XSS and MITM theft",
+    "SK003": "Session expiration not defined — set both maxAge (idle) and absoluteExpiry (max session lifetime)",
+    "SK004": "CSRF protection not declared — specify mechanism: samesite-strict, double-submit-cookie, or synchronizer-token",
+    "SK005": "TODO/FIXME/HACK comment found",
+    "SK006": "Session token not rotated after login — set session.rotate_on_login: true to prevent session fixation attacks"
+  }
+}

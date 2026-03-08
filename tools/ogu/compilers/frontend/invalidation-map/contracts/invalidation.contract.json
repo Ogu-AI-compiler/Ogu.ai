@@ -1,0 +1,11 @@
+{
+  "id": "invalidation-map",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "no-orphan-queries", "description": "Every query key in the map must have a compiled query-artifact", "severity": "error" },
+    { "id": "no-orphan-mutations", "description": "Every mutation in the map must have a compiled mutation-artifact", "severity": "error" },
+    { "id": "no-circular", "description": "No circular invalidation chains allowed", "severity": "error" },
+    { "id": "complete-coverage", "description": "Every mutation in the system must appear in the map (or in fireAndForget)", "severity": "error" },
+    { "id": "no-empty-invalidation", "description": "Mutations must not map to zero queries unless explicitly marked fireAndForget", "severity": "warning" }
+  ]
+}

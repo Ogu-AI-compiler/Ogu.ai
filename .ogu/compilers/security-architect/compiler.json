@@ -1,0 +1,127 @@
+{
+  "compiler_id": "compiler_security-architect",
+  "role": "security-architect",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "security",
+    "display_name": "Security Architect",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "threat-modeling",
+      "security-requirements",
+      "defense-in-depth-design",
+      "code-review",
+      "compliance-mapping"
+    ],
+    "consumes": ["Spec.md", "PRD.md", "data flow diagrams"],
+    "produces": ["threat-model.md", "security-requirements.md", "security-architecture.md"]
+  },
+
+  "gates": [
+    {
+      "id": "threat-model-exists",
+      "description": "Threat model with DFD and STRIDE analysis must exist",
+      "type": "file_exists",
+      "pattern": "threat",
+      "severity": "error"
+    },
+    {
+      "id": "stride-analysis-present",
+      "description": "STRIDE threat categories must be analyzed",
+      "type": "file_contains",
+      "required_string": "STRIDE",
+      "severity": "error"
+    },
+    {
+      "id": "mitigations-documented",
+      "description": "All threats rated >=15 must have documented mitigations",
+      "type": "file_contains",
+      "required_string": "mitigation",
+      "severity": "error"
+    },
+    {
+      "id": "auth-model-defined",
+      "description": "Authentication and authorization model must be defined",
+      "type": "file_contains",
+      "required_string": "authentication",
+      "severity": "error"
+    },
+    {
+      "id": "encryption-strategy",
+      "description": "Encryption at rest and in transit strategy must be documented",
+      "type": "file_contains",
+      "required_string": "encryption",
+      "severity": "error"
+    },
+    {
+      "id": "no-hardcoded-secrets",
+      "description": "No hardcoded secrets in any architecture artifacts",
+      "type": "file_not_contains",
+      "banned_string": "password123",
+      "severity": "error"
+    },
+    {
+      "id": "audit-logging-defined",
+      "description": "Audit logging strategy for state-changing operations must be defined",
+      "type": "file_contains",
+      "required_string": "audit",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "security-through-obscurity",
+      "description": "Hiding endpoints or using non-standard ports as security measures"
+    },
+    {
+      "id": "rolling-your-own-crypto",
+      "description": "Implementing custom encryption, hashing, or token generation"
+    },
+    {
+      "id": "overly-permissive-defaults",
+      "description": "Services start with admin access, APIs accept all origins"
+    },
+    {
+      "id": "checkbox-security",
+      "description": "Running a scanner once, fixing findings, declaring secure"
+    },
+    {
+      "id": "frozen-security-model",
+      "description": "Security architecture never updated as the system evolves"
+    }
+  ],
+
+  "escalation_triggers": [
+    "A vulnerability found that could expose user PII or financial data",
+    "A dependency has a critical CVE with no available patch or workaround",
+    "Threat model reveals a risk rated >=20 with no clear mitigation",
+    "A compliance requirement (GDPR, SOC 2, PCI-DSS) is violated",
+    "Engineering pushes back on a critical security control due to performance or UX"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with system design for threat modeling",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Threat model document exists with DFD and STRIDE analysis",
+      "All threats rated >=15 have documented mitigations",
+      "Authentication and authorization model defined",
+      "Data classification completed for all data types",
+      "Encryption strategy defined (at rest and in transit)",
+      "Audit logging covers all state-changing operations"
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "id": "service-client-runtime-module",
+  "title": "Service Client Runtime Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the shared HTTP transport layer: timeout/AbortSignal on every request, config-sourced base URLs, secret header redaction in logs, explicit retry policy (allowlist-only), and typed non-2xx error normalization.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "config-artifact.json",
+    "output_artifact": "client-runtime-artifact.json",
+    "identifier": "CLIENT_RUNTIME"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Implementation Check",
+      "gates": ["timeout-enforced", "base-url-from-config"]
+    },
+    {
+      "id": 3,
+      "name": "Security Check",
+      "gates": ["secrets-redacted", "retry-allowlisted"]
+    },
+    {
+      "id": 4,
+      "name": "Error Handling",
+      "gates": ["errors-typed", "no-todos"]
+    },
+    {
+      "id": 5,
+      "name": "Quality",
+      "gates": ["tests-pass"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-client-runtime"]
+    }
+  ],
+  "gates": [
+    { "id": "SR001", "name": "spec-valid",           "phase": 1 },
+    { "id": "SR002", "name": "timeout-enforced",     "phase": 2 },
+    { "id": "SR003", "name": "base-url-from-config", "phase": 2 },
+    { "id": "SR004", "name": "secrets-redacted",     "phase": 3 },
+    { "id": "SR005", "name": "retry-allowlisted",    "phase": 3 },
+    { "id": "SR006", "name": "errors-typed",         "phase": 4 },
+    { "id": "SR007", "name": "no-todos",             "phase": 4 },
+    { "id": "SR008", "name": "tests-pass",           "phase": 5 },
+    { "id": "SR009", "name": "contract-client-runtime", "phase": 6 }
+  ],
+  "error_codes": {
+    "SR001": "client-runtime-spec.json missing or invalid",
+    "SR002": "HTTP request path found without timeout or AbortSignal",
+    "SR003": "Base URL hardcoded — must come from config module",
+    "SR004": "Secret header (Authorization, X-Api-Key, etc.) included in log statement without redaction",
+    "SR005": "Retry logic applies to non-allowlisted conditions (e.g., retrying 4xx, POST without idempotency)",
+    "SR006": "Non-2xx response not mapped to a typed client error",
+    "SR007": "TODO/FIXME/HACK comment found",
+    "SR008": "Tests failed",
+    "SR009": "Client runtime contract violation"
+  }
+}

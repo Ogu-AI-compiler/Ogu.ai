@@ -1,0 +1,36 @@
+{
+  "id": "db-provisioning-spec",
+  "title": "Database Provisioning Spec Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the database instance provisioning specification. Enforces: non-EOL engine version, encryption-at-rest for PII tiers, deletion protection and multi-AZ for production, backup retention compliance, and appropriate storage type for declared IOPS.",
+  "tier": "database-admin",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "db-provisioning-spec-artifact.json",
+    "identifier": "DB_PROVISIONING_SPEC"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",    "gates": ["spec-valid"] },
+    { "id": 2, "name": "Engine & Encryption",      "gates": ["engine-version", "encryption-at-rest"] },
+    { "id": 3, "name": "HA & Data Protection",     "gates": ["deletion-protection", "multi-az", "backup-retention"] },
+    { "id": 4, "name": "Storage",                  "gates": ["storage-type"] }
+  ],
+  "gates": [
+    { "id": "DPS001", "name": "spec-valid",           "phase": 1 },
+    { "id": "DPS002", "name": "engine-version",       "phase": 2 },
+    { "id": "DPS003", "name": "encryption-at-rest",   "phase": 2 },
+    { "id": "DPS004", "name": "deletion-protection",  "phase": 3 },
+    { "id": "DPS005", "name": "multi-az",             "phase": 3 },
+    { "id": "DPS006", "name": "backup-retention",     "phase": 3 },
+    { "id": "DPS007", "name": "storage-type",         "phase": 4 }
+  ],
+  "error_codes": {
+    "DPS001": "db-provisioning-spec.json missing or invalid — required fields: platform, engine, engine_version, instance_class, storage_type, multi_az, deletion_protection, encryption_at_rest, backup_retention_days",
+    "DPS002": "Engine version is EOL or unrecognised — declare a supported, non-EOL PostgreSQL version",
+    "DPS003": "PII-tier or production instance missing encryption_at_rest: true",
+    "DPS004": "Production instance missing deletion_protection: true — prevents accidental database deletion",
+    "DPS005": "Production HA instance has multi_az: false — production databases must run multi-AZ",
+    "DPS006": "Backup retention below compliance minimum — production requires ≥ 7 days",
+    "DPS007": "Storage type is gp2 but provisioned IOPS declared — use gp3 or io1/io2 for explicit IOPS reservation"
+  }
+}

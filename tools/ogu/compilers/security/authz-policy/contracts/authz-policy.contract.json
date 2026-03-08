@@ -1,0 +1,18 @@
+{
+  "id": "authz-policy",
+  "version": "1.0.0",
+  "description": "An authz-policy artifact declares the complete authorization model for a feature: roles, resources, actions, effects, and the conditions under which access is granted.",
+  "rules": [
+    { "id": "spec-has-feature", "description": "The policy must identify the feature it covers." },
+    { "id": "spec-has-roles", "description": "The roles array must declare at least one role." },
+    { "id": "spec-has-rules", "description": "The rules array must contain at least one rule." },
+    { "id": "rules-have-required-fields", "description": "Each rule must declare: id, subject, resource, action, and effect." },
+    { "id": "effect-is-allow-or-deny", "description": "rule.effect must be either 'allow' or 'deny'." },
+    { "id": "default-deny-declared", "description": "The policy must declare default_effect: 'deny' at the top level, or include a wildcard deny rule. Authorization is deny-by-default." },
+    { "id": "no-wildcard-allow-rules", "description": "Allow rules must not use wildcard ('*', 'all', 'any') for both resource and action simultaneously." },
+    { "id": "no-unauthenticated-admin-access", "description": "Unauthenticated or anonymous subjects must not be granted admin-tier actions (delete, create, manage, configure) in any allow rule." },
+    { "id": "multitenant-rules-have-tenant-condition", "description": "When multi_tenant: true, allow rules on tenant-scoped resources must include a condition checking tenant_id or org_id." },
+    { "id": "m2m-roles-not-inheriting-user", "description": "Machine-to-machine service roles must not inherit permissions from human user roles." },
+    { "id": "admin-roles-require-mfa", "description": "Roles named admin, super-admin, administrator, root, or owner must declare requires_mfa: true." }
+  ]
+}

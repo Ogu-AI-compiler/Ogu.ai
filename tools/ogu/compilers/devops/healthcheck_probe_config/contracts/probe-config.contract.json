@@ -1,0 +1,78 @@
+{
+  "id": "healthcheck_probe_config",
+  "version": "1.0.0",
+  "description": "Validates Kubernetes probe configurations for handler completeness, threshold correctness, port alignment, and safe timing relationships between liveness, readiness, and startup probes",
+  "rules": [
+    {
+      "id": "PC001",
+      "gate": "spec-valid",
+      "description": "probe-config-spec.json must exist, be valid JSON, and declare containerPorts (non-empty array) and probes",
+      "required": true,
+      "mandatoryFields": ["containerPorts", "probes"]
+    },
+    {
+      "id": "PC002",
+      "gate": "both-probes-defined",
+      "description": "Both liveness and readiness probes must be defined. liveness detects stuck containers; readiness controls traffic routing during startup and degradation",
+      "required": true,
+      "mandatoryFields": ["probes.liveness", "probes.readiness"]
+    },
+    {
+      "id": "PC003",
+      "gate": "probe-schema-valid",
+      "description": "Every probe must have exactly one handler: httpGet (with path + port), tcpSocket (with port), exec (with non-empty command array), or grpc (with port). The kubelet rejects probes with missing handler fields",
+      "required": true,
+      "allowedHandlers": ["httpGet", "tcpSocket", "exec", "grpc"],
+      "handlerRequirements": {
+        "httpGet":   ["path", "port"],
+        "tcpSocket": ["port"],
+        "exec":      ["command (non-empty array)"],
+        "grpc":      ["port"]
+      }
+    },
+    {
+      "id": "PC004",
+      "gate": "thresholds-valid",
+      "description": "All timing fields (initialDelaySeconds, periodSeconds, timeoutSeconds, successThreshold, failureThreshold) must be positive integers. liveness.successThreshold must be exactly 1 — the Kubernetes API server rejects any other value",
+      "required": true,
+      "fields": {
+        "initialDelaySeconds": { "type": "integer", "min": 1 },
+        "periodSeconds":       { "type": "integer", "min": 1 },
+        "timeoutSeconds":      { "type": "integer", "min": 1 },
+        "successThreshold":    { "type": "integer", "min": 1 },
+        "failureThreshold":    { "type": "integer", "min": 1 }
+      },
+      "constraints": {
+        "liveness.successThreshold": { "equals": 1, "reason": "Kubernetes API server rejects liveness probes with successThreshold > 1" }
+      }
+    },
+    {
+      "id": "PC005",
+      "gate": "ports-exist",
+      "description": "Every port referenced in probe handlers (httpGet.port, tcpSocket.port, grpc.port) must be declared in spec.containerPorts",
+      "required": true
+    },
+    {
+      "id": "PC006",
+      "gate": "no-todos",
+      "description": "probe-config-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "PC007",
+      "gate": "contract-probe-config",
+      "description": "Timing relationships: liveness.initialDelaySeconds must be >= (startup.periodSeconds × startup.failureThreshold) to prevent liveness from killing a slow-starting container. readiness.failureThreshold should be <= liveness.failureThreshold so traffic stops before the container is restarted",
+      "required": true,
+      "constraints": {
+        "liveness.initialDelaySeconds": "must be >= startup.periodSeconds × startup.failureThreshold (when startup probe is defined)",
+        "readiness.failureThreshold":   "should be <= liveness.failureThreshold"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "probe-config-artifact.json",
+    "ir_id_prefix": "PROBE_CONFIG:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

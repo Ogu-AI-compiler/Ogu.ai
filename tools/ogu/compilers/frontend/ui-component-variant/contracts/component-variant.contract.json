@@ -1,0 +1,23 @@
+{
+  "id": "component-variant",
+  "version": "1.0.0",
+  "description": "A valid component variant spec names the component, declares at least 2 variants with a default, uses only token references, and covers all theme modes.",
+  "rules": [
+    {
+      "id": "has-default-variant",
+      "description": "At least one variant must be the default. Without a default, the component has no fallback visual and will break when no variant prop is passed."
+    },
+    {
+      "id": "variant-ids-unique",
+      "description": "Every variant must have a unique id. Duplicate IDs make variants unreferable and cause implementation ambiguity."
+    },
+    {
+      "id": "component-name-set",
+      "description": "The component field must be a non-empty string. This is the canonical component identifier used by the IR and downstream compilers."
+    },
+    {
+      "id": "minimum-two-variants",
+      "description": "A component with only one visual variant does not need a variant system — it should just be a single component style. Two or more variants justify the spec."
+    }
+  ]
+}

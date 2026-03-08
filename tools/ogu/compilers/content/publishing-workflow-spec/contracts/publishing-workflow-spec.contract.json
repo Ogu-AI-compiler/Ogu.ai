@@ -1,0 +1,35 @@
+{
+  "id": "publishing-workflow-spec",
+  "version": "1.0.0",
+  "description": "A publishing workflow spec defines the state machine for content lifecycle: states, transitions, roles, and approval requirements — enforced before any content type can use the workflow.",
+  "rules": [
+    {
+      "id": "spec-file-exists",
+      "description": "A publishing-workflow-spec.spec.json must exist with non-empty states array, an initialState, and a roles object."
+    },
+    {
+      "id": "required-states-present",
+      "description": "Workflow must include at minimum: 'draft' and 'published' states. A workflow without these states cannot represent the basic content lifecycle."
+    },
+    {
+      "id": "published-has-archive-transition",
+      "description": "The 'published' state must transition to an archive or unpublish state. Published content without an exit path accumulates as stale live content."
+    },
+    {
+      "id": "all-states-reachable",
+      "description": "Every declared state must be reachable from the initialState via transitions. Unreachable states are dead configuration that confuses editorial teams."
+    },
+    {
+      "id": "terminal-state-exists",
+      "description": "At least one terminal state must exist (published, archived, or any state marked terminal:true). A workflow with no terminal state has no definition of 'done'."
+    },
+    {
+      "id": "role-references-valid",
+      "description": "All role IDs used in allowedRoles or transitionRoles must be defined in spec.roles. Undefined roles cannot be enforced in the CMS."
+    },
+    {
+      "id": "no-draft-to-published-bypass",
+      "description": "Draft must not transition directly to published unless allowDirectPublish:true is explicitly set. Bypassing review means unedited content reaches live audiences."
+    }
+  ]
+}

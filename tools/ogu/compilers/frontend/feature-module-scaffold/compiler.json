@@ -1,0 +1,33 @@
+{
+  "id": "feature-module-scaffold",
+  "title": "Feature Module Scaffold Compiler",
+  "version": "1.0.0",
+  "description": "Compiles feature folder structure with public barrel exports, enforces no cross-feature private imports, and verifies every declared capability has a corresponding file.",
+  "tier": "frontend",
+  "ir": { "input_artifact": null, "output_artifact": "feature-module-artifact.json", "identifier": "FEATURE_MODULE" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["barrel-exports", "capability-files"] },
+    { "id": 3, "name": "Implement", "gates": ["no-cross-feature-imports", "no-private-leaks"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-feature-module"] }
+  ],
+  "gates": [
+    { "id": "FM001", "name": "spec-valid",               "phase": 1 },
+    { "id": "FM002", "name": "barrel-exports",           "phase": 2 },
+    { "id": "FM003", "name": "capability-files",         "phase": 2 },
+    { "id": "FM004", "name": "no-cross-feature-imports", "phase": 3 },
+    { "id": "FM005", "name": "no-private-leaks",         "phase": 3 },
+    { "id": "FM006", "name": "no-todos",                 "phase": 4 },
+    { "id": "FM007", "name": "contract-feature-module",  "phase": 5 }
+  ],
+  "error_codes": {
+    "FM001": "Invalid feature module spec",
+    "FM002": "index.ts missing or has no exports — public barrel required",
+    "FM003": "Declared capability has no corresponding file in feature directory",
+    "FM004": "Cross-feature import bypasses public index.ts — must import from barrel",
+    "FM005": "Internal file exported via barrel — only public API should be in index.ts",
+    "FM006": "TODO/FIXME found",
+    "FM007": "Contract violation"
+  }
+}

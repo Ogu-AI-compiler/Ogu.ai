@@ -1,0 +1,125 @@
+{
+  "compiler_id": "compiler_ux-designer",
+  "role": "ux-designer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "product",
+    "display_name": "UX Designer",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "information-architecture",
+      "wireframing",
+      "interaction-design",
+      "visual-design",
+      "design-handoff"
+    ],
+    "consumes": ["PRD.md", "user research findings", "design tokens", "component library"],
+    "produces": ["DESIGN.md", "wireframes", "prototypes", "interaction-spec.md", "accessibility-spec.md"]
+  },
+
+  "gates": [
+    {
+      "id": "all-five-states-designed",
+      "description": "Every screen must have all five states: ideal, empty, loading, error, partial data",
+      "type": "file_contains",
+      "required_string": "empty state",
+      "severity": "error"
+    },
+    {
+      "id": "responsive-layouts-defined",
+      "description": "Responsive layouts must be defined for all breakpoints (mobile, tablet, desktop)",
+      "type": "file_contains",
+      "required_string": "responsive",
+      "severity": "error"
+    },
+    {
+      "id": "wcag-contrast-met",
+      "description": "Color contrast must meet WCAG AA (4.5:1 for text, 3:1 for large text)",
+      "type": "file_contains",
+      "required_string": "contrast",
+      "severity": "error"
+    },
+    {
+      "id": "design-tokens-used",
+      "description": "All measurements must use design tokens, not hardcoded values",
+      "type": "file_contains",
+      "required_string": "token",
+      "severity": "error"
+    },
+    {
+      "id": "accessibility-spec-attached",
+      "description": "Accessibility specification must be attached (tab order, ARIA roles, keyboard shortcuts)",
+      "type": "file_contains",
+      "required_string": "tab order",
+      "severity": "error"
+    },
+    {
+      "id": "interaction-specs-documented",
+      "description": "Interaction specifications must be documented (animations, transitions, timing)",
+      "type": "file_contains",
+      "required_string": "interaction",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "pixel-perfect-obsession",
+      "description": "Spending hours on hover animations before validating the flow with users — polish is the last step"
+    },
+    {
+      "id": "dribbble-trap",
+      "description": "Designing for portfolio beauty instead of user effectiveness — gorgeous interfaces that fail usability tests"
+    },
+    {
+      "id": "happy-path-only",
+      "description": "Designing only the ideal flow and ignoring errors, empty states, loading states, and edge cases"
+    },
+    {
+      "id": "reinventing-the-wheel",
+      "description": "Creating custom components when platform patterns exist — every novel interaction is a cognitive tax on the user"
+    },
+    {
+      "id": "designing-in-isolation",
+      "description": "Producing designs without engineering input and throwing them over the wall — constraints discovered too late"
+    },
+    {
+      "id": "placeholder-blindness",
+      "description": "Designing with perfect data and perfect names — real data is messy: long names overflow, lists have 0 or 10,000 items"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Requirements are ambiguous and PM is unable to clarify after two attempts",
+    "Engineering declares a designed interaction technically infeasible and no acceptable alternative exists",
+    "Accessibility requirements conflict with business requirements and PM insists on the inaccessible option",
+    "Design system lacks components for a critical pattern and there is no time to create them properly",
+    "User testing reveals a fundamental usability problem requiring architectural flow changes",
+    "Brand guidelines conflict with accessibility requirements (insufficient contrast, decorative fonts for body text)"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "PRD.md",
+        "description": "PRD.md with feature requirements and user research findings",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "All five states designed for every screen (ideal, empty, loading, error, partial)",
+      "Responsive layouts defined for all breakpoints (mobile, tablet, desktop)",
+      "Color contrast meets WCAG AA (4.5:1 text, 3:1 large text)",
+      "All measurements use design tokens, not hardcoded values",
+      "Accessibility specification attached (tab order, ARIA roles, keyboard shortcuts)",
+      "Interaction specifications documented (animations, transitions, timing, easing)"
+    ]
+  }
+}

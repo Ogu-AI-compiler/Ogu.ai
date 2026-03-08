@@ -1,0 +1,7 @@
+{ "id": "feature-module", "version": "1.0.0", "rules": [
+  { "id": "has-barrel", "description": "index.ts barrel file exists" },
+  { "id": "named-exports-only", "description": "Barrel uses named exports, not export *" },
+  { "id": "has-types", "description": "Has TypeScript type definitions" },
+  { "id": "no-cross-feature-imports", "description": "No imports from sibling feature directories" },
+  { "id": "no-private-leaks", "description": "No private/internal symbols exported" }
+]}

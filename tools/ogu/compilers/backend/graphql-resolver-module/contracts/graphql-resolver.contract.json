@@ -1,0 +1,9 @@
+{
+  "id": "graphql-resolver-contract", "version": "1.0.0",
+  "rules": [
+    { "id": "GRAPHQL_RESOLVER-001", "description": "No direct DB in resolvers — service layer only", "enforcement": "gate:no-direct-db" },
+    { "id": "GRAPHQL_RESOLVER-002", "description": "DataLoader used for list/nested resolvers (N+1 guard)", "enforcement": "gate:n-plus-one-guarded" },
+    { "id": "GRAPHQL_RESOLVER-003", "description": "Authorization checked per protected resolver", "enforcement": "gate:authorization-checked" },
+    { "id": "GRAPHQL_RESOLVER-004", "description": "Errors thrown as GraphQLError with extensions.code", "enforcement": "gate:errors-mapped-to-graphql" }
+  ]
+}

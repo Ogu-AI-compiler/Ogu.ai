@@ -1,0 +1,9 @@
+{
+  "id": "event-consumer-contract", "version": "1.0.0",
+  "rules": [
+    { "id": "EVENT_CONSUMER-001", "description": "Envelope validated on receipt before payload access", "enforcement": "gate:envelope-validated-on-receipt" },
+    { "id": "EVENT_CONSUMER-002", "description": "Idempotency key persisted before processing (at-least-once)", "enforcement": "gate:idempotency-persisted" },
+    { "id": "EVENT_CONSUMER-003", "description": "Errors classified (retryable vs dead-letter)", "enforcement": "gate:errors-classified" },
+    { "id": "EVENT_CONSUMER-004", "description": "Subscriptions only to declared channels", "enforcement": "gate:channel-scoped" }
+  ]
+}

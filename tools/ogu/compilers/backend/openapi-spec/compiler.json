@@ -1,0 +1,155 @@
+{
+  "id": "openapi-spec",
+  "version": "1.0.0",
+  "title": "OpenAPI Spec Compiler",
+  "description": "Aggregator compiler: collects route-artifact.json files, assembles and validates a complete OpenAPI 3.1 document. Input = compiled routes. Output = openapi-artifact.json.",
+  "ir_prefix": "OPENAPI",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "collect",
+      "title": "Collect",
+      "description": "Locate all route-artifact.json files in scope. Read openapi-spec.json for title, version, servers, auth schemes.",
+      "model": "haiku",
+      "outputs": ["openapi-spec.json"],
+      "gates": ["spec-valid", "routes-found"]
+    },
+    {
+      "phase": 1,
+      "id": "validate-fragments",
+      "title": "Validate Fragments",
+      "description": "Validate each route's openapi.json fragment: method, path, requestBody, responses, operationId",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["fragments-valid", "no-conflicts"]
+    },
+    {
+      "phase": 2,
+      "id": "assemble",
+      "title": "Assemble",
+      "description": "Merge all fragments into a single OpenAPI 3.1 document with info, servers, paths, components",
+      "model": "haiku",
+      "outputs": ["openapi.json"],
+      "gates": ["openapi-valid", "all-routes-covered", "schemas-referenced"]
+    },
+    {
+      "phase": 3,
+      "id": "verify",
+      "title": "Verify",
+      "description": "Cross-check auth schemes, verify all security references are defined, check contract compliance",
+      "model": "haiku",
+      "outputs": ["verification.json"],
+      "gates": ["auth-schemes", "contract-openapi"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed openapi-artifact.json for the registry",
+      "model": "haiku",
+      "outputs": ["openapi-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "openapi-spec.json exists with required fields: title, version, servers[]",
+      "phase": 0,
+      "required": true
+    },
+    {
+      "id": "routes-found",
+      "title": "Routes Found",
+      "description": "At least one route-artifact.json found in the declared scan paths",
+      "phase": 0,
+      "required": true
+    },
+    {
+      "id": "fragments-valid",
+      "title": "Fragments Valid",
+      "description": "Every route's openapi.json fragment has: method, path, operationId, at least one 2xx response",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-conflicts",
+      "title": "No Conflicts",
+      "description": "No duplicate operationIds across routes. No two routes with identical method+path.",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "openapi-valid",
+      "title": "OpenAPI Valid",
+      "description": "Assembled openapi.json is valid OpenAPI 3.1: has info, paths, components. All $ref targets exist.",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "all-routes-covered",
+      "title": "All Routes Covered",
+      "description": "Every route-artifact.json in scope has a corresponding path entry in the assembled spec",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "schemas-referenced",
+      "title": "Schemas Referenced",
+      "description": "All $ref values in paths point to schemas defined in components/schemas — no dangling refs",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "auth-schemes",
+      "title": "Auth Schemes",
+      "description": "All security schemes used in route fragments are defined in components/securitySchemes",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-openapi",
+      "title": "OpenAPI Contract",
+      "description": "Document satisfies structural contract: versioned, has contact info, all errors documented, no empty paths",
+      "phase": 3,
+      "required": true,
+      "contract": "openapi"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "openapi",
+      "file": "contracts/openapi.contract.json",
+      "description": "Structural requirements for compiled OpenAPI documents"
+    }
+  ],
+  "ir": {
+    "identifiers": [
+      "OPENAPI:{title}:{version}"
+    ],
+    "output_artifact": "openapi-artifact.json",
+    "artifact_schema": "openapi-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": false,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "openapi-artifact-v1",
+    "fields": ["title", "version", "route_count", "path_count", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "OS001": "openapi-spec.json missing or invalid",
+    "OS002": "No route-artifact.json files found in scan paths",
+    "OS003": "Route openapi.json fragment invalid or missing required fields",
+    "OS004": "Duplicate operationId or method+path conflict across routes",
+    "OS005": "Assembled OpenAPI document invalid (missing info/paths/components)",
+    "OS006": "route-artifact not covered in assembled spec",
+    "OS007": "Dangling $ref — schema referenced but not defined in components/schemas",
+    "OS008": "Security scheme used in route but not defined in components/securitySchemes",
+    "OS009": "OpenAPI contract violation (missing contact, undocumented errors, empty paths)"
+  }
+}

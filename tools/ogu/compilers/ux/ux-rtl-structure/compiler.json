@@ -1,0 +1,139 @@
+{
+  "id": "ux-rtl-structure",
+  "version": "1.0.0",
+  "title": "UX RTL Structure Compiler",
+  "description": "Validates RTL structure specs: layout mirroring, navigation direction reversal, icon directionality variants, text alignment overrides, responsive compatibility, and contract attestation. Produces rtl-structure-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "URT",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract rtl-spec.json from feature brief and element definitions",
+      "model": "haiku",
+      "outputs": ["rtl-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and required fields",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "mirroring",
+      "title": "Mirroring",
+      "description": "Validate layout mirroring, navigation reversal, and icon directionality",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["layouts-flipped", "navigation-reversed", "icon-directionality"]
+    },
+    {
+      "phase": 3,
+      "id": "text",
+      "title": "Text",
+      "description": "Validate text alignment overrides and responsive compatibility",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["text-alignment", "responsive-compatible"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["rtl-structure-artifact.json"],
+      "gates": ["contract-rtl-structure"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "rtl-spec.json exists with locales(array), elements(array); each element has id+type+currentDirection",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "layouts-flipped",
+      "title": "Layouts Flipped",
+      "description": "Every element with type=layout and currentDirection=ltr must declare rtlMirror:true or rtlOverride object",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "navigation-reversed",
+      "title": "Navigation Reversed",
+      "description": "If spec has navigation, it must declare rtlReverseDirection:true and rtlBackIcon; escape hatch: directionNeutral:true",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "icon-directionality",
+      "title": "Icon Directionality",
+      "description": "Every element with type=icon and directional:true must declare rtlVariant(string)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "text-alignment",
+      "title": "Text Alignment",
+      "description": "Every element with type=text and textAlign=left must declare rtlTextAlign: right or start",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "responsive-compatible",
+      "title": "Responsive Compatible",
+      "description": "If responsiveSpecRef exists, validates no fixed directional overrides without RTL declarations; escape hatch: responsiveCompatibilityExempt:true",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-rtl-structure",
+      "title": "RTL Structure Contract",
+      "description": "Version, unique element ids, at least one RTL locale, at least one element",
+      "phase": 4,
+      "required": true,
+      "contract": "rtl-structure"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "rtl-structure",
+      "file": "contracts/rtl-structure.contract.json",
+      "description": "Structural requirements for all compiled RTL structure specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["URT:{specId}", "URT:{specId}:{elementId}"],
+    "output_artifact": "rtl-structure-artifact.json",
+    "artifact_schema": "rtl-structure-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "rtl-structure-artifact-v1",
+    "fields": ["version", "locale_count", "element_count", "layout_count", "icon_count", "text_count", "has_navigation", "responsive_spec_ref", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "URT001": "rtl-spec.json missing or invalid — locales(array), elements(array) with id+type+currentDirection required",
+    "URT002": "LTR layout element missing rtlMirror:true or rtlOverride declaration",
+    "URT003": "Navigation missing rtlReverseDirection and rtlBackIcon — or directionNeutral:true",
+    "URT004": "Directional icon missing rtlVariant declaration",
+    "URT005": "Text element with textAlign=left missing rtlTextAlign override",
+    "URT006": "Responsive spec referenced but RTL compatibility not verified",
+    "URT007": "RTL structure contract violation — version, unique element ids, locales, or elements missing"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "story-contract",
+  "version": "1.0.0",
+  "compiler": "storybook-story",
+  "rules": [
+    { "id": "csf3-default-export", "description": "File must have a default export with title and component fields" },
+    { "id": "story-obj-type", "description": "Stories must be typed as StoryObj<typeof ComponentName>" },
+    { "id": "named-exports", "description": "At least one named story export (Default, Primary, etc.)" },
+    { "id": "a11y-parameters", "description": "Story or meta must include parameters.a11y configuration" },
+    { "id": "args-on-stories", "description": "Each named story must define args or inherit from meta.args" },
+    { "id": "no-console-log", "description": "No console.log in story files" },
+    { "id": "autodocs", "description": "Meta should include tags: ['autodocs'] for auto-generated docs" },
+    { "id": "no-hardcoded-strings", "description": "Story args should use realistic values, not 'string' or 'text'" }
+  ]
+}

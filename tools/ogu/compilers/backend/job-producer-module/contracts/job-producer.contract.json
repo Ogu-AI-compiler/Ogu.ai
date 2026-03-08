@@ -1,0 +1,10 @@
+{
+  "id": "job-producer-contract",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "JOB_PRODUCER-001", "description": "Payload validated against schema before enqueue", "enforcement": "gate:payload-validated" },
+    { "id": "JOB_PRODUCER-002", "description": "Queue name from topology constant — not hardcoded string", "enforcement": "gate:queue-name-from-topology" },
+    { "id": "JOB_PRODUCER-003", "description": "Enqueue call must be awaited — no fire-and-forget", "enforcement": "gate:no-fire-and-forget" },
+    { "id": "JOB_PRODUCER-004", "description": "Job options sourced from spec/config — no inline literals", "enforcement": "gate:options-from-spec" }
+  ]
+}

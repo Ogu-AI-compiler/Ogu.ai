@@ -1,0 +1,47 @@
+{
+  "id": "ux-destructive-action",
+  "version": "1.0.0",
+  "description": "A destructive action artifact is valid when every action is risk-classified, confirms intent with the user, cannot auto-confirm, provides undo capability when reversible, and links to a recovery path for high-risk outcomes.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "destructive-action-spec.json must exist with an actions array. Destructive features without a spec have undefined safety guarantees."
+    },
+    {
+      "id": "at-least-one-action",
+      "description": "The actions array must not be empty. A destructive action compiler with no actions has nothing to enforce."
+    },
+    {
+      "id": "risk-levels-valid",
+      "description": "Every action riskLevel must be low, medium, high, or critical. Unmapped risk levels cannot trigger the appropriate safety rails."
+    },
+    {
+      "id": "critical-requires-text-confirmation",
+      "description": "Critical actions must declare requiresTextConfirmation:true. Clicking a button is insufficient confirmation for irreversible high-stakes operations."
+    },
+    {
+      "id": "confirmation-declared",
+      "description": "Every action must have a confirmation object with a message string. The exception (confirmationNotRequired:true) is only valid for low-risk actions."
+    },
+    {
+      "id": "no-auto-confirm",
+      "description": "autoConfirm:true is forbidden on all actions regardless of risk level. Automatic confirmation bypasses user awareness and intent."
+    },
+    {
+      "id": "reversible-actions-have-undo",
+      "description": "Every action with reversible:true must declare undoWindow (positive number of seconds) and undoTrigger (string). Reversibility without an undo mechanism is not reversibility."
+    },
+    {
+      "id": "undo-window-capped",
+      "description": "undoWindow must not exceed 300 seconds (5 minutes). Longer windows create backend complexity and false expectations of safety."
+    },
+    {
+      "id": "high-risk-has-recovery-path",
+      "description": "Actions with riskLevel=high or critical must declare a recoveryPath string. After the undo window closes, users need to know where to go for recovery options."
+    },
+    {
+      "id": "unique-action-ids",
+      "description": "All action ids must be unique within the spec. Duplicate ids create ambiguous audit trails and confirmation dialog routing."
+    }
+  ]
+}

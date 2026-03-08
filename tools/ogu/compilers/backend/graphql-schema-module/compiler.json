@@ -1,0 +1,39 @@
+{
+  "id": "graphql-schema-module",
+  "title": "GraphQL Schema Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a GraphQL SDL schema from domain entities. Enforces: schema parses without errors, no __unsafe__ fields exposed, nullable vs non-null correctly declared, pagination uses Relay connection spec (if paginated), mutations return payload types (not root entity directly), all types have descriptions.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "graphql-schema-artifact.json",
+    "identifier": "GRAPHQL_SCHEMA"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Schema Validity", "gates": ["schema-parses", "no-unsafe-fields"] },
+    { "id": 3, "name": "Design Contract", "gates": ["mutations-return-payload", "pagination-relay"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-graphql-schema"] }
+  ],
+  "gates": [
+    { "id": "GS001", "name": "spec-valid",             "phase": 1 },
+    { "id": "GS002", "name": "schema-parses",          "phase": 2 },
+    { "id": "GS003", "name": "no-unsafe-fields",       "phase": 2 },
+    { "id": "GS004", "name": "mutations-return-payload","phase": 3 },
+    { "id": "GS005", "name": "pagination-relay",        "phase": 3 },
+    { "id": "GS006", "name": "no-todos",               "phase": 4 },
+    { "id": "GS007", "name": "tests-pass",             "phase": 4 },
+    { "id": "GS008", "name": "contract-graphql-schema","phase": 5 }
+  ],
+  "error_codes": {
+    "GS001": "graphql-schema-spec.json missing or invalid",
+    "GS002": "GraphQL SDL fails to parse",
+    "GS003": "Sensitive field exposed (password, token, secret, hash) without @internal or @deprecated",
+    "GS004": "Mutation returns root entity directly — must return payload type (e.g. CreateUserPayload)",
+    "GS005": "Paginated query does not use Relay connection spec (edges/node/pageInfo)",
+    "GS006": "TODO/FIXME/HACK comment found",
+    "GS007": "Tests failed",
+    "GS008": "GraphQL schema contract violation"
+  }
+}

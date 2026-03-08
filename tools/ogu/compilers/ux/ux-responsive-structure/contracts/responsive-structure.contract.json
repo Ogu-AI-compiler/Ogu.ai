@@ -1,0 +1,43 @@
+{
+  "id": "ux-responsive-structure",
+  "version": "1.0.0",
+  "description": "A responsive structure spec is valid when all three breakpoint tiers are covered, hidden content has a disclosure mechanism, navigation modes are declared per breakpoint, no two breakpoints share the same minWidth, collapsible regions are fully defined, and breakpoints are sorted ascending.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "responsive-spec.json must exist with breakpoints array, each having name, minWidth, and layout. A responsive spec without breakpoints cannot be validated."
+    },
+    {
+      "id": "mobile-and-desktop-named",
+      "description": "The breakpoints array must include at least one breakpoint named 'mobile' and one named 'desktop'. These are the minimum tiers for a responsive implementation."
+    },
+    {
+      "id": "all-tiers-covered",
+      "description": "Unless mobileOnly:true or desktopOnly:true, the spec must cover mobile (<=480), tablet (481-1023), and desktop (>=1024). Missing a tier leaves users on that device size without a defined layout."
+    },
+    {
+      "id": "hidden-content-has-disclosure",
+      "description": "Any region hidden at a breakpoint must declare a disclosureTarget or hiddenIntentional:true. Hiding navigation or key content without a disclosure mechanism creates dead UX."
+    },
+    {
+      "id": "navigation-has-nav-mode-per-breakpoint",
+      "description": "When navigation is declared, every breakpoint must specify a navMode from the allowed set. Navigation without a mode creates undefined rendering across device sizes."
+    },
+    {
+      "id": "no-duplicate-min-widths",
+      "description": "No two breakpoints may share the same minWidth. Duplicate breakpoint boundaries cause unpredictable CSS media query resolution."
+    },
+    {
+      "id": "collapsible-regions-fully-defined",
+      "description": "Every entry in collapsibleRegions must declare collapsedAt (array of breakpoint names) and collapseType. Collapsible regions without a collapse definition cannot be implemented."
+    },
+    {
+      "id": "breakpoints-sorted-ascending",
+      "description": "Breakpoints must be ordered by minWidth from smallest to largest. Out-of-order breakpoints cause CSS specificity issues and make specs harder to reason about."
+    },
+    {
+      "id": "breakpoint-names-unique",
+      "description": "All breakpoint names must be unique. Duplicate names cause ambiguous references in collapsedAt arrays and navigation breakpoint maps."
+    }
+  ]
+}

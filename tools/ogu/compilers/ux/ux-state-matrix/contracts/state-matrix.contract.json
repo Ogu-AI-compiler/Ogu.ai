@@ -1,0 +1,55 @@
+{
+  "id": "ux-state-matrix",
+  "version": "1.0.0",
+  "description": "A state matrix artifact is valid when every data-dependent screen declares all required states (loading, success, empty, error), error states have recovery actions, network-dependent screens have offline handling, and protected screens have unauthorized handling.",
+  "rules": [
+    {
+      "id": "screens-present",
+      "description": "state-matrix-spec.json must contain a non-empty screens array with at least one screen declared."
+    },
+    {
+      "id": "required-screen-fields",
+      "description": "Every screen must have an id (string, non-empty) and a dataDependencies array."
+    },
+    {
+      "id": "data-dependent-screens-cover-all-states",
+      "description": "Every screen with at least one data dependency must declare: loading, success, empty, and error states. These four are the minimum coverage for any data surface."
+    },
+    {
+      "id": "error-states-have-recovery",
+      "description": "Every error, offline, unauthorized, or partial state must declare at least one recovery action (retry, redirect, recoveryActions array) or be explicitly marked terminal: true."
+    },
+    {
+      "id": "network-screens-declare-offline",
+      "description": "Screens with network-dependent data must declare an 'offline' state, or set offlineHandledGlobally: true. Missing offline coverage leaves users with no feedback when connectivity drops."
+    },
+    {
+      "id": "protected-screens-declare-unauthorized",
+      "description": "Auth-protected screens must declare an 'unauthorized' state to handle mid-session auth expiry, or set unauthorizedHandledByGuard: true."
+    },
+    {
+      "id": "paginated-screens-declare-partial",
+      "description": "Screens with paginated or optional data must declare a 'partial' state for when some but not all data has loaded."
+    },
+    {
+      "id": "no-duplicate-state-types",
+      "description": "Within a single screen, each state type (loading, error, empty, etc.) must appear at most once. Duplicates create ambiguity about which state definition applies."
+    },
+    {
+      "id": "state-objects-have-type",
+      "description": "State entries that are objects must declare a 'type' field. Typeless state objects cannot be validated by downstream compilers."
+    },
+    {
+      "id": "unique-screen-ids",
+      "description": "All screen ids must be unique within the state matrix. Duplicate ids cause ambiguous state lookups."
+    },
+    {
+      "id": "version-declared",
+      "description": "state-matrix-spec.json must declare a version string for change tracking."
+    },
+    {
+      "id": "no-incomplete-markers",
+      "description": "No TODO, FIXME, HACK, or TBD in any spec file. These markers indicate incomplete state coverage which will propagate to implemented components."
+    }
+  ]
+}

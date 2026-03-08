@@ -1,0 +1,72 @@
+{
+  "id": "helm_chart",
+  "version": "1.0.0",
+  "description": "Validates Helm charts for spec completeness, Chart.yaml validity, values.yaml presence, template file existence, no broken Go-template expressions, values coverage, and chart ownership",
+  "rules": [
+    {
+      "id": "HC001",
+      "gate": "spec-valid",
+      "description": "helm-chart-spec.json must exist, be valid JSON, and declare chartName, version, and appVersion",
+      "required": true,
+      "mandatoryFields": ["chartName", "version", "appVersion"]
+    },
+    {
+      "id": "HC002",
+      "gate": "chart-yaml-valid",
+      "description": "Chart.yaml must exist at the chart root and declare name, version, and apiVersion. Missing any of these causes helm lint and helm install to reject the chart before rendering",
+      "required": true,
+      "mandatoryFields": ["name", "version", "apiVersion"],
+      "note": "apiVersion should be 'v2' for Helm 3 charts"
+    },
+    {
+      "id": "HC003",
+      "gate": "values-yaml-valid",
+      "description": "values.yaml must exist and be non-empty. An absent or empty values.yaml means all .Values.* references in templates render as empty strings, producing invalid or silently broken Kubernetes manifests",
+      "required": true
+    },
+    {
+      "id": "HC004",
+      "gate": "templates-render",
+      "description": "The templates/ directory must exist and contain at least one .yaml or .tpl file. A chart with no templates deploys no resources, which is almost always a configuration error",
+      "required": true
+    },
+    {
+      "id": "HC005",
+      "gate": "no-unresolved-expressions",
+      "description": "Template files must not contain broken Go-template expressions: empty {{ }}, TODO/FIXME/PLACEHOLDER identifiers, or bare ALL-CAPS identifiers that look like unsubstituted env vars. Block comments ({{/* ... */}}) are excluded from scanning",
+      "required": true,
+      "note": "Skipped when templates/ directory is absent",
+      "detectedPatterns": ["{{ }}", "{{ TODO }}", "{{ PLACEHOLDER }}", "{{ BARE_CAPS_VAR }}"]
+    },
+    {
+      "id": "HC006",
+      "gate": "values-coverage",
+      "description": "Every top-level .Values.<key> reference in template files must have a corresponding top-level key in values.yaml. Missing entries cause helm template to silently render empty strings, which produces invalid manifests (empty image names, missing namespace strings)",
+      "required": true,
+      "note": "Skipped when values.yaml or templates/ is absent; checks top-level keys only"
+    },
+    {
+      "id": "HC007",
+      "gate": "no-todos",
+      "description": "helm-chart-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "HC008",
+      "gate": "contract-helm-chart",
+      "description": "helm-chart-spec.json must declare a non-empty maintainers array (for ownership accountability) and a description (for discoverability in chart repositories)",
+      "required": true,
+      "mandatoryFields": ["maintainers", "description"],
+      "constraints": {
+        "maintainers": "Must be a non-empty array of { name, email } objects",
+        "description": "Must be a non-empty string"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "helm-chart-artifact.json",
+    "ir_id_prefix": "HELM_CHART:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

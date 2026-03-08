@@ -1,0 +1,40 @@
+{
+  "id": "feature-pipeline",
+  "title": "Feature Pipeline Compiler",
+  "version": "1.0.0",
+  "description": "Compiles sklearn-style feature engineering pipelines. Enforces sklearn Pipeline usage (preventing leakage), fit-on-train-only, no chained pandas assignment, no target leakage, feature name documentation, and reproducible transforms.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "split-artifact.json", "output_artifact": "feature-artifact.json", "identifier": "FEATURE_PIPELINE" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Structure", "gates": ["sklearn-pipeline-used", "no-chained-assignment"] },
+    { "id": 3, "name": "Leakage Prevention", "gates": ["no-fit-on-test", "no-target-leakage", "transformer-fit-on-train"] },
+    { "id": 4, "name": "Reproducibility", "gates": ["random-state-set", "feature-names-exported"] },
+    { "id": 5, "name": "Attest", "gates": ["no-todos", "contract-feature-pipeline"] }
+  ],
+  "gates": [
+    { "id": "FP001", "name": "spec-valid",              "phase": 1 },
+    { "id": "FP002", "name": "sklearn-pipeline-used",   "phase": 2 },
+    { "id": "FP003", "name": "no-chained-assignment",   "phase": 2 },
+    { "id": "FP004", "name": "no-fit-on-test",          "phase": 3 },
+    { "id": "FP005", "name": "no-target-leakage",       "phase": 3 },
+    { "id": "FP006", "name": "transformer-fit-on-train","phase": 3 },
+    { "id": "FP007", "name": "random-state-set",        "phase": 4 },
+    { "id": "FP008", "name": "feature-names-exported",  "phase": 4 },
+    { "id": "FP009", "name": "no-todos",                "phase": 5 },
+    { "id": "FP010", "name": "contract-feature-pipeline","phase": 5 }
+  ],
+  "error_codes": {
+    "FP001": "Invalid feature pipeline spec",
+    "FP002": "sklearn Pipeline not used — raw sequential transforms risk data leakage",
+    "FP003": "Pandas chained assignment (df['col']['row']) — use df.loc[row, col]",
+    "FP004": "Transformer.fit() called on test data — leaks test distribution into transforms",
+    "FP005": "Target column (y) used as input feature — target leakage detected",
+    "FP006": "Transformer fit outside sklearn Pipeline — must fit on train only via pipeline",
+    "FP007": "Random transformer has no random_state — transforms are not reproducible",
+    "FP008": "Feature names not exported (get_feature_names_out / feature_names_in not used)",
+    "FP009": "TODO/FIXME found",
+    "FP010": "Feature pipeline contract violation"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "cache-module",
+  "title": "Cache Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a cache access layer for a single cache family. Enforces: keys built by declared key-builder, TTL from topology (not inline), cache misses propagate to origin, no write-back on read failure, invalidation targets declared cache families only.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "cache-topology-artifact.json",
+    "output_artifact": "cache-artifact.json",
+    "identifier": "CACHE"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid", "cross-topology"] },
+    { "id": 2, "name": "Key Contract", "gates": ["key-builder-matches-spec", "no-inline-ttl"] },
+    { "id": 3, "name": "Read/Write Pattern", "gates": ["miss-propagates", "no-writeback-on-failure"] },
+    { "id": 4, "name": "Invalidation", "gates": ["invalidation-scoped"] },
+    { "id": 5, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-cache"] }
+  ],
+  "gates": [
+    { "id": "CA001", "name": "spec-valid",              "phase": 1 },
+    { "id": "CA002", "name": "cross-topology",          "phase": 1 },
+    { "id": "CA003", "name": "key-builder-matches-spec","phase": 2 },
+    { "id": "CA004", "name": "no-inline-ttl",           "phase": 2 },
+    { "id": "CA005", "name": "miss-propagates",         "phase": 3 },
+    { "id": "CA006", "name": "no-writeback-on-failure", "phase": 3 },
+    { "id": "CA007", "name": "invalidation-scoped",     "phase": 4 },
+    { "id": "CA008", "name": "no-todos",                "phase": 5 },
+    { "id": "CA009", "name": "tests-pass",              "phase": 5 },
+    { "id": "CA010", "name": "contract-cache",          "phase": 6 }
+  ],
+  "error_codes": {
+    "CA001": "cache-spec.json missing or invalid",
+    "CA002": "cache-topology-artifact.json not found — compile cache-topology first",
+    "CA003": "Key builder function signature does not match declared key inputs in spec",
+    "CA004": "TTL value hardcoded inline — must come from topology or config",
+    "CA005": "Cache miss does not propagate to origin — returns null/undefined silently",
+    "CA006": "Write-back attempted after origin read failure",
+    "CA007": "Invalidation targets namespace not declared in this module's spec",
+    "CA008": "TODO/FIXME/HACK comment found",
+    "CA009": "Tests failed",
+    "CA010": "Cache contract violation"
+  }
+}

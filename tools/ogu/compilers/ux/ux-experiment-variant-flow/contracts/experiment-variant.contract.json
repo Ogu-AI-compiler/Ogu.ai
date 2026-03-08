@@ -1,0 +1,47 @@
+{
+  "id": "ux-experiment-variant-flow",
+  "version": "1.0.0",
+  "description": "An experiment variant spec is valid when a control group is declared, every variant has a feature flag and terminal outcomes, analytics events are consistent across all variants, no variant bypasses security constraints, and rollback behavior is explicitly defined.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "experiment-variant-spec.json must exist with experiment_id, hypothesis, and variants array of at least 2. Experiments without a spec cannot be validated."
+    },
+    {
+      "id": "variants-have-id-name-flow-flag",
+      "description": "Every variant must declare id, name, flowRef, and featureFlag. Variants without these fields cannot be activated or identified in analytics."
+    },
+    {
+      "id": "exactly-one-control-group",
+      "description": "Exactly one variant must have isControl:true. Without a control group, there is no baseline to compare experiment results against."
+    },
+    {
+      "id": "feature-flags-non-empty",
+      "description": "Every variant's featureFlag must be a non-empty string. Variants without a feature flag cannot be activated programmatically and cannot be part of the experiment."
+    },
+    {
+      "id": "variants-have-terminal-outcomes",
+      "description": "Every variant must declare a terminals array with at least one terminal of type success, failure, or abandoned, each with a description. Variants without terminal outcomes cannot be statistically analyzed."
+    },
+    {
+      "id": "analytics-event-parity",
+      "description": "If analyticsEvents is declared at the spec level, every variant must track the same event names. Variants that miss events create gaps in experiment data that invalidate statistical analysis."
+    },
+    {
+      "id": "no-security-bypass-flags",
+      "description": "No variant may declare bypassAuth:true, bypassValidation:true, or skipGuards:true. Experiments are never an excuse to disable security constraints regardless of the hypothesis being tested."
+    },
+    {
+      "id": "rollback-behavior-declared",
+      "description": "Spec must declare rollbackBehavior as revert-to-control, disable-experiment, or gradual-ramp-down. Experiments without a rollback plan cannot be stopped safely when they need to be terminated."
+    },
+    {
+      "id": "variant-ids-unique",
+      "description": "All variant ids must be unique within the spec. Duplicate variant ids cause conflicting feature flag resolution and broken analytics attribution."
+    },
+    {
+      "id": "experiment-id-and-hypothesis-non-empty",
+      "description": "Both experiment_id and hypothesis must be non-empty strings. Experiments without a unique id cannot be tracked, and experiments without a hypothesis are undirected guesses."
+    }
+  ]
+}

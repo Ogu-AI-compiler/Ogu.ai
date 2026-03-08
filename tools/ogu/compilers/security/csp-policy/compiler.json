@@ -1,0 +1,33 @@
+{
+  "id": "csp-policy",
+  "title": "Content Security Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the Content Security Policy for a frontend application. Enforces: no unsafe-inline without nonce, base-uri restricted, frame-ancestors declared, no wildcard source origins.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "csp-policy.compiled.json",
+    "identifier": "CSP_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Directive Checks",      "gates": ["no-unsafe-inline-without-nonce", "base-uri-defined", "frame-ancestors-defined", "no-wildcard-sources"] },
+    { "id": 3, "name": "Quality",               "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "CP001", "name": "spec-valid",                     "phase": 1 },
+    { "id": "CP002", "name": "no-unsafe-inline-without-nonce", "phase": 2 },
+    { "id": "CP003", "name": "base-uri-defined",               "phase": 2 },
+    { "id": "CP004", "name": "frame-ancestors-defined",        "phase": 2 },
+    { "id": "CP005", "name": "no-wildcard-sources",            "phase": 2 },
+    { "id": "CP006", "name": "no-todos",                       "phase": 3 }
+  ],
+  "error_codes": {
+    "CP001": "csp-spec.json missing or invalid — required fields: directives{}, reportUri",
+    "CP002": "'unsafe-inline' used in script-src without nonce — use nonces or hashes instead",
+    "CP003": "base-uri directive not defined — prevents base tag injection attacks",
+    "CP004": "frame-ancestors not defined — either restrict to self or explicitly allow embedding origins",
+    "CP005": "Wildcard (*) used as source in a CSP directive — enumerate allowed origins explicitly",
+    "CP006": "TODO/FIXME/HACK comment found"
+  }
+}

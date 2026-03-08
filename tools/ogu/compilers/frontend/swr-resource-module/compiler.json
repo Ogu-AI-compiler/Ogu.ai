@@ -1,0 +1,39 @@
+{
+  "id": "swr-resource-module",
+  "title": "SWR Resource Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles SWR data-fetching hooks with typed keys, explicit revalidation policy, and no direct cache mutation. Alternative to query-module for SWR-based projects.",
+  "tier": "frontend",
+  "ir": { "input_artifact": null, "output_artifact": "swr-artifact.json", "identifier": "SWR" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["unique-key", "revalidation-declared", "no-cache-internals", "state-shape"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-swr"] }
+  ],
+  "gates": [
+    { "id": "SW001", "name": "spec-valid",             "phase": 1 },
+    { "id": "SW002", "name": "ts-valid",               "phase": 2 },
+    { "id": "SW003", "name": "no-any",                 "phase": 2 },
+    { "id": "SW004", "name": "unique-key",             "phase": 3 },
+    { "id": "SW005", "name": "revalidation-declared",  "phase": 3 },
+    { "id": "SW006", "name": "no-cache-internals",     "phase": 3 },
+    { "id": "SW007", "name": "state-shape",            "phase": 3 },
+    { "id": "SW008", "name": "no-todos",               "phase": 4 },
+    { "id": "SW009", "name": "tests-pass",             "phase": 4 },
+    { "id": "SW010", "name": "contract-swr",           "phase": 5 }
+  ],
+  "error_codes": {
+    "SW001": "Invalid SWR spec",
+    "SW002": "TypeScript compilation failed",
+    "SW003": "Explicit 'any' found",
+    "SW004": "SWR key is not unique — key must include all params that change the response",
+    "SW005": "Revalidation policy not declared (revalidateOnFocus, revalidateOnMount, dedupingInterval)",
+    "SW006": "Direct cache mutation via SWR internals — use mutate() API only",
+    "SW007": "Hook does not return consistent state shape (data, error, isLoading)",
+    "SW008": "TODO/FIXME found",
+    "SW009": "Tests failed",
+    "SW010": "Contract violation"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "cache-topology-contract-v1",
+  "compiler": "cache-topology-module",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "CTR-001",
+      "description": "Every cache family must have a unique namespace",
+      "severity": "error"
+    },
+    {
+      "id": "CTR-002",
+      "description": "Every cache family must declare ttl (seconds) or noExpiry:true",
+      "severity": "error"
+    },
+    {
+      "id": "CTR-003",
+      "description": "Every cache family must declare a serializer (json, msgpack, string, custom)",
+      "severity": "error"
+    },
+    {
+      "id": "CTR-004",
+      "description": "Cache key builders must be deterministic functions of declared inputs only",
+      "severity": "error"
+    },
+    {
+      "id": "CTR-005",
+      "description": "No two cache families may produce keys for the same resource with the same inputs",
+      "severity": "error"
+    },
+    {
+      "id": "CTR-006",
+      "description": "noExpiry:true requires a documented reason in noExpiryReason field",
+      "severity": "warning"
+    }
+  ]
+}

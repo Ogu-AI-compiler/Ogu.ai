@@ -1,0 +1,63 @@
+{
+  "id": "ux-user-flow",
+  "version": "1.0.0",
+  "description": "A user flow artifact is valid when every path from entry nodes terminates in a classified terminal state, all edges reference valid nodes, decision nodes have multiple branches with typed conditions, and no node is an unreachable orphan.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "user-flow-spec.json must exist with nodes, edges, terminals, and entryNodes arrays. Empty flows cannot be validated."
+    },
+    {
+      "id": "nodes-have-type",
+      "description": "Every node must declare a type: screen, decision, terminal, or system. Typeless nodes are ambiguous and cannot be validated by downstream compilers."
+    },
+    {
+      "id": "edges-have-trigger",
+      "description": "Every edge must declare a trigger (user action or system event). Triggerless edges cannot be mapped to real interactions."
+    },
+    {
+      "id": "terminal-nodes-classified",
+      "description": "Every terminal must exist in the nodes array, have type='terminal', and declare a terminalType: success, failure, abandoned, external, or cancelled."
+    },
+    {
+      "id": "at-least-one-success-terminal",
+      "description": "Every flow must declare at least one terminal with terminalType='success'. A flow with no success outcome is incomplete by definition."
+    },
+    {
+      "id": "no-dead-ends",
+      "description": "Every non-terminal node must have at least one outgoing edge. Nodes with no outgoing edges trap the user."
+    },
+    {
+      "id": "no-orphan-nodes",
+      "description": "Every node must be reachable from at least one entry node. Nodes that cannot be reached are dead code."
+    },
+    {
+      "id": "finite-paths",
+      "description": "Every path from entry nodes must eventually reach a terminal. Cycles with no terminal exit create infinite loops that users cannot escape."
+    },
+    {
+      "id": "decision-nodes-have-min-two-branches",
+      "description": "Every decision node must have at least 2 outgoing edges. One-branch decisions are passthroughs, not decisions — either simplify or declare the missing branch."
+    },
+    {
+      "id": "decision-edges-typed",
+      "description": "Every edge from a decision node must declare a conditionType (permission, data-state, experiment, user-choice, system-event, validation, feature-flag). Untyped conditions cannot be enforced."
+    },
+    {
+      "id": "edge-references-valid",
+      "description": "Every edge.from and edge.to must reference existing node ids. Dangling edges create undefined navigation behavior."
+    },
+    {
+      "id": "unique-node-ids",
+      "description": "All node ids must be unique within the flow. Duplicate ids create ambiguous routing."
+    },
+    {
+      "id": "flow-identified",
+      "description": "The spec must declare a feature_id, flow_id, or id for cross-compiler reference tracking."
+    },
+    {
+      "id": "version-declared",
+      "description": "version must be declared for change tracking and migration."
+    }
+  ]
+}

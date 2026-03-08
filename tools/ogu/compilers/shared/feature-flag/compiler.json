@@ -1,0 +1,37 @@
+{
+  "id": "feature-flag",
+  "title": "Feature Flag Compiler",
+  "version": "1.0.0",
+  "description": "Compiles typed feature flag definitions with safe defaults, fallback values, and overrides. Enforces that flags always have a safe default for flag-service outages.",
+  "tier": "shared",
+  "ir": { "input_artifact": null, "output_artifact": "flag-artifact.json", "identifier": "FLAG" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["safe-defaults", "naming-convention", "no-nested-flags"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-flag"] }
+  ],
+  "gates": [
+    { "id": "FF001", "name": "spec-valid",        "phase": 1 },
+    { "id": "FF002", "name": "ts-valid",          "phase": 2 },
+    { "id": "FF003", "name": "no-any",            "phase": 2 },
+    { "id": "FF004", "name": "safe-defaults",     "phase": 3 },
+    { "id": "FF005", "name": "naming-convention", "phase": 3 },
+    { "id": "FF006", "name": "no-nested-flags",   "phase": 3 },
+    { "id": "FF007", "name": "no-todos",          "phase": 4 },
+    { "id": "FF008", "name": "tests-pass",        "phase": 4 },
+    { "id": "FF009", "name": "contract-flag",     "phase": 5 }
+  ],
+  "error_codes": {
+    "FF001": "Invalid flag spec",
+    "FF002": "TypeScript compilation failed",
+    "FF003": "Explicit 'any' found",
+    "FF004": "Flag missing safe default value (must be safe=false for killswitch flags)",
+    "FF005": "Flag name not kebab-case or violates prefix convention",
+    "FF006": "Nested flag dependency detected (flag evaluated inside another flag's condition)",
+    "FF007": "TODO/FIXME found",
+    "FF008": "Tests failed",
+    "FF009": "Contract violation"
+  }
+}

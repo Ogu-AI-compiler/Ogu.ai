@@ -1,0 +1,30 @@
+{
+  "id": "storybook-harness-config",
+  "title": "Storybook Harness Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles .storybook/main.ts and preview.ts. Enforces story globs, TypeScript support, a11y addon, and Vitest integration for story-as-test.",
+  "tier": "frontend",
+  "ir": { "input_artifact": null, "output_artifact": "storybook-harness-artifact.json", "identifier": "STORYBOOK_HARNESS" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Implement", "gates": ["main-config", "typescript-enabled", "a11y-addon-installed"] },
+    { "id": 3, "name": "Test", "gates": ["no-todos"] },
+    { "id": 4, "name": "Attest", "gates": ["contract-storybook-harness"] }
+  ],
+  "gates": [
+    { "id": "SBC001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "SBC002", "name": "main-config",                 "phase": 2 },
+    { "id": "SBC003", "name": "typescript-enabled",          "phase": 2 },
+    { "id": "SBC004", "name": "a11y-addon-installed",        "phase": 2 },
+    { "id": "SBC005", "name": "no-todos",                    "phase": 3 },
+    { "id": "SBC006", "name": "contract-storybook-harness",  "phase": 4 }
+  ],
+  "error_codes": {
+    "SBC001": "Invalid storybook harness spec",
+    "SBC002": ".storybook/main.ts missing or has no stories glob",
+    "SBC003": "TypeScript not enabled in Storybook config",
+    "SBC004": "@storybook/addon-a11y not in addons list",
+    "SBC005": "TODO/FIXME found",
+    "SBC006": "Contract violation"
+  }
+}

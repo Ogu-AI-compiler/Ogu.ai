@@ -1,0 +1,38 @@
+{
+  "id": "publishing-workflow-spec",
+  "title": "Publishing Workflow Spec Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the content publishing workflow specification. Enforces: all required workflow states present, no unreachable states, published state has an archive/unpublish transition, no direct draft-to-published bypass, terminal states exist, and role-based transition rules are valid.",
+  "tier": "content",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "publishing-workflow-spec.json",
+    "identifier": "PUBLISHING_WORKFLOW_SPEC"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "State Graph",            "gates": ["states-complete", "no-unreachable-states", "terminal-state-exists"] },
+    { "id": 3, "name": "Transition Rules",       "gates": ["published-has-archive", "no-direct-draft-to-published", "role-transitions-valid"] },
+    { "id": 4, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "PWS001", "name": "spec-valid",                    "phase": 1 },
+    { "id": "PWS002", "name": "states-complete",               "phase": 2 },
+    { "id": "PWS003", "name": "published-has-archive",         "phase": 3 },
+    { "id": "PWS004", "name": "no-unreachable-states",         "phase": 2 },
+    { "id": "PWS005", "name": "terminal-state-exists",         "phase": 2 },
+    { "id": "PWS006", "name": "role-transitions-valid",        "phase": 3 },
+    { "id": "PWS007", "name": "no-direct-draft-to-published",  "phase": 3 },
+    { "id": "PWS008", "name": "no-todos",                      "phase": 4 }
+  ],
+  "error_codes": {
+    "PWS001": "publishing-workflow-spec.json missing or invalid — required fields: states[], transitions[], roles[]",
+    "PWS002": "Workflow missing required states — must include at minimum: draft, review, published, archived",
+    "PWS003": "Published state has no archive or unpublish transition — published content must have an exit path",
+    "PWS004": "Unreachable state detected — every declared state must be reachable from at least one transition",
+    "PWS005": "No terminal state defined — at least one state must have no outbound transitions (e.g., archived, deleted)",
+    "PWS006": "Transition role is undefined — every transition must reference a role declared in the roles list",
+    "PWS007": "Direct draft-to-published transition exists — content must pass through review before publishing",
+    "PWS008": "TODO/FIXME/HACK comment found"
+  }
+}

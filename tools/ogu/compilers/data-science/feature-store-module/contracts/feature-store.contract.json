@@ -1,0 +1,12 @@
+{
+  "id": "feature-store-module",
+  "version": "1.0.0",
+  "description": "Contract rules for feature store modules",
+  "rules": [
+    { "id": "has-entity-key", "description": "entity_key defined in spec" },
+    { "id": "has-version", "description": "Feature group is versioned" },
+    { "id": "no-raw-sql", "description": "No raw SQL string construction" },
+    { "id": "features-have-dtype", "description": "All features have dtype annotation" },
+    { "id": "no-training-serving-skew", "description": "Transformations defined once, not duplicated" }
+  ]
+}

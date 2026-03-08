@@ -1,0 +1,50 @@
+{
+  "id": "page",
+  "version": "1.0.0",
+  "title": "React Page Contract",
+  "description": "Structural requirements for all compiled React page components",
+  "rules": [
+    {
+      "id": "uses-layout",
+      "title": "Layout Integration",
+      "description": "Page must use the declared layout component — pages must not define their own nav/header/footer inline",
+      "severity": "error"
+    },
+    {
+      "id": "no-raw-fetch",
+      "title": "No Raw Fetch in Component Body",
+      "description": "Data fetching must go through compiled hooks (useXxx) — no raw fetch()/axios() calls in the page component body or useEffect",
+      "severity": "error"
+    },
+    {
+      "id": "auth-guard",
+      "title": "Auth Guard",
+      "description": "If spec.auth !== 'none', page must redirect or render an auth guard before showing protected content",
+      "severity": "error"
+    },
+    {
+      "id": "no-inline-styles",
+      "title": "No Inline Styles",
+      "description": "No style={{ }} props — use className with Tailwind/CSS modules/styled-components instead",
+      "severity": "warning"
+    },
+    {
+      "id": "loading-skeleton",
+      "title": "Loading Skeleton Not Spinner-Only",
+      "description": "Loading state should use a skeleton that matches the page layout, not just a centered spinner",
+      "severity": "warning"
+    },
+    {
+      "id": "error-recovery",
+      "title": "Error Recovery Action",
+      "description": "Error state must provide a recovery action — at minimum a Retry button or a link back to a safe route",
+      "severity": "error"
+    },
+    {
+      "id": "suspense-or-state",
+      "title": "Consistent Loading Pattern",
+      "description": "Page must use either Suspense boundaries consistently OR explicit isLoading state — not a mix of both in the same render tree",
+      "severity": "warning"
+    }
+  ]
+}

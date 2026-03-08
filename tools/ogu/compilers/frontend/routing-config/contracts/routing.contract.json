@@ -1,0 +1,41 @@
+{
+  "id": "routing-config",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "lazy-top-level",
+      "description": "All top-level route components must be lazy-loaded via React.lazy() or Next.js dynamic()",
+      "severity": "error"
+    },
+    {
+      "id": "suspense-boundary",
+      "description": "Lazy routes must be wrapped in <Suspense fallback={<LoadingFallback/>}>",
+      "severity": "error"
+    },
+    {
+      "id": "not-found-route",
+      "description": "A catch-all route (path='*') or 404 page must be defined",
+      "severity": "error"
+    },
+    {
+      "id": "error-element",
+      "description": "Router must have an error boundary (errorElement in React Router, or ErrorBoundary wrap)",
+      "severity": "warning"
+    },
+    {
+      "id": "typed-path-params",
+      "description": "All :param segments in route paths must have corresponding TypeScript type definitions",
+      "severity": "error"
+    },
+    {
+      "id": "no-cyclic-redirects",
+      "description": "Redirect chains must not form cycles",
+      "severity": "error"
+    },
+    {
+      "id": "auth-guard-on-protected",
+      "description": "Routes marked as protected must use a ProtectedRoute/RequireAuth wrapper",
+      "severity": "error"
+    }
+  ]
+}

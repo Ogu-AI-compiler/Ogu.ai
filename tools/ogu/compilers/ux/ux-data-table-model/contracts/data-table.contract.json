@@ -1,0 +1,47 @@
+{
+  "id": "ux-data-table-model",
+  "version": "1.0.0",
+  "description": "A data table spec is valid when columns are fully defined, pagination is declared for large datasets, selection and bulk action state is explicit, every table has a loading and empty state, sortable columns have sort definitions, and destructive bulk actions require confirmation.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "data-table-spec.json must exist with table_id (string), columns (array), and pagination (object with pageSize). Tables without a spec cannot be validated."
+    },
+    {
+      "id": "columns-have-id-label-field",
+      "description": "Every column must declare id, label, and field. Columns without these fields cannot be rendered or bound to API responses."
+    },
+    {
+      "id": "pagination-page-size-positive",
+      "description": "pagination.pageSize must be a number greater than 0. A zero or missing page size produces empty or infinite page requests."
+    },
+    {
+      "id": "large-datasets-require-pagination",
+      "description": "When estimatedRowCount > 25 or pagination.required:true, pageSize must be between 1 and 100. Rendering thousands of rows without pagination degrades performance."
+    },
+    {
+      "id": "selectable-tables-declare-selection-state",
+      "description": "When selectable:true, selectionState must declare maxSelection and bulkActions. Tables that allow selection without declaring selection limits create unpredictable multi-select behavior."
+    },
+    {
+      "id": "loading-state-declared",
+      "description": "Every table must declare loadingState as skeleton, spinner, or overlay. Tables that fetch data without a loading state appear broken or frozen."
+    },
+    {
+      "id": "empty-state-with-message",
+      "description": "Every table must declare emptyState with a non-empty message. A blank table with no explanation creates confusion about whether the data is missing or the feature is broken."
+    },
+    {
+      "id": "sortable-columns-have-sort-definition",
+      "description": "Any column with sortable:true must be listed in spec.sortableColumns or spec.sorts. Marking a column sortable without an API sort binding creates a broken UI interaction."
+    },
+    {
+      "id": "destructive-bulk-actions-require-confirmation",
+      "description": "Any bulkAction with destructive:true must declare a confirmation object with message. Destructive batch operations without confirmation can irrecoverably destroy data."
+    },
+    {
+      "id": "column-ids-unique",
+      "description": "All column ids must be unique within the spec. Duplicate column ids cause conflicting sort/filter bindings and broken column visibility toggles."
+    }
+  ]
+}

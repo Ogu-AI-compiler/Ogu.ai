@@ -1,0 +1,81 @@
+{
+  "id": "ui-spacing-scale",
+  "version": "1.0.0",
+  "title": "UI Spacing Scale Compiler",
+  "description": "Verifies spacing scale: all values are multiples of base unit, semantic roles declared, no duplicates, minimum step size",
+  "ir_prefix": "UI_SPACE",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract base unit, scale method, density requirements, semantic spacing roles",
+      "model": "haiku",
+      "outputs": ["spacing-scale-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "verify",
+      "title": "Verify Spacing Scale",
+      "description": "Run all gates against spacing spec",
+      "model": "haiku",
+      "outputs": ["spacing-artifact.json"],
+      "gates": [
+        "spec-valid",
+        "base-multiples",
+        "semantic-roles",
+        "no-duplicates",
+        "min-spacing",
+        "no-todos",
+        "contract-spacing"
+      ]
+    },
+    {
+      "phase": 2,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed spacing artifact for downstream consumers",
+      "model": "haiku",
+      "outputs": ["spacing-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    { "id": "spec-valid",      "title": "Spec Valid",        "description": "spacing-scale-spec.json exists with steps array and baseUnit declared", "phase": 1, "required": true },
+    { "id": "base-multiples",  "title": "Base Multiples",    "description": "Every spacing step value is a multiple of the declared base unit", "phase": 1, "required": true },
+    { "id": "semantic-roles",  "title": "Semantic Roles",    "description": "Semantic spacing roles declared: inset, stack, inline, gap", "phase": 1, "required": true },
+    { "id": "no-duplicates",   "title": "No Duplicate Values","description": "No two spacing steps share the same pixel value", "phase": 1, "required": true },
+    { "id": "min-spacing",     "title": "Minimum Spacing",   "description": "No spacing step is below 2px", "phase": 1, "required": true },
+    { "id": "no-todos",        "title": "No TODOs",          "description": "No TODO/FIXME/HACK in spacing spec files", "phase": 1, "required": true },
+    { "id": "contract-spacing","title": "Contract: Spacing", "description": "Artifact validates against spacing-scale.contract.json", "phase": 1, "required": true }
+  ],
+  "contracts": [
+    { "id": "spacing-scale", "file": "contracts/spacing-scale.contract.json", "description": "Structural requirements for a valid spacing scale" }
+  ],
+  "ir": {
+    "identifiers": ["UI_SPACE:spacing-scale"],
+    "output_artifact": "spacing-artifact.json",
+    "artifact_schema": "ui-spacing-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "ui-spacing-artifact-v1",
+    "fields": ["step_count", "base_unit", "semantic_role_count", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "USS001": "spacing-scale-spec.json missing or invalid",
+    "USS002": "Spacing step value is not a multiple of base unit",
+    "USS003": "Semantic spacing role missing (inset/stack/inline/gap)",
+    "USS004": "Duplicate pixel value across spacing steps",
+    "USS005": "Spacing step below 2px minimum",
+    "USS006": "TODO/FIXME/HACK found in spacing spec files",
+    "USS007": "Spacing scale contract violation"
+  }
+}

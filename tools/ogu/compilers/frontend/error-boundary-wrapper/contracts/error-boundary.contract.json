@@ -1,0 +1,8 @@
+{ "id": "error-boundary", "version": "1.0.0", "rules": [
+  { "id": "class-api", "description": "Uses class component or react-error-boundary" },
+  { "id": "safe-fallback", "description": "Fallback UI defined and safe" },
+  { "id": "structured-report", "description": "Error reporting uses structured sink" },
+  { "id": "has-fallback", "description": "FallbackComponent prop defined" },
+  { "id": "no-async-render", "description": "render() is not async" },
+  { "id": "exports-boundary", "description": "ErrorBoundary is exported" }
+]}

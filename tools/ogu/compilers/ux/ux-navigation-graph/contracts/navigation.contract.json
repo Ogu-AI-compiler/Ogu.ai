@@ -1,0 +1,55 @@
+{
+  "id": "ux-navigation-graph",
+  "version": "1.0.0",
+  "description": "A navigation graph artifact is valid when every screen is reachable from at least one entry point, all transitions target valid nodes, protected nodes declare guards, no closed cycles trap the user, and a 404 state is handled.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "navigation-spec.json must exist with a non-empty nodes array and a non-empty entryPoints array."
+    },
+    {
+      "id": "entry-points-resolve",
+      "description": "Every id in entryPoints must reference a node that exists in the nodes array. An unresolved entry point means the graph has no valid starting position."
+    },
+    {
+      "id": "all-nodes-reachable",
+      "description": "Every node must be reachable from at least one entry point by following transitions. Unreachable nodes are dead code in the navigation model."
+    },
+    {
+      "id": "all-transition-targets-valid",
+      "description": "Every transition.to must reference an existing node id. Dangling transitions point to screens that the navigation graph cannot render."
+    },
+    {
+      "id": "protected-nodes-have-guards",
+      "description": "Every node with auth=true or visibility != 'public' must declare a guard or redirectOnFail. Without a guard, access-control behavior is undefined."
+    },
+    {
+      "id": "back-path-exists",
+      "description": "Every non-entry node must have at least one incoming transition (or be marked deepLinkOnly). A node with no incoming edges cannot be reached in-app."
+    },
+    {
+      "id": "no-closed-cycles",
+      "description": "Strongly connected components of size > 1 must have at least one exit edge to a node outside the component. Closed cycles trap the user with no way out."
+    },
+    {
+      "id": "not-found-handled",
+      "description": "A 404/not-found state must be declared as a node, a fallbackNode reference, or notFoundHandledExternally=true. Missing 404 handling leaves an undefined navigation state."
+    },
+    {
+      "id": "transitions-have-triggers",
+      "description": "Every transition must declare a trigger type (click, submit, system, deepLink, etc.). Untriggered transitions cannot be validated against user interaction models."
+    },
+    {
+      "id": "auth-nodes-declare-visibility",
+      "description": "Nodes with auth=true must declare a visibility value. auth=true without visibility is an incomplete access control declaration."
+    },
+    {
+      "id": "unique-node-ids",
+      "description": "All node ids must be unique within the navigation graph. Duplicate ids produce ambiguous routing behavior."
+    },
+    {
+      "id": "version-declared",
+      "description": "navigation-spec.json must declare a version string for change tracking and migration."
+    }
+  ]
+}

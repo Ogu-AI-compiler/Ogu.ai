@@ -1,0 +1,32 @@
+{
+  "id": "test-module-contract",
+  "version": "1.0.0",
+  "description": "Contract for backend-test-module output artifacts",
+  "rules": [
+    {
+      "id": "TEST_MODULE-001",
+      "description": "Every behavior scenario declared in spec must have at least one test",
+      "enforcement": "gate:scenarios-covered"
+    },
+    {
+      "id": "TEST_MODULE-002",
+      "description": "No real network calls in unit tests — use MSW, vi.mock, jest.mock, or nock",
+      "enforcement": "gate:no-real-network"
+    },
+    {
+      "id": "TEST_MODULE-003",
+      "description": "No shared mutable state between tests — reset in beforeEach",
+      "enforcement": "gate:no-shared-state"
+    },
+    {
+      "id": "TEST_MODULE-004",
+      "description": "Mock return values must be typed — no implicit any",
+      "enforcement": "gate:typed-mocks"
+    },
+    {
+      "id": "TEST_MODULE-005",
+      "description": "Tests use specific value assertions — not just toBeTruthy/toBeDefined alone",
+      "enforcement": "gate:no-weak-assertions"
+    }
+  ]
+}

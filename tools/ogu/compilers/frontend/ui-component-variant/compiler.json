@@ -1,0 +1,84 @@
+{
+  "id": "ui-component-variant",
+  "version": "1.0.0",
+  "title": "UI Component Variant Compiler",
+  "description": "Verifies component visual variant matrix: token-only references, destructive semantic enforcement, all-mode coverage, prop axis completeness",
+  "ir_prefix": "UI_VARIANT",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract component definition, variant axes, token references from design intent",
+      "model": "haiku",
+      "outputs": ["component-variant-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "verify",
+      "title": "Verify Component Variants",
+      "description": "Run all gates: token-only refs, destructive semantics, mode coverage, prop coverage",
+      "model": "haiku",
+      "outputs": ["variant-artifact.json"],
+      "gates": [
+        "spec-valid",
+        "tokens-only",
+        "destructive-semantic",
+        "all-modes-covered",
+        "prop-coverage",
+        "no-raw-values",
+        "no-todos",
+        "contract-variant"
+      ]
+    },
+    {
+      "phase": 2,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed variant artifact for component implementation",
+      "model": "haiku",
+      "outputs": ["variant-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    { "id": "spec-valid",          "title": "Spec Valid",            "description": "component-variant-spec.json exists with component name and variants array", "phase": 1, "required": true },
+    { "id": "tokens-only",         "title": "Token References Only", "description": "All variant color values reference design token names, not raw values", "phase": 1, "required": true },
+    { "id": "destructive-semantic","title": "Destructive Semantic",  "description": "Variants with destructive/danger intent use the semantic destructive token", "phase": 1, "required": true },
+    { "id": "all-modes-covered",   "title": "All Modes Covered",     "description": "Each variant has visual properties defined for all declared theme modes", "phase": 1, "required": true },
+    { "id": "prop-coverage",       "title": "Prop Coverage",         "description": "Every declared prop axis has at least one variant entry", "phase": 1, "required": true },
+    { "id": "no-raw-values",       "title": "No Raw Values",         "description": "No hardcoded hex, rgb(), rgba(), or raw px values in variant visual properties", "phase": 1, "required": true },
+    { "id": "no-todos",            "title": "No TODOs",              "description": "No TODO/FIXME/HACK in variant spec files", "phase": 1, "required": true },
+    { "id": "contract-variant",    "title": "Contract: Variant",     "description": "Artifact validates against component-variant.contract.json", "phase": 1, "required": true }
+  ],
+  "contracts": [
+    { "id": "component-variant", "file": "contracts/component-variant.contract.json", "description": "Structural requirements for a valid component visual variant matrix" }
+  ],
+  "ir": {
+    "identifiers": ["UI_VARIANT:{componentName}"],
+    "output_artifact": "variant-artifact.json",
+    "artifact_schema": "ui-variant-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "ui-variant-artifact-v1",
+    "fields": ["component_name", "variant_count", "prop_count", "modes", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UCV001": "component-variant-spec.json missing or invalid structure",
+    "UCV002": "Variant visual property uses non-token reference",
+    "UCV003": "Destructive-intent variant does not use destructive semantic token",
+    "UCV004": "Variant missing visual definition for a declared theme mode",
+    "UCV005": "Declared prop axis has no variant entry",
+    "UCV006": "Hardcoded hex/rgb/px value in variant visual properties",
+    "UCV007": "TODO/FIXME/HACK found in variant spec files",
+    "UCV008": "Component variant contract violation"
+  }
+}

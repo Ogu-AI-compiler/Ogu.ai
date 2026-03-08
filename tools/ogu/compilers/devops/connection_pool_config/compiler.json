@@ -1,0 +1,97 @@
+{
+  "id": "connection_pool_config",
+  "title": "Connection Pool Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles database connection pool configuration (PgBouncer, sidecar). Enforces: config parses, numeric limits positive, max_client_conn >= largest pool, auth+TLS in approved enum, host/secret refs declared.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "secret-bundle-artifact.json",
+    "output_artifact": "connection-pool-artifact.json",
+    "identifier": "CONNECTION_POOL"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "limits-positive",
+        "client-conn-sufficient"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "auth-tls-valid",
+        "host-refs-declared"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-connection-pool"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "CP001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "CP002",
+      "name": "limits-positive",
+      "phase": 2
+    },
+    {
+      "id": "CP003",
+      "name": "client-conn-sufficient",
+      "phase": 2
+    },
+    {
+      "id": "CP004",
+      "name": "auth-tls-valid",
+      "phase": 3
+    },
+    {
+      "id": "CP005",
+      "name": "host-refs-declared",
+      "phase": 3
+    },
+    {
+      "id": "CP006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "CP007",
+      "name": "contract-connection-pool",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "CP001": "connection-pool-spec.json missing — required: pooler, maxClientConn, poolSize, host",
+    "CP002": "Numeric limit is not a positive integer",
+    "CP003": "maxClientConn < poolSize — connections will be rejected",
+    "CP004": "Auth type or TLS mode not in approved enum",
+    "CP005": "DB host, port, or secret not declared in upstream artifacts",
+    "CP006": "TODO/FIXME found",
+    "CP007": "Connection pool contract violation"
+  }
+}

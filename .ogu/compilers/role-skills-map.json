@@ -1,0 +1,317 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Maps each agent role to the artifact skills it is authorized to use. Skills correspond 1:1 with artifact compilers in tools/ogu/compilers/.",
+    "generated_at": "2026-03-08T00:00:00.000Z"
+  },
+
+  "product-manager":      [],
+  "ux-researcher":        [],
+  "scrum-master":         [],
+  "program-manager":      [],
+  "engineering-manager":  [],
+
+  "ux-designer": [
+    "ux-user-flow", "ux-task-flow", "ux-navigation-graph", "ux-form-flow",
+    "ux-state-matrix", "ux-onboarding-flow", "ux-permission-branch",
+    "ux-recovery-flow", "ux-responsive-structure", "ux-rtl-structure",
+    "ux-search-filter-sort", "ux-sitemap", "ux-data-table-model",
+    "ux-destructive-action", "ux-copy-structure", "ux-experiment-variant-flow"
+  ],
+
+  "product-analyst": [
+    "ab-test-analysis", "experiment-config", "statistical-test-module", "data-schema"
+  ],
+
+  "growth-engineer": [
+    "experiment-config", "experiment-variant-wrapper", "feature-flag",
+    "ab-test-analysis", "analytics-event"
+  ],
+
+  "backend-architect": [
+    "ts-schema", "openapi-spec", "module-scaffold", "domain-service-module",
+    "api-route", "cache-topology-module", "queue-topology-module"
+  ],
+
+  "cloud-architect": [
+    "iac-stack-definition", "helm-chart", "kubernetes-workload",
+    "kubernetes-service", "kubernetes-ingress-gateway", "kustomize-overlay",
+    "env-schema", "secret-bundle", "vault-policy"
+  ],
+
+  "solutions-architect": [
+    "openapi-spec", "ts-schema", "iac-stack-definition", "module-scaffold",
+    "service-client-module", "event-publisher-module"
+  ],
+
+  "domain-modeler": [
+    "ts-schema", "data-schema", "domain-service-module"
+  ],
+
+  "integration-architect": [
+    "api-route", "openapi-spec", "event-publisher-module", "event-consumer-module",
+    "service-client-module", "service-client-runtime-module",
+    "webhook-processor-module", "queue-topology-module"
+  ],
+
+  "event-architect": [
+    "event-publisher-module", "event-consumer-module",
+    "queue-topology-module", "cache-topology-module"
+  ],
+
+  "api-designer": [
+    "api-route", "openapi-spec", "graphql-schema-module",
+    "graphql-resolver-module", "ts-schema"
+  ],
+
+  "frontend-developer": [
+    "react-component", "react-form", "react-hook", "react-page",
+    "layout-component", "navigation-config", "routing-config",
+    "route-guard", "route-resilience", "query-module", "mutation-module",
+    "invalidation-map", "state-store", "loading-skeleton",
+    "error-boundary-wrapper", "feature-module-scaffold", "providers-scaffold",
+    "animation-spec", "design-tokens", "storybook-story", "storybook-harness-config",
+    "a11y-harness-config", "testing-harness-config", "unit-test-module",
+    "url-searchparams-contract", "swr-resource-module",
+    "experiment-variant-wrapper", "security-safe-html-module",
+    "analytics-event", "feature-flag", "i18n", "utility-fn"
+  ],
+
+  "backend-developer": [
+    "api-route", "auth-middleware", "db-migration", "ts-schema", "openapi-spec",
+    "domain-service-module", "orm-repository-module", "transaction-script-module",
+    "service-client-module", "service-client-runtime-module",
+    "cache-module", "cache-topology-module", "queue-topology-module",
+    "job-producer-module", "job-worker-module", "scheduled-job-module",
+    "event-publisher-module", "event-consumer-module",
+    "webhook-processor-module", "rate-limit-policy-module",
+    "config-validation-module", "graphql-resolver-module", "graphql-schema-module",
+    "healthcheck-module", "backend-test-module", "backend-test-harness-config",
+    "seed-scenario-module", "module-scaffold", "feature-flag", "utility-fn"
+  ],
+
+  "full-stack-developer": [
+    "react-component", "react-form", "react-hook", "react-page",
+    "layout-component", "navigation-config", "routing-config",
+    "route-guard", "query-module", "mutation-module", "invalidation-map",
+    "state-store", "loading-skeleton", "error-boundary-wrapper",
+    "feature-module-scaffold", "unit-test-module", "swr-resource-module",
+    "api-route", "auth-middleware", "db-migration", "ts-schema", "openapi-spec",
+    "domain-service-module", "orm-repository-module", "transaction-script-module",
+    "cache-module", "job-producer-module", "event-publisher-module",
+    "healthcheck-module", "backend-test-module", "module-scaffold",
+    "analytics-event", "feature-flag", "i18n", "utility-fn"
+  ],
+
+  "mobile-developer": [
+    "react-component", "react-form", "react-hook",
+    "animation-spec", "unit-test-module", "analytics-event",
+    "feature-flag", "i18n", "utility-fn"
+  ],
+
+  "ui-developer": [
+    "react-component", "react-page", "layout-component",
+    "animation-spec", "design-tokens", "storybook-story", "storybook-harness-config",
+    "ui-color-system", "ui-component-variant", "ui-motion-spec",
+    "ui-spacing-scale", "ui-state-appearance", "ui-theme-manifest",
+    "ui-token-system", "ui-typography-scale", "loading-skeleton",
+    "unit-test-module", "a11y-harness-config"
+  ],
+
+  "systems-programmer": [
+    "ts-schema", "utility-fn", "module-scaffold"
+  ],
+
+  "compiler-engineer": [
+    "ts-schema", "utility-fn", "module-scaffold"
+  ],
+
+  "tech-lead": [
+    "ts-schema", "openapi-spec", "module-scaffold",
+    "backend-test-harness-config", "testing-harness-config", "coverage-policy"
+  ],
+
+  "qa-engineer": [
+    "e2e-spec", "contract-test", "test-harness-config", "test-data-policy",
+    "visual-regression", "a11y-test", "coverage-policy", "backend-test-module"
+  ],
+
+  "test-automation": [
+    "e2e-spec", "contract-test", "test-harness-config", "backend-test-harness-config",
+    "testing-harness-config", "a11y-harness-config", "storybook-harness-config",
+    "unit-test-module", "backend-test-module", "visual-regression"
+  ],
+
+  "performance-tester": [
+    "load-test-spec", "performance-budget"
+  ],
+
+  "accessibility-expert": [
+    "accessibility-policy", "a11y-test", "a11y-harness-config"
+  ],
+
+  "qa-lead": [
+    "coverage-policy", "e2e-spec", "test-data-policy", "visual-regression",
+    "accessibility-policy", "contract-test", "load-test-spec", "performance-budget"
+  ],
+
+  "security-architect": [
+    "threat-model", "authz-policy", "csp-policy",
+    "secret-handling-policy", "pii-classification", "encryption-key-policy"
+  ],
+
+  "security-auditor": [
+    "audit-log-policy", "dep-vuln-policy", "sast-policy",
+    "vuln-exception-record", "threat-model", "pii-classification"
+  ],
+
+  "penetration-tester": [
+    "sast-policy", "vuln-exception-record", "dep-vuln-policy",
+    "input-validation-policy", "csp-policy"
+  ],
+
+  "compliance-officer": [
+    "audit-log-policy", "pii-classification", "authz-policy",
+    "secret-handling-policy", "role-privilege-policy"
+  ],
+
+  "devsecops-engineer": [
+    "security-scan-pipeline", "dep-vuln-policy", "sast-policy",
+    "secret-handling-policy", "vault-policy", "csp-policy",
+    "input-validation-policy", "file-upload-policy",
+    "webhook-verification-policy", "audit-log-policy"
+  ],
+
+  "identity-engineer": [
+    "authz-policy", "session-cookie-policy", "encryption-key-policy",
+    "rate-limit-policy"
+  ],
+
+  "devops-engineer": [
+    "ci-cd-pipeline", "dockerfile-image", "env-schema", "secret-bundle",
+    "healthcheck-probe-config", "iac-stack-definition", "scheduled-job",
+    "db-migration-runner", "data-seed-job", "background-worker-runtime"
+  ],
+
+  "site-reliability": [
+    "prometheus-rule-group", "grafana-dashboard-bundle",
+    "disaster-recovery-runbook", "healthcheck-probe-config",
+    "backup-verification-job"
+  ],
+
+  "release-manager": [
+    "ci-cd-pipeline", "env-schema", "dockerfile-image"
+  ],
+
+  "platform-engineer": [
+    "developer-platform-stack", "iac-stack-definition", "helm-chart",
+    "kubernetes-workload", "kubernetes-service", "kubernetes-ingress-gateway",
+    "kustomize-overlay", "env-schema", "secret-bundle", "vault-policy"
+  ],
+
+  "incident-commander": [
+    "disaster-recovery-runbook", "prometheus-rule-group", "grafana-dashboard-bundle"
+  ],
+
+  "chaos-engineer": [
+    "disaster-recovery-runbook", "prometheus-rule-group"
+  ],
+
+  "cost-optimizer": [
+    "rightsizing-profile", "cost-tagging-policy"
+  ],
+
+  "observability-engineer": [
+    "prometheus-rule-group", "grafana-dashboard-bundle", "healthcheck-probe-config"
+  ],
+
+  "infra-engineer": [
+    "iac-stack-definition", "dockerfile-image", "helm-chart",
+    "kubernetes-workload", "kubernetes-service", "kubernetes-ingress-gateway",
+    "kustomize-overlay", "network-dns-config", "env-schema", "secret-bundle",
+    "edge-policy-bundle", "vault-policy", "db-backup-job",
+    "backup-verification-job", "connection-pool-config"
+  ],
+
+  "data-engineer": [
+    "data-pipeline-script", "data-ingestion-script", "data-validation-module",
+    "data-schema", "feature-pipeline", "db-migration"
+  ],
+
+  "data-scientist": [
+    "eda-notebook", "jupyter-notebook-module", "model-training-script",
+    "model-evaluation-report", "model-card", "experiment-config",
+    "statistical-test-module", "dataset-split-module", "ab-test-analysis",
+    "data-schema", "data-validation-module"
+  ],
+
+  "analytics-engineer": [
+    "data-schema", "data-pipeline-script", "data-validation-module",
+    "ab-test-analysis", "statistical-test-module"
+  ],
+
+  "ml-engineer": [
+    "model-registry-entry", "model-monitoring-config", "serving-api-module",
+    "feature-store-module", "model-training-script", "model-card"
+  ],
+
+  "database-admin": [
+    "backup-policy", "connection-pool-config", "connection-string-contract",
+    "db-provisioning-spec", "index-advisory-spec", "query-performance-budget",
+    "restore-verification-spec", "role-privilege-policy"
+  ],
+
+  "etl-developer": [
+    "data-ingestion-script", "data-pipeline-script",
+    "data-validation-module", "data-schema"
+  ],
+
+  "content-manager": [
+    "content-type-schema", "alt-text-policy", "media-caption-credit-policy",
+    "publishing-workflow-spec", "redirect-manifest",
+    "seo-metadata-spec", "taxonomy-tagging-policy"
+  ],
+
+  "technical-writer":   [],
+  "developer-advocate": [],
+
+  "api-documentarian": [
+    "openapi-spec"
+  ],
+
+  "scale-performance": [
+    "load-test-spec", "performance-budget",
+    "prometheus-rule-group", "query-performance-budget"
+  ],
+
+  "ai-engineer": [
+    "model-registry-entry", "serving-api-module",
+    "feature-store-module", "api-route", "ts-schema"
+  ],
+
+  "blockchain-developer":  [],
+  "embedded-engineer":     [],
+  "graphics-programmer":   [],
+  "game-developer":        [],
+
+  "networking-engineer": [
+    "network-dns-config", "edge-policy-bundle"
+  ],
+
+  "distributed-systems": [
+    "cache-topology-module", "queue-topology-module",
+    "event-publisher-module", "event-consumer-module",
+    "service-client-module"
+  ],
+
+  "cto":               [],
+  "vp-engineering":    [],
+
+  "staff-engineer": [
+    "ts-schema", "openapi-spec", "module-scaffold"
+  ],
+
+  "principal-engineer": [
+    "ts-schema", "openapi-spec"
+  ]
+}

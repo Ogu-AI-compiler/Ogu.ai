@@ -1,0 +1,12 @@
+{
+  "id": "model-evaluation-report",
+  "version": "1.0.0",
+  "description": "Contract rules for model evaluation reports",
+  "rules": [
+    { "id": "multiple-metrics", "description": "Multiple evaluation metrics required (not just accuracy)" },
+    { "id": "baseline-present", "description": "Comparison to baseline required" },
+    { "id": "test-set-prediction", "description": "Predictions made on test set only" },
+    { "id": "confidence-intervals", "description": "Confidence intervals around metrics required" },
+    { "id": "findings-documented", "description": "Findings and conclusions documented" }
+  ]
+}

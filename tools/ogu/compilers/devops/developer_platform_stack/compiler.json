@@ -1,0 +1,97 @@
+{
+  "id": "developer_platform_stack",
+  "title": "Developer Platform Stack Compiler",
+  "version": "1.0.0",
+  "description": "Compiles local dev environment stack (docker compose, devcontainer, Makefile, Tiltfile). Enforces: compose config valid, all referenced Dockerfiles/scripts exist, local env template covers required vars, bootstrap target resolves all services.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "dockerfile-artifact.json",
+    "output_artifact": "dev-platform-artifact.json",
+    "identifier": "DEV_PLATFORM"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "compose-config-valid",
+        "refs-exist"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "env-template-complete",
+        "bootstrap-resolves"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-dev-platform"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "DP001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "DP002",
+      "name": "compose-config-valid",
+      "phase": 2
+    },
+    {
+      "id": "DP003",
+      "name": "refs-exist",
+      "phase": 2
+    },
+    {
+      "id": "DP004",
+      "name": "env-template-complete",
+      "phase": 3
+    },
+    {
+      "id": "DP005",
+      "name": "bootstrap-resolves",
+      "phase": 3
+    },
+    {
+      "id": "DP006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "DP007",
+      "name": "contract-dev-platform",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "DP001": "dev-platform-spec.json missing — required: services[], bootstrapCommand",
+    "DP002": "docker compose config is invalid",
+    "DP003": "Referenced Dockerfile, script, or manifest does not exist",
+    "DP004": "Local env template missing required non-secret env variables",
+    "DP005": "Bootstrap target references service not in services list",
+    "DP006": "TODO/FIXME found",
+    "DP007": "Developer platform stack contract violation"
+  }
+}

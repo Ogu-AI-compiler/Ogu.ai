@@ -1,0 +1,34 @@
+{
+  "id": "dep-vuln-policy",
+  "title": "Dependency Vulnerability Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the dependency vulnerability scanning policy. Enforces: critical vulnerabilities block the build, high vulns have remediation SLAs, all exceptions reference a vuln-exception-record, and all package ecosystems (npm, pip, go, etc.) are covered.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "dep-vuln-policy.compiled.json",
+    "identifier": "DEP_VULN_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Severity Policy",       "gates": ["critical-is-blocked", "high-has-sla"] },
+    { "id": 3, "name": "Exceptions & Coverage", "gates": ["exceptions-reference-waiver", "all-ecosystems-covered"] },
+    { "id": 4, "name": "Quality",               "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "DV001", "name": "spec-valid",                 "phase": 1 },
+    { "id": "DV002", "name": "critical-is-blocked",        "phase": 2 },
+    { "id": "DV003", "name": "high-has-sla",               "phase": 2 },
+    { "id": "DV004", "name": "exceptions-reference-waiver","phase": 3 },
+    { "id": "DV005", "name": "all-ecosystems-covered",     "phase": 3 },
+    { "id": "DV006", "name": "no-todos",                   "phase": 4 }
+  ],
+  "error_codes": {
+    "DV001": "dep-vuln-spec.json missing or invalid — required fields: ecosystems[], severity{}, scanTool",
+    "DV002": "Critical severity vulnerabilities do not block the build — CVSS ≥9.0 must fail CI",
+    "DV003": "High severity vulnerabilities have no remediation SLA — define maxDays for high-severity findings",
+    "DV004": "Vulnerability exception has no reference to a vuln-exception-record — all exceptions must be formally waivered",
+    "DV005": "Not all package ecosystems used in the project are covered by the scanning policy",
+    "DV006": "TODO/FIXME/HACK comment found"
+  }
+}

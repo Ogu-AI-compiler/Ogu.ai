@@ -1,0 +1,12 @@
+{
+  "id": "data-ingestion-script",
+  "version": "1.0.0",
+  "description": "Contract rules for data ingestion scripts",
+  "rules": [
+    { "id": "uses-pathlib", "description": "No hardcoded absolute paths — use pathlib.Path" },
+    { "id": "has-logging", "description": "Use logging module, not print()" },
+    { "id": "validates-schema", "description": "Schema must be validated at load time" },
+    { "id": "has-main-guard", "description": "Script must have if __name__ == __main__: guard" },
+    { "id": "idempotent-output", "description": "No append-mode writes — output is idempotent" }
+  ]
+}

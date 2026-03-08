@@ -1,0 +1,41 @@
+{
+  "id": "animation-spec",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "variants-exported",
+      "description": "Variants object must be exported (export const fadeVariants = {...}) for consumption by components",
+      "severity": "error"
+    },
+    {
+      "id": "reduced-motion-variant",
+      "description": "Every animated variant set must have a reduced-motion fallback via useReducedMotion() or CSS media query",
+      "severity": "error"
+    },
+    {
+      "id": "transform-only",
+      "description": "Animate only GPU-composited properties: x/y/scale/rotate/opacity. Never width/height/top/left",
+      "severity": "error"
+    },
+    {
+      "id": "no-inline-style-animation",
+      "description": "Use Framer Motion animate prop or CSS classes — avoid inline style={{transition:...}}",
+      "severity": "warning"
+    },
+    {
+      "id": "duration-in-bounds",
+      "description": "Animation duration must be between 50ms and 2000ms",
+      "severity": "error"
+    },
+    {
+      "id": "valid-easing",
+      "description": "Easing must be a named preset (easeOut, spring...) or valid cubic-bezier()",
+      "severity": "error"
+    },
+    {
+      "id": "exit-variant",
+      "description": "If enter/visible variant is defined, an exit variant should also be defined for AnimatePresence",
+      "severity": "warning"
+    }
+  ]
+}

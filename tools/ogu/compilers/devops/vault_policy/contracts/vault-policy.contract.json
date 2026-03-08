@@ -1,0 +1,75 @@
+{
+  "id": "vault_policy",
+  "version": "1.0.0",
+  "description": "Validates HashiCorp Vault policy definitions for least-privilege compliance, safe capability declarations, and operational accountability",
+  "rules": [
+    {
+      "id": "VP001",
+      "gate": "spec-valid",
+      "description": "vault-policy-spec.json must exist, be valid JSON, and declare name, a non-empty paths array, and a roles array. Every path entry must have a path string and a non-empty capabilities array",
+      "required": true,
+      "mandatoryFields": ["name", "paths", "roles"]
+    },
+    {
+      "id": "VP002",
+      "gate": "roles-declared",
+      "description": "Every role referenced in path entries must be declared in the top-level roles array. Undeclared roles produce a runtime auth failure when the service account attempts to authenticate",
+      "required": true
+    },
+    {
+      "id": "VP003",
+      "gate": "no-wildcard-paths",
+      "description": "Paths containing * or + wildcards are flagged unless the entry includes wildcardException with a justification. Wildcards grant access to all current and future secrets under a prefix",
+      "required": true,
+      "note": "Exemption: add wildcardException: \"reason\" to the specific path entry"
+    },
+    {
+      "id": "VP004",
+      "gate": "capabilities-allowed",
+      "description": "All declared capabilities must be from the recognised Vault capability set. Unrecognised values are silently ignored by Vault, making the policy misleading",
+      "required": true,
+      "enum": ["create", "read", "update", "delete", "list", "patch", "sudo", "deny"]
+    },
+    {
+      "id": "VP005",
+      "gate": "least-privilege",
+      "description": "Paths under sys/raw, sys/mount, or auth/token/root are restricted. These paths provide cluster-level access and must be explicitly acknowledged with allowRootAccess: true",
+      "required": true,
+      "restrictedPrefixes": ["sys/raw", "sys/mount", "auth/token/root"],
+      "note": "Exemption: set allowRootAccess: true in the spec with a documented justification"
+    },
+    {
+      "id": "VP006",
+      "gate": "paths-in-allowed-prefix",
+      "description": "When spec.allowedPrefixes is declared, every path must start with one of the declared prefixes. Paths outside the allowed set indicate scope creep or misconfiguration",
+      "required": false,
+      "note": "Skipped when spec.allowedPrefixes is absent"
+    },
+    {
+      "id": "VP007",
+      "gate": "no-todos",
+      "description": "vault-policy-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "VP008",
+      "gate": "contract-vault-policy",
+      "description": "Policy must declare description (for auditor clarity) and owner (for access review accountability). Kubernetes service account roles must specify namespace — missing namespace allows any namespace's SA to authenticate",
+      "required": true,
+      "mandatoryFields": ["description", "owner"],
+      "conditionalRules": [
+        {
+          "when": "roles[].serviceAccount is defined",
+          "requires": "roles[].namespace",
+          "hint": "Add namespace to scope the Kubernetes auth binding to a specific namespace"
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "file": "vault-policy-artifact.json",
+    "ir_id_prefix": "VAULT_POLICY:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

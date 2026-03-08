@@ -1,0 +1,47 @@
+{
+  "id": "a11y",
+  "version": "1.0.0",
+  "description": "Accessibility requirements for compiled React components",
+  "rules": [
+    {
+      "id": "interactive-roles",
+      "description": "Interactive elements (onClick, onKeyDown) must have explicit role or use semantic HTML",
+      "check": "div[onClick] must have role=button or be wrapped in <button>"
+    },
+    {
+      "id": "aria-labels",
+      "description": "Icon-only buttons must have aria-label",
+      "check": "button with no text content must have aria-label or aria-labelledby"
+    },
+    {
+      "id": "keyboard-handler",
+      "description": "Elements with onClick must also handle onKeyDown (Enter/Space)",
+      "check": "onClick presence implies onKeyDown or use of <button>"
+    },
+    {
+      "id": "focus-visible",
+      "description": "Focusable elements must not have outline:none without a visible focus alternative",
+      "check": "absence of outline: none or outline: 0 without focus-visible alternative"
+    },
+    {
+      "id": "color-contrast",
+      "description": "Text color must have ≥4.5:1 contrast ratio against background (WCAG AA)",
+      "check": "design tokens must define contrast-safe pairs"
+    },
+    {
+      "id": "axe-violations",
+      "description": "axe-core must report zero violations on all rendered variants",
+      "check": "axe.run() returns violations.length === 0"
+    },
+    {
+      "id": "landmark-roles",
+      "description": "Page-level components must use landmark roles (main, nav, aside, etc.)",
+      "check": "conditional on component_type === page_level"
+    },
+    {
+      "id": "img-alt",
+      "description": "All img elements must have non-empty alt text (or alt='' for decorative)",
+      "check": "img elements have alt attribute"
+    }
+  ]
+}

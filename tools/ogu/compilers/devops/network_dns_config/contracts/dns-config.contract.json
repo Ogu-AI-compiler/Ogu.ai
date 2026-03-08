@@ -1,0 +1,71 @@
+{
+  "id": "network_dns_config",
+  "version": "1.0.0",
+  "description": "Validates DNS record configurations for type validity, TTL safety, FQDN correctness, no CNAME-at-apex, TLS host consistency, and operational accountability",
+  "rules": [
+    {
+      "id": "DNS001",
+      "gate": "spec-valid",
+      "description": "dns-config-spec.json must exist, be valid JSON, and declare a non-empty records array. Every record must have hostname, a valid type, and a target",
+      "required": true,
+      "fields": {
+        "type": { "enum": ["A", "AAAA", "CNAME", "TXT", "MX", "NS", "SRV"] }
+      },
+      "mandatoryRecordFields": ["hostname", "type", "target"]
+    },
+    {
+      "id": "DNS002",
+      "gate": "hostnames-fqdn",
+      "description": "All hostnames must be valid DNS labels. FQDN format is enforced for absolute hostnames (trailing dot). Labels cannot start or end with hyphens",
+      "required": true
+    },
+    {
+      "id": "DNS003",
+      "gate": "hostnames-unique",
+      "description": "No two records may share the same hostname and type combination within the same zone. Duplicate A/CNAME records for the same name produce undefined resolution behaviour",
+      "required": true
+    },
+    {
+      "id": "DNS004",
+      "gate": "tls-host-match",
+      "description": "When spec.tls is declared, every TLS hostname must match at least one DNS record in spec.records. A TLS certificate for a hostname with no DNS record will never be served",
+      "required": false,
+      "note": "Skipped when spec.tls is absent"
+    },
+    {
+      "id": "DNS005",
+      "gate": "ttl-valid",
+      "description": "TTL values must be integers within the allowed range. Defaults: min=60s (prevents excessive DNS traffic), max=86400s (24h — ensures changes propagate within a day). Range is configurable via spec.ttlPolicy.min/max",
+      "required": false,
+      "defaults": { "min": 60, "max": 86400 },
+      "note": "Skipped for records with no TTL declared; those records are flagged by contract-dns-config (DNS008)"
+    },
+    {
+      "id": "DNS006",
+      "gate": "targets-resolve",
+      "description": "CNAME targets must not point to themselves (infinite loop). CNAME targets that are also declared as A records in the same spec are validated for consistency",
+      "required": false,
+      "note": "Skipped when no CNAME records are present"
+    },
+    {
+      "id": "DNS007",
+      "gate": "no-todos",
+      "description": "dns-config-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "DNS008",
+      "gate": "contract-dns-config",
+      "description": "environment must be declared (dns records must be scoped to staging/production). owner must be declared for DNS change accountability. All records should declare explicit TTL — provider defaults are non-deterministic across environments",
+      "required": true,
+      "mandatoryFields": ["environment", "owner"],
+      "advisory": "Records without explicit TTL are flagged but do not fail the gate"
+    }
+  ],
+  "artifact": {
+    "file": "dns-config-artifact.json",
+    "ir_id_prefix": "DNS_CONFIG:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

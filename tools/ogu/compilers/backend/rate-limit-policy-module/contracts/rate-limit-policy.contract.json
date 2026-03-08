@@ -1,0 +1,8 @@
+{
+  "id": "rate-limit-policy-contract", "version": "1.0.0",
+  "rules": [
+    { "id": "RATE_LIMIT-001", "description": "Key builder is deterministic — no Date.now/random", "enforcement": "gate:key-deterministic" },
+    { "id": "RATE_LIMIT-002", "description": "429 includes Retry-After header", "enforcement": "gate:retry-after-header" },
+    { "id": "RATE_LIMIT-003", "description": "No undeclared bypasses", "enforcement": "gate:no-undeclared-bypass" }
+  ]
+}

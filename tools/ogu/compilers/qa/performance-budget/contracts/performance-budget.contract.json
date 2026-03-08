@@ -1,0 +1,53 @@
+{
+  "id": "performance-budget",
+  "version": "1.0.0",
+  "description": "Performance budget spec contract — validates Core Web Vitals thresholds, CI enforcement, and Lighthouse configuration",
+  "rules": [
+    {
+      "id": "PB-C01",
+      "description": "coreWebVitals must be an object if declared",
+      "required": false,
+      "type": "object"
+    },
+    {
+      "id": "PB-C02",
+      "description": "ciAction must be 'fail', 'warn', or 'block' — never 'none' or absent",
+      "required": true,
+      "enum": ["fail", "warn", "block"]
+    },
+    {
+      "id": "PB-C03",
+      "description": "CLS.good must be a decimal < 1.0 — CLS is a unitless score, not milliseconds",
+      "required": false,
+      "type": "number",
+      "max": 1.0
+    },
+    {
+      "id": "PB-C04",
+      "description": "LCP.good must be between 500ms and 4000ms",
+      "required": false,
+      "type": "number",
+      "min": 500,
+      "max": 4000
+    },
+    {
+      "id": "PB-C05",
+      "description": "lighthouseRuns must be >= 3 when lighthouseThresholds is declared",
+      "required": false,
+      "type": "number",
+      "min": 3
+    },
+    {
+      "id": "PB-C06",
+      "description": "FID (First Input Delay) is deprecated — use INP (Interaction to Next Paint) instead",
+      "required": false,
+      "deprecated": "FID",
+      "replacement": "INP"
+    }
+  ],
+  "artifact": {
+    "file": "performance-budget-artifact.json",
+    "ir_id_prefix": "PERFORMANCE_BUDGET:",
+    "required_fields": ["ir_id", "ciAction", "attestation"]
+  }
+}

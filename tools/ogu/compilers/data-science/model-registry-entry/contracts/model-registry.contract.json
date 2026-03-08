@@ -1,0 +1,12 @@
+{
+  "id": "model-registry-entry",
+  "version": "1.0.0",
+  "description": "Contract rules for model registry entries",
+  "rules": [
+    { "id": "has-artifact", "description": "Serialized model artifact must exist" },
+    { "id": "has-metadata", "description": "Model metadata (params/metrics) must be recorded" },
+    { "id": "has-version", "description": "Model must be versioned" },
+    { "id": "has-model-card", "description": "Model card must be linked" },
+    { "id": "reproducibility-hash", "description": "Training run hash/ID must be recorded" }
+  ]
+}

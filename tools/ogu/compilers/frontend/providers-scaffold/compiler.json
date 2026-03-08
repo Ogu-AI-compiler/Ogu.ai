@@ -1,0 +1,41 @@
+{
+  "id": "providers-scaffold",
+  "title": "Providers Scaffold Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the app-level provider tree (QueryClient, Router, Store, ThemeProvider). Enforces provider order, no duplicates, and correct QueryClient config.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "providers-artifact.json",
+    "identifier": "PROVIDERS"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["provider-order", "no-duplicate-providers", "queryclient-config"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-providers"] }
+  ],
+  "gates": [
+    { "id": "PR001", "name": "spec-valid",             "phase": 1 },
+    { "id": "PR002", "name": "ts-valid",               "phase": 2 },
+    { "id": "PR003", "name": "no-any",                 "phase": 2 },
+    { "id": "PR004", "name": "provider-order",         "phase": 3 },
+    { "id": "PR005", "name": "no-duplicate-providers", "phase": 3 },
+    { "id": "PR006", "name": "queryclient-config",     "phase": 3 },
+    { "id": "PR007", "name": "no-todos",               "phase": 4 },
+    { "id": "PR008", "name": "tests-pass",             "phase": 4 },
+    { "id": "PR009", "name": "contract-providers",     "phase": 5 }
+  ],
+  "error_codes": {
+    "PR001": "Invalid providers spec",
+    "PR002": "TypeScript compilation failed",
+    "PR003": "Explicit 'any' found",
+    "PR004": "Provider order violation (QueryClientProvider must be outermost data provider)",
+    "PR005": "Duplicate provider detected",
+    "PR006": "QueryClient missing retry/staleTime config",
+    "PR007": "TODO/FIXME found",
+    "PR008": "Tests failed",
+    "PR009": "Contract violation"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "graphql-schema-contract", "version": "1.0.0",
+  "rules": [
+    { "id": "GRAPHQL_SCHEMA-001", "description": "SDL parses without errors", "enforcement": "gate:schema-parses" },
+    { "id": "GRAPHQL_SCHEMA-002", "description": "No sensitive fields exposed (password/token/secret)", "enforcement": "gate:no-unsafe-fields" },
+    { "id": "GRAPHQL_SCHEMA-003", "description": "Mutations return payload types, not root entities", "enforcement": "gate:mutations-return-payload" },
+    { "id": "GRAPHQL_SCHEMA-004", "description": "Relay pagination spec implemented if declared", "enforcement": "gate:pagination-relay" }
+  ]
+}

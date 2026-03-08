@@ -1,0 +1,155 @@
+{
+  "id": "ux-state-matrix",
+  "version": "1.0.0",
+  "title": "UX State Matrix Compiler",
+  "description": "Validates state coverage for every screen: data-dependent screens must declare loading/success/empty/error states; error states must have recovery actions; network screens need offline handling; protected screens need unauthorized handling. Produces state-matrix-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "UXS",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract state-matrix-spec.json from screen inventory, data dependencies, and API error contracts",
+      "model": "haiku",
+      "outputs": ["state-matrix-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate screen structure and state declarations",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "no-duplicate-states"]
+    },
+    {
+      "phase": 2,
+      "id": "coverage",
+      "title": "State Coverage",
+      "description": "Validate completeness of state declarations across all screen types",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["required-states", "offline-state", "unauthorized-state", "partial-state"]
+    },
+    {
+      "phase": 3,
+      "id": "recovery",
+      "title": "Recovery",
+      "description": "Validate recovery actions on all error states",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["recovery-action", "no-todos"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["state-matrix-artifact.json"],
+      "gates": ["contract-state-matrix"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "state-matrix-spec.json exists with screens array; each screen has id and dataDependencies",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "no-duplicate-states",
+      "title": "No Duplicate States",
+      "description": "Within each screen, each state type appears at most once",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "required-states",
+      "title": "Required States",
+      "description": "Data-dependent screens declare loading, success, empty, and error states",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "offline-state",
+      "title": "Offline State",
+      "description": "Network-dependent screens declare an offline state or set offlineHandledGlobally: true",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "unauthorized-state",
+      "title": "Unauthorized State",
+      "description": "Auth-protected screens declare an unauthorized state or set unauthorizedHandledByGuard: true",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "partial-state",
+      "title": "Partial State",
+      "description": "Paginated/optional-data screens declare a partial state",
+      "phase": 2,
+      "required": false
+    },
+    {
+      "id": "recovery-action",
+      "title": "Recovery Action",
+      "description": "Every error/offline/unauthorized state declares at least one recovery action",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "no-todos",
+      "title": "No TODOs",
+      "description": "No TODO/FIXME/HACK/TBD in any spec file",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-state-matrix",
+      "title": "State Matrix Contract",
+      "description": "Full contract: version, unique ids, state objects have type",
+      "phase": 4,
+      "required": true,
+      "contract": "state-matrix"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "state-matrix",
+      "file": "contracts/state-matrix.contract.json",
+      "description": "Structural requirements for all compiled UX state matrices"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UXS:{screenId}", "UXS:{screenId}:{stateType}"],
+    "output_artifact": "state-matrix-artifact.json",
+    "artifact_schema": "state-matrix-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "state-matrix-artifact-v1",
+    "fields": ["version", "screen_count", "data_dependent_count", "total_states", "has_offline_coverage", "has_unauthorized_coverage", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UXS001": "state-matrix-spec.json missing or invalid — screens array with id and dataDependencies required",
+    "UXS002": "Data-dependent screen missing required state — loading, success, empty, and error are all required",
+    "UXS003": "Network-dependent screen missing offline state",
+    "UXS004": "Protected screen missing unauthorized state",
+    "UXS005": "Error state has no recovery action and is not marked terminal",
+    "UXS006": "Duplicate state type within a single screen",
+    "UXS007": "Paginated/optional-data screen missing partial state",
+    "UXS008": "TODO/FIXME/HACK/TBD found in spec file — indicates incomplete state coverage",
+    "UXS009": "State matrix contract violation — version missing, duplicate screen ids, or state objects without type"
+  }
+}

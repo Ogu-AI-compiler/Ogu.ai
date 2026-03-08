@@ -1,0 +1,12 @@
+{
+  "id": "restore-verification-spec",
+  "version": "1.0.0",
+  "description": "A restore verification spec defines how database backups are tested and verified — RTO targets, integrity check procedures, automated drill schedules, and checksum methods. An unverified backup is not a backup.",
+  "rules": [
+    { "id": "required-fields-present", "description": "The spec must declare rto_hours, drill_schedule, integrity_checks, and checksum_method." },
+    { "id": "rto-is-quantitative", "description": "rto_hours must be a concrete positive number. Vague descriptions (fast, acceptable, tbd) cannot be measured against actual restore drill results and are rejected." },
+    { "id": "integrity-checks-with-row-count", "description": "integrity_checks must be a non-empty array with at least one row_count or count_compare check. Without row count verification, partial restores and truncated tables go undetected." },
+    { "id": "automated-drill-schedule", "description": "drill_schedule must declare a frequency (monthly minimum for production, weekly for RPO < 4h) and automated: true. Manual drills are unreliable and often skipped." },
+    { "id": "checksum-method-specific", "description": "checksum_method must be a recognized machine-verifiable method: pg_dump_sha256, pg_dump_md5, table_count, table_checksum, pitr_lsn, or custom (with description). Vague values like manual or visual are rejected." }
+  ]
+}

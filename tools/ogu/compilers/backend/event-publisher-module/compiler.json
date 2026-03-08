@@ -1,0 +1,39 @@
+{
+  "id": "event-publisher-module",
+  "title": "Event Publisher Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a typed event publisher. Enforces: events wrapped in typed envelope (eventType, aggregateId, payload, timestamp, version), channel from topology (not hardcoded), publish result awaited, no business logic inside publisher (pure dispatch).",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "event-publisher-artifact.json",
+    "identifier": "EVENT_PUBLISHER"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Envelope Contract", "gates": ["envelope-typed", "channel-from-spec"] },
+    { "id": 3, "name": "Dispatch Purity", "gates": ["no-business-logic", "publish-awaited"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-event-publisher"] }
+  ],
+  "gates": [
+    { "id": "EP001", "name": "spec-valid",              "phase": 1 },
+    { "id": "EP002", "name": "envelope-typed",          "phase": 2 },
+    { "id": "EP003", "name": "channel-from-spec",       "phase": 2 },
+    { "id": "EP004", "name": "no-business-logic",       "phase": 3 },
+    { "id": "EP005", "name": "publish-awaited",         "phase": 3 },
+    { "id": "EP006", "name": "no-todos",                "phase": 4 },
+    { "id": "EP007", "name": "tests-pass",              "phase": 4 },
+    { "id": "EP008", "name": "contract-event-publisher","phase": 5 }
+  ],
+  "error_codes": {
+    "EP001": "event-publisher-spec.json missing or invalid",
+    "EP002": "Event not wrapped in typed envelope (missing eventType, aggregateId, timestamp, version)",
+    "EP003": "Channel/topic hardcoded as string — must come from spec constant",
+    "EP004": "Business logic found inside publisher (DB access, HTTP call, computation)",
+    "EP005": "Publish call not awaited",
+    "EP006": "TODO/FIXME/HACK comment found",
+    "EP007": "Tests failed",
+    "EP008": "Event publisher contract violation"
+  }
+}

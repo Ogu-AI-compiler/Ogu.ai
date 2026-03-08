@@ -1,0 +1,34 @@
+{
+  "id": "healthcheck_probe_config",
+  "title": "Healthcheck Probe Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Kubernetes liveness, readiness, and startup probe configurations. Enforces: each referenced port exists on the target container, probe schema validates, all thresholds are positive integers, both readiness and liveness defined.",
+  "tier": "devops",
+  "ir": { "input_artifact": "k8s-workload-artifact.json", "output_artifact": "probe-config-artifact.json", "identifier": "PROBE_CONFIG" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Port Existence",        "gates": ["ports-exist"] },
+    { "id": 3, "name": "Schema Validation",     "gates": ["probe-schema-valid", "thresholds-valid"] },
+    { "id": 4, "name": "Completeness",          "gates": ["both-probes-defined"] },
+    { "id": 5, "name": "Quality",               "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                "gates": ["contract-probe-config"] }
+  ],
+  "gates": [
+    { "id": "PC001", "name": "spec-valid",            "phase": 1 },
+    { "id": "PC002", "name": "ports-exist",           "phase": 2 },
+    { "id": "PC003", "name": "probe-schema-valid",    "phase": 3 },
+    { "id": "PC004", "name": "thresholds-valid",      "phase": 3 },
+    { "id": "PC005", "name": "both-probes-defined",   "phase": 4 },
+    { "id": "PC006", "name": "no-todos",              "phase": 5 },
+    { "id": "PC007", "name": "contract-probe-config", "phase": 6 }
+  ],
+  "error_codes": {
+    "PC001": "probe-config-spec.json missing or invalid — required: containerPorts[], probes{}",
+    "PC002": "Probe references a port that does not exist on the container",
+    "PC003": "Probe schema is invalid — httpGet, tcpSocket, exec, or grpc must be complete",
+    "PC004": "Probe threshold or timing field is not a positive integer",
+    "PC005": "Both liveness and readiness probes are not defined (or exemption missing)",
+    "PC006": "TODO/FIXME found",
+    "PC007": "Probe config contract violation"
+  }
+}

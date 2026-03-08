@@ -1,0 +1,38 @@
+{
+  "id": "connection-pool-config",
+  "title": "Connection Pool Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles PgBouncer (or equivalent) connection pool configuration. Enforces: valid pool mode, total pool sizes within instance max_connections, max_client_connections above pool total, scram-sha-256 auth, health check query defined, reserve pool non-zero, and idle timeout set.",
+  "tier": "database-admin",
+  "ir": {
+    "input_artifact": "db-provisioning-spec-artifact.json",
+    "output_artifact": "connection-pool-config-artifact.json",
+    "identifier": "CONNECTION_POOL_CONFIG"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Pool Sizing",              "gates": ["pool-mode", "pool-size-limit", "max-client-connections"] },
+    { "id": 3, "name": "Auth & Health",            "gates": ["auth-type", "health-check-query"] },
+    { "id": 4, "name": "Resilience",               "gates": ["reserve-pool", "idle-timeout"] }
+  ],
+  "gates": [
+    { "id": "CPC001", "name": "spec-valid",              "phase": 1 },
+    { "id": "CPC002", "name": "pool-mode",               "phase": 2 },
+    { "id": "CPC003", "name": "pool-size-limit",         "phase": 2 },
+    { "id": "CPC004", "name": "max-client-connections",  "phase": 2 },
+    { "id": "CPC005", "name": "auth-type",               "phase": 3 },
+    { "id": "CPC006", "name": "health-check-query",      "phase": 3 },
+    { "id": "CPC007", "name": "reserve-pool",            "phase": 4 },
+    { "id": "CPC008", "name": "idle-timeout",            "phase": 4 }
+  ],
+  "error_codes": {
+    "CPC001": "connection-pool-config.json missing or invalid — required fields: pool_mode, pools[], max_client_connections, auth_type, health_check_query",
+    "CPC002": "pool_mode is invalid — must be one of: session | transaction | statement",
+    "CPC003": "Sum of pool sizes exceeds instance max_connections — total pool size must be ≤ (max_connections − reserved system connections)",
+    "CPC004": "max_client_connections is not greater than total pool size — clients must be able to queue without hard-failing",
+    "CPC005": "auth_type is md5 (deprecated) — use scram-sha-256 for all connection pool authentication",
+    "CPC006": "health_check_query is not defined — pool must have a query to verify backend connections are alive",
+    "CPC007": "reserve_pool_size is zero — reserve pool must be > 0 to handle connection spikes without rejection",
+    "CPC008": "server_idle_timeout is not defined or is zero — idle connections must have a timeout to prevent resource leaks"
+  }
+}

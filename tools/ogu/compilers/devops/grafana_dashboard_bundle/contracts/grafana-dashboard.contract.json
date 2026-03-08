@@ -1,0 +1,67 @@
+{
+  "id": "grafana_dashboard_bundle",
+  "version": "1.0.0",
+  "description": "Validates Grafana dashboard bundles for JSON validity, required fields, declared datasource UIDs, unique panel IDs, and contract-level provisioning completeness",
+  "rules": [
+    {
+      "id": "GD001",
+      "gate": "spec-valid",
+      "description": "grafana-dashboard-spec.json must exist, be valid JSON, and declare a non-empty dashboards array",
+      "required": true,
+      "mandatoryFields": ["dashboards"],
+      "constraints": {
+        "dashboards": "must be a non-empty array — an empty dashboards array provisions nothing but reports success"
+      }
+    },
+    {
+      "id": "GD002",
+      "gate": "dashboard-json-valid",
+      "description": "Every dashboard file referenced in the spec must exist on disk and be valid JSON. Grafana silently skips dashboards with parse errors during provisioning, leaving monitoring gaps without any error indication",
+      "required": true,
+      "mandatoryDashboardFields": ["file"]
+    },
+    {
+      "id": "GD003",
+      "gate": "required-fields-present",
+      "description": "Every dashboard JSON file must declare title (for display), panels (for content), and schemaVersion (for compatibility). Dashboards missing these fields are blank or render with errors in the Grafana UI",
+      "required": true,
+      "mandatoryDashboardJsonFields": ["title", "panels", "schemaVersion"]
+    },
+    {
+      "id": "GD004",
+      "gate": "datasource-uids-declared",
+      "description": "All datasource UIDs referenced inside dashboard panel datasource fields must be declared in spec.datasources. Undeclared UIDs cause individual panels to fail with 'datasource not found', silently breaking specific charts without failing the dashboard load. Gate is skipped when no datasources are declared in the spec",
+      "required": true,
+      "note": "Skipped automatically when spec.datasources is empty or absent. Reserved UIDs '-- Grafana --' and template variable UIDs (${...}) are exempt"
+    },
+    {
+      "id": "GD005",
+      "gate": "panel-ids-unique",
+      "description": "No two panels within the same dashboard may share the same id value. Duplicate panel IDs cause Grafana to render one panel in multiple grid positions — showing the same chart twice while other panels disappear entirely",
+      "required": true
+    },
+    {
+      "id": "GD006",
+      "gate": "no-todos",
+      "description": "grafana-dashboard-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers. Placeholder datasource UIDs or dashboard file paths cause silent provisioning failures — blank dashboards with no error",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "GD007",
+      "gate": "contract-grafana-dashboard",
+      "description": "Declared datasources must have both uid and type fields. Each dashboard entry must reference a dashboard JSON that declares a uid field. Each dashboard must declare tags for discoverability in the Grafana catalog",
+      "required": true,
+      "constraints": {
+        "datasource-fields": "each datasource must have uid and type declared",
+        "dashboard-uid": "each referenced dashboard JSON must contain a uid field",
+        "dashboard-tags": "each dashboard JSON must declare a non-empty tags array"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "grafana-dashboard-artifact.json",
+    "ir_id_prefix": "GRAFANA_DASHBOARD_BUNDLE:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

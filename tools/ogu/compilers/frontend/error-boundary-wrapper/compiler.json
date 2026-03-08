@@ -1,0 +1,37 @@
+{
+  "id": "error-boundary-wrapper",
+  "title": "Error Boundary Wrapper Compiler",
+  "version": "1.0.0",
+  "description": "Compiles React ErrorBoundary components using the official class API. Enforces fallback UI safety, structured error reporting, and no async-handler confusion.",
+  "tier": "frontend",
+  "ir": { "input_artifact": null, "output_artifact": "error-boundary-artifact.json", "identifier": "ERROR_BOUNDARY" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["class-api", "safe-fallback", "structured-report"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-error-boundary"] }
+  ],
+  "gates": [
+    { "id": "EB001", "name": "spec-valid",             "phase": 1 },
+    { "id": "EB002", "name": "ts-valid",               "phase": 2 },
+    { "id": "EB003", "name": "no-any",                 "phase": 2 },
+    { "id": "EB004", "name": "class-api",              "phase": 3 },
+    { "id": "EB005", "name": "safe-fallback",          "phase": 3 },
+    { "id": "EB006", "name": "structured-report",      "phase": 3 },
+    { "id": "EB007", "name": "no-todos",               "phase": 4 },
+    { "id": "EB008", "name": "tests-pass",             "phase": 4 },
+    { "id": "EB009", "name": "contract-error-boundary","phase": 5 }
+  ],
+  "error_codes": {
+    "EB001": "Invalid error boundary spec",
+    "EB002": "TypeScript compilation failed",
+    "EB003": "Explicit 'any' found",
+    "EB004": "ErrorBoundary not implemented as class component with getDerivedStateFromError or componentDidCatch",
+    "EB005": "Fallback UI can throw — fallback must have a safe render path",
+    "EB006": "Error reporting uses console.log instead of structured sink",
+    "EB007": "TODO/FIXME found",
+    "EB008": "Tests failed",
+    "EB009": "Contract violation"
+  }
+}

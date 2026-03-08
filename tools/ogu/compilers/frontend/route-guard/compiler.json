@@ -1,0 +1,46 @@
+{
+  "id": "route-guard",
+  "title": "Route Guard Compiler",
+  "version": "1.0.0",
+  "description": "Compiles auth guard components (ProtectedRoute/RequireAuth). Enforces redirect-on-unauth, no flash of protected content, and typed auth state.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "auth-artifact.json",
+    "output_artifact": "guard-artifact.json",
+    "identifier": "GUARD"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["redirect-on-unauth", "no-flash", "loading-state"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Cross-Compiler Verify", "gates": ["cross-auth", "cross-routing"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-guard"] }
+  ],
+  "gates": [
+    { "id": "RG001", "name": "spec-valid",      "phase": 1 },
+    { "id": "RG002", "name": "ts-valid",        "phase": 2 },
+    { "id": "RG003", "name": "no-any",          "phase": 2 },
+    { "id": "RG004", "name": "redirect-on-unauth", "phase": 3 },
+    { "id": "RG005", "name": "no-flash",        "phase": 3 },
+    { "id": "RG006", "name": "loading-state",   "phase": 3 },
+    { "id": "RG007", "name": "no-todos",        "phase": 4 },
+    { "id": "RG008", "name": "tests-pass",      "phase": 4 },
+    { "id": "RG009", "name": "cross-auth",      "phase": 5 },
+    { "id": "RG010", "name": "cross-routing",   "phase": 5 },
+    { "id": "RG011", "name": "contract-guard",  "phase": 6 }
+  ],
+  "error_codes": {
+    "RG001": "Invalid guard spec",
+    "RG002": "TypeScript compilation failed",
+    "RG003": "Explicit 'any' found",
+    "RG004": "No redirect on unauthenticated — guard must navigate away",
+    "RG005": "Flash of protected content — children rendered before auth check resolves",
+    "RG006": "No loading state — guard must show spinner while auth resolves",
+    "RG007": "TODO/FIXME found",
+    "RG008": "Tests failed",
+    "RG009": "auth-artifact not found — compile auth-middleware first",
+    "RG010": "routing-artifact not found — compile routing-config first",
+    "RG011": "Contract violation"
+  }
+}

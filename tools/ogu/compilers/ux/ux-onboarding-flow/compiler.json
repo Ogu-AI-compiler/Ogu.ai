@@ -1,0 +1,139 @@
+{
+  "id": "ux-onboarding-flow",
+  "version": "1.0.0",
+  "title": "UX Onboarding Flow Compiler",
+  "description": "Validates onboarding flow specs: step structure, termination targets, skip options, returning user behavior, abandoned session recovery, step type validity, and contract attestation. Produces onboarding-flow-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "UOF",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract onboarding-spec.json from feature brief and step definitions",
+      "model": "haiku",
+      "outputs": ["onboarding-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and step type validity",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "step-types-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "paths",
+      "title": "Paths",
+      "description": "Validate termination target and skip option declarations",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["terminates-to-main", "skip-option"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate returning user behavior and abandoned session recovery",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["returning-user-bypass", "abandoned-recovery"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["onboarding-flow-artifact.json"],
+      "gates": ["contract-onboarding-flow"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "onboarding-spec.json exists with flow_id(string), steps(array), terminationTarget(string); each step has id+title+type",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "step-types-valid",
+      "title": "Step Types Valid",
+      "description": "Every step.type must be one of: info, setup, permission-prompt, tutorial, verification, celebration",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "terminates-to-main",
+      "title": "Terminates to Main",
+      "description": "terminationTarget must be non-empty and must not point to an onboarding step id",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "skip-option",
+      "title": "Skip Option",
+      "description": "Every step with required:false must declare skipLabel(string) and skipTarget(string)",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "returning-user-bypass",
+      "title": "Returning User Bypass",
+      "description": "Spec must declare returningUserBehavior: skip-entirely, show-summary, start-from-incomplete, or always-show",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "abandoned-recovery",
+      "title": "Abandoned Recovery",
+      "description": "Spec must declare abandonedBehavior: save-progress, restart, or ask-user; if save-progress, resumeKey required; escape hatch: singleSession:true",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-onboarding-flow",
+      "title": "Onboarding Flow Contract",
+      "description": "Version, unique step ids, terminationTarget non-empty, at least one step",
+      "phase": 4,
+      "required": true,
+      "contract": "onboarding-flow"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "onboarding-flow",
+      "file": "contracts/onboarding-flow.contract.json",
+      "description": "Structural requirements for all compiled onboarding flow specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UOF:{flow_id}", "UOF:{flow_id}:{stepId}"],
+    "output_artifact": "onboarding-flow-artifact.json",
+    "artifact_schema": "onboarding-flow-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "onboarding-flow-artifact-v1",
+    "fields": ["version", "flow_id", "step_count", "required_step_count", "termination_target", "returning_user_behavior", "abandoned_behavior", "single_session", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UOF001": "onboarding-spec.json missing or invalid — flow_id, steps, terminationTarget required",
+    "UOF002": "terminationTarget is empty or circular — must point to main app, not an onboarding step",
+    "UOF003": "Optional step missing skipLabel or skipTarget",
+    "UOF004": "returningUserBehavior missing — must be skip-entirely, show-summary, start-from-incomplete, or always-show",
+    "UOF005": "abandonedBehavior missing or save-progress declared without resumeKey",
+    "UOF006": "Invalid step type — must be info, setup, permission-prompt, tutorial, verification, or celebration",
+    "UOF007": "Onboarding flow contract violation — version, unique step ids, terminationTarget, or step count invalid"
+  }
+}

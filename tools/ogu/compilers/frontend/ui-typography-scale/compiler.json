@@ -1,0 +1,84 @@
+{
+  "id": "ui-typography-scale",
+  "version": "1.0.0",
+  "title": "UI Typography Scale Compiler",
+  "description": "Verifies typography scale: every step has required fields, min font size, body line height, no negative tracking, i18n font stacks",
+  "ir_prefix": "UI_TYPO",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract typeface list, scale ratio, platform targets, i18n requirements",
+      "model": "haiku",
+      "outputs": ["typography-scale-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "verify",
+      "title": "Verify Typography Scale",
+      "description": "Run all gates against typography spec",
+      "model": "haiku",
+      "outputs": ["typography-artifact.json"],
+      "gates": [
+        "spec-valid",
+        "steps-complete",
+        "min-font-size",
+        "body-line-height",
+        "no-negative-tracking",
+        "i18n-stacks",
+        "no-todos",
+        "contract-typography"
+      ]
+    },
+    {
+      "phase": 2,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed typography artifact for downstream consumers",
+      "model": "haiku",
+      "outputs": ["typography-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    { "id": "spec-valid",          "title": "Spec Valid",             "description": "typography-scale-spec.json exists with required fields: steps array", "phase": 1, "required": true },
+    { "id": "steps-complete",      "title": "Steps Complete",         "description": "Every scale step has font-size, line-height, and font-weight defined", "phase": 1, "required": true },
+    { "id": "min-font-size",       "title": "Minimum Font Size",      "description": "No scale step has font-size below 12px (0.75rem)", "phase": 1, "required": true },
+    { "id": "body-line-height",    "title": "Body Line Height",       "description": "Body text step has line-height ≥ 1.4 (WCAG SC 1.4.12)", "phase": 1, "required": true },
+    { "id": "no-negative-tracking","title": "No Negative Tracking",   "description": "Letter-spacing for body text is not negative", "phase": 1, "required": true },
+    { "id": "i18n-stacks",         "title": "i18n Font Stacks",       "description": "i18n font stacks defined for every declared non-Latin script", "phase": 1, "required": false },
+    { "id": "no-todos",            "title": "No TODOs",               "description": "No TODO/FIXME/HACK in typography spec files", "phase": 1, "required": true },
+    { "id": "contract-typography", "title": "Contract: Typography",   "description": "Artifact validates against typography-scale.contract.json", "phase": 1, "required": true }
+  ],
+  "contracts": [
+    { "id": "typography-scale", "file": "contracts/typography-scale.contract.json", "description": "Structural requirements for a valid typography scale" }
+  ],
+  "ir": {
+    "identifiers": ["UI_TYPO:typography-scale"],
+    "output_artifact": "typography-artifact.json",
+    "artifact_schema": "ui-typography-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "ui-typography-artifact-v1",
+    "fields": ["step_count", "base_size", "scale_ratio", "has_i18n_stacks", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UTS001": "typography-scale-spec.json missing or invalid structure",
+    "UTS002": "Scale step missing required property (font-size, line-height, font-weight)",
+    "UTS003": "Font size below 12px minimum",
+    "UTS004": "Body text line height below 1.4 (WCAG SC 1.4.12)",
+    "UTS005": "Letter-spacing is negative for body text step",
+    "UTS006": "i18n font stack missing for declared non-Latin script",
+    "UTS007": "TODO/FIXME/HACK found in typography spec files",
+    "UTS008": "Typography scale contract violation"
+  }
+}

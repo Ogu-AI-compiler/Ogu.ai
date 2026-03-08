@@ -1,0 +1,30 @@
+{
+  "id": "frontend-test-harness-config",
+  "title": "Frontend Test Harness Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles vitest.config.ts and test setup files. Enforces jsdom environment, jest-dom matchers, Testing Library setup, and coverage thresholds.",
+  "tier": "frontend",
+  "ir": { "input_artifact": null, "output_artifact": "frontend-test-harness-artifact.json", "identifier": "FRONTEND_TEST_HARNESS" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Implement", "gates": ["vitest-config", "jestdom-setup", "coverage-config"] },
+    { "id": 3, "name": "Test", "gates": ["no-todos"] },
+    { "id": 4, "name": "Attest", "gates": ["contract-test-harness"] }
+  ],
+  "gates": [
+    { "id": "TC001", "name": "spec-valid",           "phase": 1 },
+    { "id": "TC002", "name": "vitest-config",        "phase": 2 },
+    { "id": "TC003", "name": "jestdom-setup",        "phase": 2 },
+    { "id": "TC004", "name": "coverage-config",      "phase": 2 },
+    { "id": "TC005", "name": "no-todos",             "phase": 3 },
+    { "id": "TC006", "name": "contract-test-harness","phase": 4 }
+  ],
+  "error_codes": {
+    "TC001": "Invalid test harness spec",
+    "TC002": "vitest.config.ts missing or does not set environment: jsdom",
+    "TC003": "jest-dom not loaded in setup file — @testing-library/jest-dom must be imported",
+    "TC004": "Coverage thresholds not configured or not machine-readable",
+    "TC005": "TODO/FIXME found",
+    "TC006": "Contract violation"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "id": "rightsizing_profile",
+  "title": "Rightsizing Profile Compiler",
+  "version": "1.0.0",
+  "description": "Compiles resource rightsizing patches and HPA/VPA manifests. Enforces: CPU/memory quantities parse, request <= limit when both set, autoscaler min <= max, metric targets within allowed ranges.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "prometheus-rules-artifact.json",
+    "output_artifact": "rightsizing-artifact.json",
+    "identifier": "RIGHTSIZING"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "quantities-parse",
+        "request-lte-limit"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "autoscaler-bounds-valid",
+        "metric-targets-valid"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-rightsizing"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "RS001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "RS002",
+      "name": "quantities-parse",
+      "phase": 2
+    },
+    {
+      "id": "RS003",
+      "name": "request-lte-limit",
+      "phase": 2
+    },
+    {
+      "id": "RS004",
+      "name": "autoscaler-bounds-valid",
+      "phase": 3
+    },
+    {
+      "id": "RS005",
+      "name": "metric-targets-valid",
+      "phase": 3
+    },
+    {
+      "id": "RS006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "RS007",
+      "name": "contract-rightsizing",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "RS001": "rightsizing-spec.json missing — required: workloads[{name, resources}]",
+    "RS002": "CPU or memory quantity cannot be parsed",
+    "RS003": "Request exceeds limit for CPU or memory",
+    "RS004": "HPA/VPA minReplicas > maxReplicas",
+    "RS005": "HPA metric target not within allowed range",
+    "RS006": "TODO/FIXME found",
+    "RS007": "Rightsizing profile contract violation"
+  }
+}

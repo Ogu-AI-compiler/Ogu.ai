@@ -1,0 +1,97 @@
+{
+  "id": "prometheus_rule_group",
+  "title": "Prometheus Rule Group Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Prometheus alerting and recording rules. Enforces: alert names unique, each alert has expr+severity+summary, recording rule names are valid metric names, no whitespace in names.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "k8s-workload-artifact.json",
+    "output_artifact": "prometheus-rules-artifact.json",
+    "identifier": "PROMETHEUS_RULES"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "alert-names-unique",
+        "alerts-have-required-fields"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "recording-rule-names-valid",
+        "severity-labels-valid"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-prometheus-rules"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "PR001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "PR002",
+      "name": "alert-names-unique",
+      "phase": 2
+    },
+    {
+      "id": "PR003",
+      "name": "alerts-have-required-fields",
+      "phase": 2
+    },
+    {
+      "id": "PR004",
+      "name": "recording-rule-names-valid",
+      "phase": 3
+    },
+    {
+      "id": "PR005",
+      "name": "severity-labels-valid",
+      "phase": 3
+    },
+    {
+      "id": "PR006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "PR007",
+      "name": "contract-prometheus-rules",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "PR001": "prometheus-rules-spec.json missing — required: groups[{name, rules[]}]",
+    "PR002": "Duplicate alert name within the ruleset",
+    "PR003": "Alert missing required fields: expr, labels.severity, annotations.summary",
+    "PR004": "Recording rule name contains whitespace or invalid characters",
+    "PR005": "Severity label not in allowed set: critical, warning, info",
+    "PR006": "TODO/FIXME found",
+    "PR007": "Prometheus rules contract violation"
+  }
+}

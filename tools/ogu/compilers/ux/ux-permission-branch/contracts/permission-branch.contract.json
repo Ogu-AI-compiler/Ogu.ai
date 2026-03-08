@@ -1,0 +1,47 @@
+{
+  "id": "ux-permission-branch",
+  "version": "1.0.0",
+  "description": "A permission branch artifact is valid when every declared role has branch coverage, every denial is communicated to the user, all protected actions are restricted, no role has contradictory restrictions, and multi-role conflict resolution is declared when applicable.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "permission-branch-spec.json must exist with roles (array) and branches (array). Permission systems without specs cannot be audited."
+    },
+    {
+      "id": "all-roles-have-branches",
+      "description": "Every role in spec.roles must have at least one corresponding branch entry. Roles without branches have implicitly undefined behavior."
+    },
+    {
+      "id": "restrictions-have-targetId",
+      "description": "Every restriction must declare a targetId string. Restrictions without targets cannot be applied to any UI element."
+    },
+    {
+      "id": "restrictions-have-type",
+      "description": "Every restriction must declare a type string (hide, show, disable, enable, etc.). Typeless restrictions have undefined enforcement behavior."
+    },
+    {
+      "id": "denied-state-communicated",
+      "description": "Restrictions of type hide or disable must declare deniedMessage or redirectTo unless silentDeny:true. Users blocked from an action must understand why."
+    },
+    {
+      "id": "protected-actions-covered",
+      "description": "Every action in spec.protectedActions must appear as a targetId in at least one branch restriction. Protected actions not covered by any branch are effectively open."
+    },
+    {
+      "id": "no-conflicting-restrictions",
+      "description": "No two restrictions for the same role and target may have contradictory types (hide + show, enable + disable). Conflicting restrictions produce undefined runtime behavior."
+    },
+    {
+      "id": "redirectTo-format-valid",
+      "description": "All redirectTo values must start with / (route) or be a valid named flow id (alphanumeric with hyphens). Malformed redirects cause navigation failures."
+    },
+    {
+      "id": "multi-role-resolution-valid",
+      "description": "When multiRoleResolution is declared, it must be most-restrictive, least-restrictive, or priority-order. The system must have a deterministic answer when roles conflict."
+    },
+    {
+      "id": "unique-role-ids",
+      "description": "All role ids must be unique within the spec. Duplicate role ids create ambiguous branch lookups."
+    }
+  ]
+}

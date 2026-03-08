@@ -1,0 +1,84 @@
+{
+  "id": "ui-state-appearance",
+  "version": "1.0.0",
+  "title": "UI State Appearance Compiler",
+  "description": "Verifies interaction state visual spec: all required states defined, focus contrast, disabled opacity, unique visual change per state, skeleton geometry",
+  "ir_prefix": "UI_STATE",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract component list, interaction states, token references for each state",
+      "model": "haiku",
+      "outputs": ["state-appearance-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "verify",
+      "title": "Verify State Appearances",
+      "description": "Run all gates: required states, focus contrast, disabled, skeleton, unique visuals",
+      "model": "haiku",
+      "outputs": ["state-artifact.json"],
+      "gates": [
+        "spec-valid",
+        "states-complete",
+        "focus-contrast",
+        "disabled-opacity",
+        "unique-visual-change",
+        "skeleton-geometry",
+        "no-todos",
+        "contract-state"
+      ]
+    },
+    {
+      "phase": 2,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed state artifact for component implementation",
+      "model": "haiku",
+      "outputs": ["state-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    { "id": "spec-valid",          "title": "Spec Valid",            "description": "state-appearance-spec.json exists with components array, each having states", "phase": 1, "required": true },
+    { "id": "states-complete",     "title": "States Complete",       "description": "All 6 required states defined for every component: default, hover, focus, active, disabled, error", "phase": 1, "required": true },
+    { "id": "focus-contrast",      "title": "Focus Contrast",        "description": "Focus state specifies a focusRing token or declares minimum 3:1 contrast", "phase": 1, "required": true },
+    { "id": "disabled-opacity",    "title": "Disabled Opacity",      "description": "Disabled state uses opacity or a semantic disabled token (not just color change)", "phase": 1, "required": true },
+    { "id": "unique-visual-change","title": "Unique Visual Change",  "description": "Every state has at least one property that differs from the default state", "phase": 1, "required": true },
+    { "id": "skeleton-geometry",   "title": "Skeleton Geometry",     "description": "If skeleton state declared, it must reference the same layout dimensions as the loaded state", "phase": 1, "required": false },
+    { "id": "no-todos",            "title": "No TODOs",              "description": "No TODO/FIXME/HACK in state spec files", "phase": 1, "required": true },
+    { "id": "contract-state",      "title": "Contract: State",       "description": "Artifact validates against state-appearance.contract.json", "phase": 1, "required": true }
+  ],
+  "contracts": [
+    { "id": "state-appearance", "file": "contracts/state-appearance.contract.json", "description": "Structural requirements for a valid UI state appearance spec" }
+  ],
+  "ir": {
+    "identifiers": ["UI_STATE:{componentName}"],
+    "output_artifact": "state-artifact.json",
+    "artifact_schema": "ui-state-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "ui-state-artifact-v1",
+    "fields": ["component_count", "state_count", "has_skeleton", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "USA001": "state-appearance-spec.json missing or invalid structure",
+    "USA002": "Required interaction state missing (default/hover/focus/active/disabled/error)",
+    "USA003": "Focus state does not specify a focusRing or accessible contrast mechanism",
+    "USA004": "Disabled state does not use opacity or semantic disabled token",
+    "USA005": "State has no visual difference from the default state",
+    "USA006": "Skeleton state does not reference layout dimensions of the loaded state",
+    "USA007": "TODO/FIXME/HACK found in state spec files",
+    "USA008": "State appearance contract violation"
+  }
+}

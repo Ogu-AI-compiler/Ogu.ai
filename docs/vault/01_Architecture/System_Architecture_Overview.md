@@ -12,7 +12,7 @@ Ogu הוא **קומפיילר של רעיונות לאפליקציות**. הוא
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Studio (React + Hono + WebSocket)  — UI / control      │
+│  Kadima UI (React + Vite, served by Kadima) — UI/ctrl   │
 ├─────────────────────────────────────────────────────────┤
 │  Kadima Daemon (6 loops + RunnerPool) — control plane   │
 ├─────────────────────────────────────────────────────────┤
@@ -435,41 +435,37 @@ Drain: 10s timeout, then SIGKILL remaining workers
 
 ---
 
-## 7. Studio — Web UI
+## 7. Kadima UI — Web Interface
 
 ### Architecture
 
 ```
 Frontend: React + Zustand (state machine routing, no React Router)
-Backend:  Hono on @hono/node-server (port 4200)
-Realtime: WebSocket with EventBatcher (80ms) + ReplayBuffer (5K events)
+Backend:  Kadima daemon (pure Node.js, port 4210)
+Realtime: SSE (/api/events) — typed events, dedup, reconnect
+Source:   tools/kadima/ui/src/
+Built to: tools/kadima/ui/dist/ (served statically by daemon)
+Dev mode: Vite proxy → Kadima port 4210
 ```
 
-### API Surface — 12 routers, 40+ endpoints
+### API Surface — served by Kadima daemon
 
 ```
 /api         → state, features, files, sessions, marketplace, widgets, SSE
 /api         → exec (CLI execution)
-/api         → chat (AI)
-/api/kadima  → proxy to Kadima daemon
-/api/ogu     → CLI bridge
-/api         → wizard, brief, project-state, manifest, Kadima control
-/api         → project-lifecycle
+/api/ogu     → CLI bridge (org, agents, budget, audit, governance)
+/api/wizard  → archetype wizard, brief, research
+/api/project → project-state, manifest, lifecycle controls
 /api/marketplace → agent marketplace
 ```
 
-### WebSocket Event Flow
+### SSE Event Flow
 
 ```
-File watchers (chokidar) → audit JSONL / state changes
-  → mapAuditToWsEvent() (30+ audit types → typed events)
-  → EventBatcher (80ms coalescing)
-  → ReplayBuffer (5K events)
-  → CursorManager (per-client, per-stream tracking)
-  → Browser WebSocket
+Kadima daemon emitAudit() → .ogu/audit/current.jsonl
+  → broadcaster (event-stream.mjs)
+  → SSE /api/events → Browser EventSource
 ```
-
-**Critical events bypass batcher:** `GOV_BLOCKED`, `INTENT_STATE`, `SNAPSHOT_AVAILABLE`
 
 ### UI State Machine
 
@@ -614,16 +610,16 @@ checkRiskTier()        // high/critical risk tier
 
 ```
                           ┌──────────────────────┐
-                          │     Studio (UI)       │
+                          │     Kadima UI         │
                           │  React + Zustand      │
-                          │  WebSocket + REST     │
+                          │  SSE + REST           │
                           └──────────┬───────────┘
                                      │
                           ┌──────────▼───────────┐
-                          │  Studio Server        │
-                          │  Hono (port 4200)     │
-                          │  12 API routers       │
-                          │  WS + SSE + chokidar  │
+                          │  Kadima Daemon        │
+                          │  Node.js (port 4210)  │
+                          │  6 route modules      │
+                          │  SSE broadcaster      │
                           └──────────┬───────────┘
                                      │
               ┌──────────────────────┼──────────────────────┐
@@ -660,7 +656,7 @@ Kadima daemon → emitAudit() (inline function)
   ↓
 .ogu/audit/current.jsonl (append-only)
   ↓
-SSE broadcast → Studio WebSocket → Browser
+SSE broadcast (Kadima /api/events) → Browser EventSource
 ```
 
 **30+ event types:** `agent:started`, `agent:completed`, `compile:started`, `compile:gate`, `governance:approval_required`, `task:dispatched`, `wave:started`, `budget:exhausted`, `circuit.tripped`, `feature.auto_transition`, `knowledge.indexed`, `metrics.health_critical`...

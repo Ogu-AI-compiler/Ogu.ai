@@ -1,0 +1,44 @@
+{
+  "id": "e2e-spec",
+  "title": "E2E Specification Compiler",
+  "version": "1.0.0",
+  "description": "Compiles E2E test specifications. Enforces: user flows cover multiple routes (not single-page tests), at least one critical path declared, baseUrl from environment variable, no hardcoded credentials in flows, page objects use accessible selectors (not CSS class/ID), retries only in CI (local retries hide flaky tests), failure artifacts configured.",
+  "tier": "qa",
+  "ir": {
+    "input_artifact": "qa-test-harness-artifact.json",
+    "output_artifact": "e2e-spec-artifact.json",
+    "identifier": "E2E_SPEC"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",   "gates": ["spec-valid"] },
+    { "id": 2, "name": "Flow Integrity",           "gates": ["critical-paths-defined", "all-flows-multi-route"] },
+    { "id": 3, "name": "Safety & Isolation",       "gates": ["baseurl-from-env", "no-hardcoded-credentials", "retries-ci-only"] },
+    { "id": 4, "name": "Page Objects & Artifacts", "gates": ["selectors-are-accessible", "failure-artifacts-configured"] },
+    { "id": 5, "name": "Quality",                  "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                   "gates": ["contract-e2e"] }
+  ],
+  "gates": [
+    { "id": "QA020", "name": "spec-valid",                   "phase": 1 },
+    { "id": "QA021", "name": "critical-paths-defined",       "phase": 2 },
+    { "id": "QA022", "name": "all-flows-multi-route",        "phase": 2 },
+    { "id": "QA023", "name": "baseurl-from-env",             "phase": 3 },
+    { "id": "QA024", "name": "no-hardcoded-credentials",     "phase": 3 },
+    { "id": "QA025", "name": "retries-ci-only",              "phase": 3 },
+    { "id": "QA026", "name": "selectors-are-accessible",     "phase": 4 },
+    { "id": "QA027", "name": "failure-artifacts-configured", "phase": 4 },
+    { "id": "QA028", "name": "no-todos",                     "phase": 5 },
+    { "id": "QA029", "name": "contract-e2e",                 "phase": 6 }
+  ],
+  "error_codes": {
+    "QA020": "e2e-spec.json missing or invalid — required fields: framework, baseUrl, userFlows[]",
+    "QA021": "No user flow marked criticalPath: true — cannot determine pre-deploy gate",
+    "QA022": "User flow covers only one route — single-route flows are component tests, not E2E",
+    "QA023": "baseUrl contains hardcoded localhost or IP — must use environment variable ${E2E_BASE_URL}",
+    "QA024": "User flow spec contains password or token as literal value — hardcoded credentials detected",
+    "QA025": "retries.local > 0 — local retries hide flaky tests; retries must be CI-only",
+    "QA026": "Page object file uses CSS class selector (.class) or ID selector (#id) — use getByRole/getByLabel",
+    "QA027": "failureArtifacts.screenshot not enabled — CI cannot diagnose failures without screenshots",
+    "QA028": "TODO/FIXME/HACK comment found",
+    "QA029": "E2E spec artifact contract violation"
+  }
+}

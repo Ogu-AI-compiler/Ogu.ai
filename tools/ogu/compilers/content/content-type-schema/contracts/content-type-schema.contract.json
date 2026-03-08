@@ -1,0 +1,39 @@
+{
+  "id": "content-type-schema",
+  "version": "1.0.0",
+  "description": "A content type schema defines the structural contract for all CMS content types: their fields, types, validation rules, and relationships — and must be internally consistent before any content can be created.",
+  "rules": [
+    {
+      "id": "spec-file-exists",
+      "description": "A content-type-schema.spec.json file must exist in the artifact directory and must be valid JSON with a non-empty types array."
+    },
+    {
+      "id": "unique-type-ids",
+      "description": "Every content type must have a unique string id. Duplicate IDs cause CMS schema conflicts that silently overwrite each other."
+    },
+    {
+      "id": "at-least-one-required-field",
+      "description": "Every content type must have at least one required:true field. A fully optional type cannot enforce content quality or integrity."
+    },
+    {
+      "id": "slug-fields-unique",
+      "description": "Every field of type 'slug' must declare unique:true. Non-unique slugs produce duplicate URLs, breaking routing and SEO."
+    },
+    {
+      "id": "reference-to-exists",
+      "description": "Every reference field must declare referenceTo pointing to a content type ID that exists in the same schema. Dangling references crash CMS rendering."
+    },
+    {
+      "id": "no-circular-references",
+      "description": "Content types must not form circular reference chains (A → B → A) unless explicitly marked bidirectional:true. Unintended cycles cause infinite CMS query loops."
+    },
+    {
+      "id": "image-alt-text-declared",
+      "description": "Every image field must explicitly declare altRequired:true or altRequired:false. Undeclared alt text policy causes inconsistent a11y enforcement across content authors."
+    },
+    {
+      "id": "camel-case-field-names",
+      "description": "All field names must follow camelCase convention. Inconsistent naming breaks CMS API field mapping and frontend prop alignment."
+    }
+  ]
+}

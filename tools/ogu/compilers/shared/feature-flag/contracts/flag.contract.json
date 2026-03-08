@@ -1,0 +1,15 @@
+{
+  "id": "flag-contract",
+  "version": "1.0.0",
+  "compiler": "feature-flag",
+  "rules": [
+    { "id": "typed-flags", "description": "Flag definitions must be TypeScript typed" },
+    { "id": "exported-flags", "description": "Flag map or constants must be exported" },
+    { "id": "use-flag-hook", "description": "Must expose useFlag() or getFlag() for consumption" },
+    { "id": "default-value", "description": "All flag accesses must have a fallback defaultValue" },
+    { "id": "safe-defaults", "description": "killswitch flags must default to false" },
+    { "id": "kebab-case-names", "description": "Flag names must be kebab-case" },
+    { "id": "no-nested-flags", "description": "Flag conditions must not evaluate other flags" },
+    { "id": "no-any", "description": "No explicit any in flag types" }
+  ]
+}

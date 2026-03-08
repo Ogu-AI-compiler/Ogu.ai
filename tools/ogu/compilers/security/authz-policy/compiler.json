@@ -1,0 +1,38 @@
+{
+  "id": "authz-policy",
+  "title": "Authorization Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the authorization policy for an API or feature. Enforces: default-deny posture, no wildcard allows in production, no unauthenticated access to admin operations, multi-tenant data isolation, scoped M2M actors, and admin role separation.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "threat-model.compiled.json",
+    "output_artifact": "authz-policy.compiled.json",
+    "identifier": "AUTHZ_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",    "gates": ["spec-valid"] },
+    { "id": 2, "name": "Baseline Posture",          "gates": ["default-deny-exists", "no-wildcard-in-prod-allow", "no-unauthenticated-admin"] },
+    { "id": 3, "name": "Isolation & Scoping",       "gates": ["multitenant-isolation", "m2m-actors-scoped", "admin-role-isolated"] },
+    { "id": 4, "name": "Quality",                   "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "AZ001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "AZ002", "name": "default-deny-exists",         "phase": 2 },
+    { "id": "AZ003", "name": "no-wildcard-in-prod-allow",   "phase": 2 },
+    { "id": "AZ004", "name": "no-unauthenticated-admin",    "phase": 2 },
+    { "id": "AZ005", "name": "multitenant-isolation",       "phase": 3 },
+    { "id": "AZ006", "name": "m2m-actors-scoped",           "phase": 3 },
+    { "id": "AZ007", "name": "admin-role-isolated",         "phase": 3 },
+    { "id": "AZ008", "name": "no-todos",                    "phase": 4 }
+  ],
+  "error_codes": {
+    "AZ001": "authz-spec.json missing or invalid — required fields: defaultEffect, roles[], endpoints[]",
+    "AZ002": "No default-deny rule found — authorization policy must fail closed",
+    "AZ003": "Wildcard (*) allow rule found in production policy — explicit resource grants only",
+    "AZ004": "Admin operation accessible without authentication — all admin endpoints require auth",
+    "AZ005": "Cross-tenant data access possible — all queries must be scoped to tenantId",
+    "AZ006": "M2M service actor has broad scope — service accounts must be scoped to minimum required permissions",
+    "AZ007": "Admin role inherits from regular user roles — admin must be a separate, isolated role",
+    "AZ008": "TODO/FIXME/HACK comment found"
+  }
+}

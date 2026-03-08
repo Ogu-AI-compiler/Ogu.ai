@@ -1,0 +1,97 @@
+{
+  "id": "db_migration_runner",
+  "title": "DB Migration Runner Compiler",
+  "version": "1.0.0",
+  "description": "Compiles database migration execution config (pipeline jobs, K8s Jobs). Enforces: migration directory exists, runner config validates, command from approved allowlist, credentials injected via env/secrets, ordering policy explicit.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "secret-bundle-artifact.json",
+    "output_artifact": "migration-runner-artifact.json",
+    "identifier": "MIGRATION_RUNNER"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "migration-dir-exists",
+        "command-allowlisted"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "credentials-via-env",
+        "ordering-explicit"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "contract-migration-runner"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "MR001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "MR002",
+      "name": "migration-dir-exists",
+      "phase": 2
+    },
+    {
+      "id": "MR003",
+      "name": "command-allowlisted",
+      "phase": 2
+    },
+    {
+      "id": "MR004",
+      "name": "credentials-via-env",
+      "phase": 3
+    },
+    {
+      "id": "MR005",
+      "name": "ordering-explicit",
+      "phase": 3
+    },
+    {
+      "id": "MR006",
+      "name": "no-todos",
+      "phase": 4
+    },
+    {
+      "id": "MR007",
+      "name": "contract-migration-runner",
+      "phase": 5
+    }
+  ],
+  "error_codes": {
+    "MR001": "db-migration-runner-spec.json missing — required: command, migrationDir, orderingPolicy",
+    "MR002": "Migration directory does not exist or contains no migration files",
+    "MR003": "Migration command not in approved allowlist",
+    "MR004": "Database credentials provided as literal values instead of env refs",
+    "MR005": "Ordering policy not declared: must be pre-deploy, deploy, or post-deploy",
+    "MR006": "TODO/FIXME found",
+    "MR007": "Migration runner contract violation"
+  }
+}

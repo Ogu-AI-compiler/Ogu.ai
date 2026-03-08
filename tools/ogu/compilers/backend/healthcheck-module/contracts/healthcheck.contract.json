@@ -1,0 +1,37 @@
+{
+  "id": "healthcheck-contract-v1",
+  "compiler": "healthcheck-module",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "HC-001",
+      "description": "Every dependency check must have an explicit timeoutMs bound",
+      "severity": "error"
+    },
+    {
+      "id": "HC-002",
+      "description": "At least one dependency must be declared in healthcheck-spec.json",
+      "severity": "error"
+    },
+    {
+      "id": "HC-003",
+      "description": "Liveness checks must not reference remote systems (database, redis, http, queue)",
+      "severity": "error"
+    },
+    {
+      "id": "HC-004",
+      "description": "Readiness output must be JSON with status per dependency",
+      "severity": "error"
+    },
+    {
+      "id": "HC-005",
+      "description": "Health checks must be read-only — no writes, deletes, or mutations",
+      "severity": "error"
+    },
+    {
+      "id": "HC-006",
+      "description": "Failing dependency must return deterministic unhealthy or degraded status, not throw or swallow",
+      "severity": "error"
+    }
+  ]
+}

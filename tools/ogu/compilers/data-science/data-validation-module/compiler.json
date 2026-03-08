@@ -1,0 +1,35 @@
+{
+  "id": "data-validation-module",
+  "title": "Data Validation Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles data validation suites using pandera or Great Expectations. Enforces expectation coverage on critical columns, non-silent failures, boundary validation, and report generation.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "schema-ds-artifact.json", "output_artifact": "validation-artifact.json", "identifier": "DATA_VALIDATION" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Expectations", "gates": ["expectations-defined", "critical-columns-covered", "no-silent-failures"] },
+    { "id": 3, "name": "Integration", "gates": ["report-generated", "cross-schema"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-validation"] }
+  ],
+  "gates": [
+    { "id": "DV001", "name": "spec-valid",              "phase": 1 },
+    { "id": "DV002", "name": "expectations-defined",    "phase": 2 },
+    { "id": "DV003", "name": "critical-columns-covered","phase": 2 },
+    { "id": "DV004", "name": "no-silent-failures",      "phase": 2 },
+    { "id": "DV005", "name": "report-generated",        "phase": 3 },
+    { "id": "DV006", "name": "cross-schema",            "phase": 3 },
+    { "id": "DV007", "name": "no-todos",                "phase": 4 },
+    { "id": "DV008", "name": "contract-validation",     "phase": 4 }
+  ],
+  "error_codes": {
+    "DV001": "Invalid data validation spec",
+    "DV002": "No expectation suite / pandera schema defined",
+    "DV003": "Critical columns from schema spec not covered by expectations",
+    "DV004": "Validation failures silently ignored — must raise DataValidationError or log CRITICAL",
+    "DV005": "No validation report generated (html/json output)",
+    "DV006": "schema-ds-artifact.json not found — data-schema compiler must run first",
+    "DV007": "TODO/FIXME found",
+    "DV008": "Validation contract violation"
+  }
+}

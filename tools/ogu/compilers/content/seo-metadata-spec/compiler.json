@@ -1,0 +1,39 @@
+{
+  "id": "seo-metadata-spec",
+  "title": "SEO Metadata Spec Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the SEO metadata specification for all content types. Enforces: every type has a title template, title length within 50–60 characters, meta description within 120–155 characters, OG image dimensions declared, robots directive set, and hreflang coverage for all localized content types.",
+  "tier": "content",
+  "ir": {
+    "input_artifact": "content-type-schema.json",
+    "output_artifact": "seo-metadata-spec.json",
+    "identifier": "SEO_METADATA_SPEC"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Title & Description",    "gates": ["title-template-defined", "title-length-valid", "meta-desc-length-valid"] },
+    { "id": 3, "name": "Social & Indexing",      "gates": ["og-image-dimensions", "robots-directive-declared"] },
+    { "id": 4, "name": "Localization",           "gates": ["hreflang-coverage"] },
+    { "id": 5, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "SMS001", "name": "spec-valid",                  "phase": 1 },
+    { "id": "SMS002", "name": "title-template-defined",      "phase": 2 },
+    { "id": "SMS003", "name": "title-length-valid",          "phase": 2 },
+    { "id": "SMS004", "name": "meta-desc-length-valid",      "phase": 2 },
+    { "id": "SMS005", "name": "og-image-dimensions",         "phase": 3 },
+    { "id": "SMS006", "name": "robots-directive-declared",   "phase": 3 },
+    { "id": "SMS007", "name": "hreflang-coverage",           "phase": 4 },
+    { "id": "SMS008", "name": "no-todos",                    "phase": 5 }
+  ],
+  "error_codes": {
+    "SMS001": "seo-metadata-spec.json missing or invalid — required fields: content_types[] with title_template, meta_description_template",
+    "SMS002": "Content type missing SEO title template — every content type must have a title tag template",
+    "SMS003": "Title template produces output outside 50–60 character range — validate with representative content",
+    "SMS004": "Meta description template produces output outside 120–155 character range — adjust template length",
+    "SMS005": "OG image dimensions not declared or below 1200×630px minimum — declare og_image dimensions per content type",
+    "SMS006": "Robots directive not declared for content type — specify index/noindex and follow/nofollow per type",
+    "SMS007": "hreflang rules do not cover all declared locales for a localized content type",
+    "SMS008": "TODO/FIXME/HACK comment found"
+  }
+}

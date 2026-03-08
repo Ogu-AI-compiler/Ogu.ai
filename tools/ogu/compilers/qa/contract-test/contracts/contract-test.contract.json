@@ -1,0 +1,47 @@
+{
+  "id": "contract-test",
+  "version": "1.0.0",
+  "description": "Consumer-driven contract test spec contract — validates framework, broker configuration, interaction quality, and OpenAPI alignment",
+  "rules": [
+    {
+      "id": "CT-C01",
+      "description": "framework must be one of: pact, pactflow, spring-cloud-contract, dredd, schemathesis",
+      "required": true,
+      "enum": ["pact", "pactflow", "spring-cloud-contract", "dredd", "schemathesis"]
+    },
+    {
+      "id": "CT-C02",
+      "description": "broker.url must use environment variable syntax, not a hardcoded URL",
+      "required": false,
+      "pattern": "^\\$\\{[A-Z_][A-Z0-9_]*\\}$|^\\$[A-Z_][A-Z0-9_]*$"
+    },
+    {
+      "id": "CT-C03",
+      "description": "publishResults must be true when broker is declared",
+      "required": false,
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "id": "CT-C04",
+      "description": "Interaction paths must exist in referenced OpenAPI spec",
+      "required": false
+    },
+    {
+      "id": "CT-C05",
+      "description": "Interactions must not use empty response bodies or wildcard matchers",
+      "required": true
+    },
+    {
+      "id": "CT-C06",
+      "description": "validateAgainstOpenApi must be true when openApiSpec is declared",
+      "required": false,
+      "type": "boolean"
+    }
+  ],
+  "artifact": {
+    "file": "contract-test-artifact.json",
+    "ir_id_prefix": "CONTRACT_TEST:",
+    "required_fields": ["ir_id", "framework", "consumer", "providers", "interactions", "attestation"]
+  }
+}

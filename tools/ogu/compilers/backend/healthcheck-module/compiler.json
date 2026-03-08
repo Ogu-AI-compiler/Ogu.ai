@@ -1,0 +1,66 @@
+{
+  "id": "healthcheck-module",
+  "title": "Healthcheck Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles liveness and readiness health check handlers. Enforces: liveness never calls remote systems, readiness output is per-dependency and machine-readable, every dependency has a timeout, failing dependency produces deterministic result.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "config-artifact.json",
+    "output_artifact": "healthcheck-artifact.json",
+    "identifier": "HEALTHCHECK"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Liveness Check",
+      "gates": ["liveness-no-remote"]
+    },
+    {
+      "id": 3,
+      "name": "Readiness Check",
+      "gates": ["readiness-machine-readable", "dependency-timeouts"]
+    },
+    {
+      "id": 4,
+      "name": "Safety Check",
+      "gates": ["no-destructive-ops", "deterministic-failure"]
+    },
+    {
+      "id": 5,
+      "name": "Quality",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-healthcheck"]
+    }
+  ],
+  "gates": [
+    { "id": "HC001", "name": "spec-valid",              "phase": 1 },
+    { "id": "HC002", "name": "liveness-no-remote",     "phase": 2 },
+    { "id": "HC003", "name": "readiness-machine-readable", "phase": 3 },
+    { "id": "HC004", "name": "dependency-timeouts",    "phase": 3 },
+    { "id": "HC005", "name": "no-destructive-ops",     "phase": 4 },
+    { "id": "HC006", "name": "deterministic-failure",  "phase": 4 },
+    { "id": "HC007", "name": "no-todos",               "phase": 5 },
+    { "id": "HC008", "name": "tests-pass",             "phase": 5 },
+    { "id": "HC009", "name": "contract-healthcheck",   "phase": 6 }
+  ],
+  "error_codes": {
+    "HC001": "healthcheck-spec.json missing or invalid",
+    "HC002": "Liveness check calls remote system (DB, HTTP, Redis) — liveness must be local-only",
+    "HC003": "Readiness output is not machine-readable per-dependency (must be JSON with status per dep)",
+    "HC004": "Dependency check has no timeout bound",
+    "HC005": "Health check performs destructive operation (write, delete, modify)",
+    "HC006": "Failing dependency does not produce deterministic unhealthy/degraded result",
+    "HC007": "TODO/FIXME/HACK comment found",
+    "HC008": "Tests failed",
+    "HC009": "Healthcheck contract violation"
+  }
+}

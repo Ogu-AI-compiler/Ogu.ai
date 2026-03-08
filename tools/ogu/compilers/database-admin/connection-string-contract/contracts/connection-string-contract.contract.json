@@ -1,0 +1,14 @@
+{
+  "id": "connection-string-contract",
+  "version": "1.0.0",
+  "description": "A connection string contract defines per-service, per-environment database connection parameters with no embedded credentials, proper SSL enforcement, and isolated identities for each service.",
+  "rules": [
+    { "id": "required-fields-present", "description": "The spec must declare environments, services, and format (uri or dsn). Missing these makes the contract incomplete." },
+    { "id": "no-literal-passwords", "description": "No connection string may contain a literal password value. All credentials must reference an environment variable placeholder (${DB_PASSWORD}) or vault path ({{vault:secret/db}}). Embedded passwords in URIs (postgres://user:pass@host) are also rejected." },
+    { "id": "ssl-required-for-non-local", "description": "For all non-local environments, sslmode must be require, verify-full, or verify-ca. disable and prefer allow plaintext connections and are vulnerable to MITM attacks." },
+    { "id": "host-declared-for-every-env", "description": "Every service must have a host or connection_string declared for every environment in the spec. A missing host causes silent fallback to a wrong database." },
+    { "id": "per-service-credential-isolation", "description": "No two services may share the same database user for the same environment. Shared credentials mean a breach of one service exposes all others." },
+    { "id": "connect-timeout-declared", "description": "connect_timeout must be declared globally or per environment. Without it, applications hang indefinitely when the database is unreachable, causing cascading failures." },
+    { "id": "format-consistent", "description": "All connection strings must use the same format (all URI or all DSN). Mixed formats cause inconsistent parsing behavior across services." }
+  ]
+}

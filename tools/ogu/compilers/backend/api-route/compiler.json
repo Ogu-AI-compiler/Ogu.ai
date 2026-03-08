@@ -1,0 +1,193 @@
+{
+  "id": "api-route",
+  "version": "1.0.0",
+  "title": "API Route Compiler",
+  "description": "Formal compiler for HTTP API route handlers: parse intent → scaffold → implement → test → verify → attest",
+  "ir_prefix": "ROUTE",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract route spec: method, path, input schema, output schema, auth requirements, error cases",
+      "model": "haiku",
+      "outputs": ["route-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "scaffold",
+      "title": "Scaffold",
+      "description": "Generate file structure: handler, schema, types, test stub, OpenAPI fragment",
+      "model": "haiku",
+      "outputs": ["handler.ts", "schema.ts", "handler.test.ts", "openapi.json"],
+      "gates": ["spec-valid", "schema-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "implement",
+      "title": "Implement",
+      "description": "Write full handler with input validation, auth check, business logic, error handling",
+      "model": "sonnet",
+      "outputs": ["handler.ts"],
+      "gates": ["auth-present", "error-codes", "input-validated", "no-raw-sql", "no-todos"]
+    },
+    {
+      "phase": 3,
+      "id": "test",
+      "title": "Test",
+      "description": "Write and run unit tests: happy path, validation errors, auth errors, edge cases",
+      "model": "sonnet",
+      "outputs": ["handler.test.ts"],
+      "gates": ["tests-pass", "coverage"]
+    },
+    {
+      "phase": 4,
+      "id": "verify",
+      "title": "Verify",
+      "description": "Cross-check handler against spec, OpenAPI shape, and route contract",
+      "model": "haiku",
+      "outputs": ["verification.json"],
+      "gates": ["openapi-shape", "contract-route", "cross-schema", "cross-auth", "cross-migration"]
+    },
+    {
+      "phase": 5,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Produce signed route-artifact.json for the registry",
+      "model": "haiku",
+      "outputs": ["route-artifact.json"],
+      "gates": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "route-spec.json exists with required fields: method, path, input, output, auth",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "schema-valid",
+      "title": "Schema Valid",
+      "description": "schema.ts parses without error and exports InputSchema + OutputSchema",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "auth-present",
+      "title": "Auth Present",
+      "description": "If spec.auth !== 'none', handler calls auth middleware or checks token before business logic",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "error-codes",
+      "title": "Error Codes",
+      "description": "Handler returns correct HTTP status codes: 400 validation, 401 unauth, 403 forbidden, 404 not found, 500 server",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "input-validated",
+      "title": "Input Validated",
+      "description": "All req.body/req.query/req.params access goes through schema.parse() before use",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-raw-sql",
+      "title": "No Raw SQL",
+      "description": "No raw SQL string literals — must use ORM, query builder, or parameterized queries",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "no-todos",
+      "title": "No TODOs",
+      "description": "No TODO/FIXME/HACK/PLACEHOLDER in handler or schema files",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "tests-pass",
+      "title": "Tests Pass",
+      "description": "All handler unit tests pass with zero failures",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "coverage",
+      "title": "Test Coverage",
+      "description": "≥80% line coverage for handler.ts",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "openapi-shape",
+      "title": "OpenAPI Shape",
+      "description": "openapi.json is valid OpenAPI 3.1 fragment with correct method, path, request/response schemas",
+      "phase": 4,
+      "required": true
+    },
+    {
+      "id": "contract-route",
+      "title": "Route Contract",
+      "description": "Handler matches route.contract.json: method, path pattern, auth level, error shape",
+      "phase": 4,
+      "required": true,
+      "contract": "route"
+    },
+    {
+      "id": "cross-schema",
+      "title": "Schema Alignment",
+      "description": "If schema-artifact.json exists, route input/output fields must align with schema fields. Schema is the source of truth.",
+      "phase": 4,
+      "required": false
+    }
+  ],
+  "contracts": [
+    {
+      "id": "route",
+      "file": "contracts/route.contract.json",
+      "description": "Structural requirements for all compiled API route handlers"
+    }
+  ],
+  "ir": {
+    "identifiers": [
+      "ROUTE:{METHOD} {path}",
+      "SCHEMA:{InputName}",
+      "SCHEMA:{OutputName}"
+    ],
+    "output_artifact": "route-artifact.json",
+    "artifact_schema": "route-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.50
+  },
+  "attestation": {
+    "schema": "route-artifact-v1",
+    "fields": ["method", "path", "auth", "input_schema", "output_schema", "gates_passed", "coverage", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "AR001": "route-spec.json missing or invalid",
+    "AR002": "Schema file invalid or missing exports",
+    "AR003": "Auth middleware missing on protected route",
+    "AR004": "HTTP status codes incorrect or missing",
+    "AR005": "Raw SQL detected in handler",
+    "AR006": "TODO/FIXME/HACK found in implementation",
+    "AR007": "OpenAPI shape invalid or missing",
+    "AR008": "Handler tests failed",
+    "AR009": "Test coverage below threshold",
+    "AR010": "Input used without schema validation",
+    "AR011": "Route contract violation",
+    "AR012": "Route input/output fields conflict with schema",
+    "AR013": "Protected route missing compiled auth-middleware artifact",
+    "AR014": "Route uses DB but missing compiled db-migration artifact"
+  }
+}

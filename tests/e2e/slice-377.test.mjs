@@ -1,5 +1,5 @@
 /**
- * Slice 377 — marketplace.ts Studio API
+ * Slice 377 — Marketplace API
  * Tests via unit-level imports (no HTTP server needed).
  * Tests that createMarketplaceApi() exports a Hono app with correct route behavior
  * by testing the underlying lib functions directly.

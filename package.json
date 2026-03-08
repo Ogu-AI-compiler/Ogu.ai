@@ -4,6 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "dev:all": "bash -lc 'node tools/kadima/daemon.mjs & npm --prefix tools/kadima run ui:dev & wait'",
+    "dev:ui": "npm --prefix tools/kadima run ui:dev",
+    "dev:kadima": "node tools/kadima/daemon.mjs",
     "test": "vitest run",
     "test:smoke": "vitest run tests/smoke/neil-fine-jewelry.test.js --reporter=verbose"
   },

@@ -1,0 +1,121 @@
+{
+  "compiler_id": "compiler_embedded-engineer",
+  "role": "embedded-engineer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "expert",
+    "display_name": "Embedded Engineer",
+    "min_tier": 3
+  },
+
+  "pipeline": {
+    "phases": [
+      "hardware-software-interface",
+      "rtos-design",
+      "memory-management",
+      "communication-protocols",
+      "firmware-release"
+    ],
+    "consumes": ["hardware datasheets", "MCU specs", "timing requirements", "power budget"],
+    "produces": ["firmware/", "driver-layer/", "rtos-config", "memory-map.md", "release-binary"]
+  },
+
+  "gates": [
+    {
+      "id": "no-dynamic-allocation",
+      "description": "No malloc/free in production firmware — all buffers pre-allocated at compile time",
+      "type": "file_not_contains",
+      "banned_string": "malloc(",
+      "severity": "error"
+    },
+    {
+      "id": "isr-short",
+      "description": "All ISRs must be short — set a flag, defer processing to main loop or task",
+      "type": "file_contains",
+      "required_string": "ISR",
+      "severity": "error"
+    },
+    {
+      "id": "watchdog-configured",
+      "description": "Watchdog timer must be configured and tested on every project",
+      "type": "file_contains",
+      "required_string": "watchdog",
+      "severity": "error"
+    },
+    {
+      "id": "memory-within-budget",
+      "description": "Flash and RAM utilization must be within budget with margin — reported at every build",
+      "type": "file_contains",
+      "required_string": "memory",
+      "severity": "error"
+    },
+    {
+      "id": "stack-watermarks-checked",
+      "description": "Stack watermarks must be checked before release — no near-overflows",
+      "type": "file_contains",
+      "required_string": "watermark",
+      "severity": "error"
+    },
+    {
+      "id": "volatile-on-hardware-registers",
+      "description": "Volatile keyword must be used for hardware registers and ISR-shared variables",
+      "type": "file_contains",
+      "required_string": "volatile",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "works-on-my-desk",
+      "description": "Code developed on an eval board and assumed to work on the production board — different hardware, different behavior"
+    },
+    {
+      "id": "bare-metal-spaghetti",
+      "description": "Everything in main() with nested if statements and global flags — no state machine, no HAL, no modularity"
+    },
+    {
+      "id": "printf-debugging-in-production",
+      "description": "Debug printf statements left in production firmware — consuming CPU time, UART bandwidth, and power"
+    },
+    {
+      "id": "infinite-loop-of-failure",
+      "description": "Hardware error occurs, no recovery logic, system hangs — watchdog not configured, device bricks until power-cycled"
+    },
+    {
+      "id": "premature-optimization",
+      "description": "Optimizing for speed before correctness — assembly tricks for functions that run once per second while real bottlenecks are ignored"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Hardware bug discovered that requires board redesign",
+    "Safety-critical failure mode identified that current architecture cannot handle",
+    "Memory or processing budget exceeded with no optimization path",
+    "Certification requirement (automotive, medical, aerospace) requiring process changes",
+    "Vendor SDK bug that blocks development",
+    "Production hardware arriving with different component revisions than development hardware"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with hardware specs, timing requirements, and peripheral definitions",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "No dynamic memory allocation in production firmware",
+      "All ISRs are short (set flag, defer processing)",
+      "Watchdog timer configured and tested",
+      "Flash and RAM utilization within budget with margin",
+      "Stack watermarks checked — no near-overflows",
+      "Volatile keyword used for hardware registers and ISR-shared variables"
+    ]
+  }
+}

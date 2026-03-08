@@ -1,0 +1,59 @@
+{
+  "id": "design-tokens",
+  "title": "Design Tokens Compiler",
+  "version": "1.0.0",
+  "description": "Compiles design tokens (colors, typography, spacing, radius) into tailwind.config.ts and CSS custom properties. Enforces WCAG contrast ratios and naming conventions.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "tokens-artifact.json",
+    "identifier": "TOKENS"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid", "naming-convention"]
+    },
+    {
+      "id": 2,
+      "name": "Scaffold",
+      "gates": ["ts-valid"]
+    },
+    {
+      "id": 3,
+      "name": "Implement",
+      "gates": ["wcag-contrast", "no-collisions", "dark-mode-pairs"]
+    },
+    {
+      "id": 4,
+      "name": "Test",
+      "gates": ["no-todos"]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": ["contract-tokens"]
+    }
+  ],
+  "gates": [
+    { "id": "DT001", "name": "spec-valid",       "phase": 1 },
+    { "id": "DT002", name: "naming-convention",  "phase": 1 },
+    { "id": "DT003", "name": "ts-valid",          "phase": 2 },
+    { "id": "DT004", "name": "wcag-contrast",     "phase": 3 },
+    { "id": "DT005", "name": "no-collisions",     "phase": 3 },
+    { "id": "DT006", "name": "dark-mode-pairs",   "phase": 3 },
+    { "id": "DT007", "name": "no-todos",          "phase": 4 },
+    { "id": "DT008", "name": "contract-tokens",   "phase": 5 }
+  ],
+  "error_codes": {
+    "DT001": "Invalid tokens spec",
+    "DT002": "Token naming convention violation (kebab-case required)",
+    "DT003": "TypeScript compilation failed",
+    "DT004": "WCAG AA contrast ratio not met for color pair",
+    "DT005": "Token key collision between categories",
+    "DT006": "Dark mode token missing for light mode counterpart",
+    "DT007": "TODO/FIXME found",
+    "DT008": "Contract violation"
+  }
+}

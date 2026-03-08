@@ -1,0 +1,34 @@
+{
+  "id": "index-advisory-spec",
+  "title": "Index Advisory Spec Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the index advisory specification for a feature or query set. Enforces: every index recommendation has a rationale tied to a query pattern, per-table index counts are within limits, redundant indexes are flagged, write-heavy tables are not over-indexed, and removal recommendations include a reason.",
+  "tier": "database-admin",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "index-advisory-spec-artifact.json",
+    "identifier": "INDEX_ADVISORY_SPEC"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Rationale & Limits",     "gates": ["rationale-required", "max-indexes-per-table"] },
+    { "id": 3, "name": "Redundancy & Churn",     "gates": ["no-redundant-indexes", "write-heavy-not-over-indexed"] },
+    { "id": 4, "name": "Removal Hygiene",        "gates": ["remove-has-reason"] }
+  ],
+  "gates": [
+    { "id": "IAS001", "name": "spec-valid",                    "phase": 1 },
+    { "id": "IAS002", "name": "rationale-required",            "phase": 2 },
+    { "id": "IAS003", "name": "max-indexes-per-table",         "phase": 2 },
+    { "id": "IAS004", "name": "no-redundant-indexes",          "phase": 3 },
+    { "id": "IAS005", "name": "write-heavy-not-over-indexed",  "phase": 3 },
+    { "id": "IAS006", "name": "remove-has-reason",             "phase": 4 }
+  ],
+  "error_codes": {
+    "IAS001": "index-advisory-spec.json missing or invalid — required fields: indexes[] with table, columns[], index_type",
+    "IAS002": "Index recommendation missing rationale — every index must reference the query pattern or access pattern it accelerates",
+    "IAS003": "Table exceeds maximum recommended index count — excessive indexes degrade write performance and bloat storage",
+    "IAS004": "Redundant index detected — two indexes provide overlapping coverage; the narrower one should be removed",
+    "IAS005": "Write-heavy table is over-indexed — high-churn tables pay a write penalty for every index; remove indexes not on hot read paths",
+    "IAS006": "Index removal recommendation missing reason — document why the index is unused or redundant before flagging for removal"
+  }
+}

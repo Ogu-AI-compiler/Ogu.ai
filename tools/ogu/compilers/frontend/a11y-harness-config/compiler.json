@@ -1,0 +1,33 @@
+{
+  "id": "a11y-harness-config",
+  "title": "A11y Harness Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles accessibility test harness setup: vitest-axe integration, Storybook a11y addon config, WCAG level declaration, and allowed-violations policy.",
+  "tier": "frontend",
+  "ir": { "input_artifact": "storybook-harness-artifact.json", "output_artifact": "a11y-harness-artifact.json", "identifier": "A11Y_HARNESS" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Implement", "gates": ["axe-wrapper", "wcag-level-declared", "storybook-addon"] },
+    { "id": 3, "name": "Test", "gates": ["no-todos"] },
+    { "id": 4, "name": "Cross-Compiler Verify", "gates": ["cross-storybook"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-a11y-harness"] }
+  ],
+  "gates": [
+    { "id": "AH001", "name": "spec-valid",           "phase": 1 },
+    { "id": "AH002", "name": "axe-wrapper",          "phase": 2 },
+    { "id": "AH003", "name": "wcag-level-declared",  "phase": 2 },
+    { "id": "AH004", "name": "storybook-addon",      "phase": 2 },
+    { "id": "AH005", "name": "no-todos",             "phase": 3 },
+    { "id": "AH006", "name": "cross-storybook",      "phase": 4 },
+    { "id": "AH007", "name": "contract-a11y-harness","phase": 5 }
+  ],
+  "error_codes": {
+    "AH001": "Invalid a11y harness spec",
+    "AH002": "vitest-axe or jest-axe wrapper not found in test setup",
+    "AH003": "WCAG compliance level not declared (must be AA or AAA)",
+    "AH004": "@storybook/addon-a11y not configured in Storybook main",
+    "AH005": "TODO/FIXME found",
+    "AH006": "storybook-harness-artifact not found — compile storybook-harness-config first",
+    "AH007": "Contract violation"
+  }
+}

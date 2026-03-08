@@ -1,0 +1,120 @@
+{
+  "compiler_id": "compiler_frontend-developer",
+  "role": "frontend-developer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "engineering",
+    "display_name": "Frontend Developer",
+    "min_tier": 1
+  },
+
+  "pipeline": {
+    "phases": [
+      "component-design",
+      "implementation",
+      "accessibility-check",
+      "performance-check",
+      "testing"
+    ],
+    "consumes": ["Spec.md", "Plan.json", "DESIGN.md", "API contracts"],
+    "produces": ["component files", "test files", "style files"]
+  },
+
+  "gates": [
+    {
+      "id": "components-exist",
+      "description": "At least one component file must be produced",
+      "type": "output_count",
+      "min": 1,
+      "severity": "error"
+    },
+    {
+      "id": "no-any-types",
+      "description": "No TypeScript 'any' types in production components",
+      "type": "file_not_contains",
+      "banned_string": ": any",
+      "severity": "error"
+    },
+    {
+      "id": "no-debug-statements",
+      "description": "No console.log or debugger statements",
+      "type": "file_not_contains",
+      "banned_string": "console.log(",
+      "severity": "error"
+    },
+    {
+      "id": "tests-exist",
+      "description": "Tests must be produced alongside components",
+      "type": "file_contains",
+      "required_string": "test(",
+      "severity": "error"
+    },
+    {
+      "id": "error-state-handled",
+      "description": "Components must handle error states",
+      "type": "file_contains",
+      "required_string": "error",
+      "severity": "warn"
+    },
+    {
+      "id": "loading-state-handled",
+      "description": "Async components must handle loading state",
+      "type": "file_contains",
+      "required_string": "loading",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "prop-drilling",
+      "description": "Passing props through 4+ levels of components that don't use them"
+    },
+    {
+      "id": "mega-component",
+      "description": "A single file with 500+ lines handling state, data fetching, rendering, and events"
+    },
+    {
+      "id": "overusing-global-state",
+      "description": "Putting form data and UI state into a global store"
+    },
+    {
+      "id": "fetch-on-render-cascade",
+      "description": "Parent renders → child mounts → child fetches → grandchild renders → grandchild fetches"
+    },
+    {
+      "id": "css-important-abuse",
+      "description": "Using !important to override styles — indicates specificity architecture problem"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Design spec requires a layout causing performance issues (>100 DOM repaints/s)",
+    "A third-party dependency has a known security vulnerability with no patch",
+    "API response shape does not match the agreed contract, blocking frontend work",
+    "Accessibility audit reveals WCAG AA violations requiring design changes",
+    "Performance budget exceeded and optimization alone cannot fix it"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with UI requirements and acceptance criteria",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "All required components implemented",
+      "No TypeScript 'any' types",
+      "No console.log in production code",
+      "Loading and error states handled",
+      "Tests exist for components",
+      "No hardcoded strings (all localizable)"
+    ]
+  }
+}

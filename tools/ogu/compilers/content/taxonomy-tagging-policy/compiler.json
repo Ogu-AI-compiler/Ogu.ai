@@ -1,0 +1,39 @@
+{
+  "id": "taxonomy-tagging-policy",
+  "title": "Taxonomy Tagging Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the taxonomy and tagging policy. Enforces: vocabulary type declared, controlled vocabulary is non-empty when declared, per-content-type tag rules defined, tag counts are numeric, normalization rules cover case and special characters, and prohibited tags list is explicitly declared.",
+  "tier": "content",
+  "ir": {
+    "input_artifact": "content-type-schema.json",
+    "output_artifact": "taxonomy-policy.json",
+    "identifier": "TAXONOMY_TAGGING_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Vocabulary",             "gates": ["vocabulary-type-declared", "controlled-vocab-non-empty"] },
+    { "id": 3, "name": "Per-Type Rules",         "gates": ["per-type-tag-rules", "tag-counts-numeric"] },
+    { "id": 4, "name": "Governance",             "gates": ["normalization-rules", "prohibited-tags-declared"] },
+    { "id": 5, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "TAX001", "name": "spec-valid",                 "phase": 1 },
+    { "id": "TAX002", "name": "vocabulary-type-declared",   "phase": 2 },
+    { "id": "TAX003", "name": "controlled-vocab-non-empty", "phase": 2 },
+    { "id": "TAX004", "name": "per-type-tag-rules",         "phase": 3 },
+    { "id": "TAX005", "name": "tag-counts-numeric",         "phase": 3 },
+    { "id": "TAX006", "name": "normalization-rules",        "phase": 4 },
+    { "id": "TAX007", "name": "prohibited-tags-declared",   "phase": 4 },
+    { "id": "TAX008", "name": "no-todos",                   "phase": 5 }
+  ],
+  "error_codes": {
+    "TAX001": "taxonomy-policy.json missing or invalid — required fields: vocabulary_type, contexts[], normalization",
+    "TAX002": "Vocabulary type not declared — must be one of: controlled | free-form | hybrid",
+    "TAX003": "Controlled vocabulary type declared but tag list is empty — controlled vocabulary must have at least one entry",
+    "TAX004": "Content type missing tag count rules — every taggable content type must declare min and max tag counts",
+    "TAX005": "Tag count min or max is non-numeric — min_tags and max_tags must be integers",
+    "TAX006": "Normalization rules not defined — declare how tags are normalized: case, special characters, whitespace handling",
+    "TAX007": "Prohibited tags list not declared — must be explicitly present (even if empty) to confirm governance was considered",
+    "TAX008": "TODO/FIXME/HACK comment found"
+  }
+}

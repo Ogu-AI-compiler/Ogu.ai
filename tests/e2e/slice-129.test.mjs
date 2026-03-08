@@ -1,7 +1,7 @@
 /**
- * Slice 129 — Studio Event Stream + IndexedDB Sync
+ * Slice 129 — Event Stream + IndexedDB Sync
  *
- * Studio Event Stream: formal SSE-style event stream with sequence tracking.
+ * Event Stream: formal SSE-style event stream with sequence tracking.
  * IndexedDB Sync: client-side state replica with sync cursors.
  */
 
@@ -14,14 +14,14 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 129 — Studio Event Stream + IndexedDB Sync\x1b[0m\n");
+console.log("\n\x1b[1mSlice 129 — Event Stream + IndexedDB Sync\x1b[0m\n");
 
-// ── Part 1: Studio Event Stream ──────────────────────────────
+// ── Part 1: Event Stream ──────────────────────────────
 
-console.log("\x1b[36m  Part 1: Studio Event Stream\x1b[0m");
+console.log("\x1b[36m  Part 1: Event Stream\x1b[0m");
 
-const sesLib = join(process.cwd(), "tools/ogu/commands/lib/studio-event-stream.mjs");
-assert("studio-event-stream.mjs exists", () => {
+const sesLib = join(process.cwd(), "tools/ogu/commands/lib/event-stream.mjs");
+assert("event-stream.mjs exists", () => {
   if (!existsSync(sesLib)) throw new Error("file missing");
 });
 

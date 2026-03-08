@@ -1,7 +1,7 @@
 /**
- * Slice 115 — Studio Event Envelope + Event Batcher
+ * Slice 115 — Event Envelope + Event Batcher
  *
- * Studio event envelope: typed envelope for Studio WebSocket events.
+ * Event envelope: typed envelope for Kadima SSE events.
  * Event batcher: batch and coalesce events for efficient transport.
  */
 
@@ -14,22 +14,22 @@ function assert(label, fn) {
   catch (e) { fail++; console.log(`  \x1b[31m✗\x1b[0m ${label}: ${e.message}`); }
 }
 
-console.log("\n\x1b[1mSlice 115 — Studio Event Envelope + Event Batcher\x1b[0m\n");
+console.log("\n\x1b[1mSlice 115 — Event Envelope + Event Batcher\x1b[0m\n");
 
-// ── Part 1: Studio Event Envelope ──────────────────────────────
+// ── Part 1: Event Envelope ──────────────────────────────
 
-console.log("\x1b[36m  Part 1: Studio Event Envelope\x1b[0m");
+console.log("\x1b[36m  Part 1: Event Envelope\x1b[0m");
 
-const seLib = join(process.cwd(), "tools/ogu/commands/lib/studio-event-typed.mjs");
-assert("studio-event-typed.mjs exists", () => {
+const seLib = join(process.cwd(), "tools/ogu/commands/lib/event-typed.mjs");
+assert("event-typed.mjs exists", () => {
   if (!existsSync(seLib)) throw new Error("file missing");
 });
 
 const seMod = await import(seLib);
 
-assert("createStudioEvent builds typed envelope", () => {
-  if (typeof seMod.createStudioEvent !== "function") throw new Error("missing");
-  const event = seMod.createStudioEvent({
+assert("createEvent builds typed envelope", () => {
+  if (typeof seMod.createEvent !== "function") throw new Error("missing");
+  const event = seMod.createEvent({
     type: "TASK_STARTED",
     streamKey: "feature:auth",
     payload: { taskId: "t-1", agentId: "backend-dev" },
@@ -41,21 +41,21 @@ assert("createStudioEvent builds typed envelope", () => {
 });
 
 assert("sequential events have incrementing seq", () => {
-  const e1 = seMod.createStudioEvent({ type: "A", streamKey: "s1", payload: {} });
-  const e2 = seMod.createStudioEvent({ type: "B", streamKey: "s1", payload: {} });
+  const e1 = seMod.createEvent({ type: "A", streamKey: "s1", payload: {} });
+  const e2 = seMod.createEvent({ type: "B", streamKey: "s1", payload: {} });
   if (e2.seq <= e1.seq) throw new Error("seq should increment");
 });
 
-assert("STUDIO_EVENT_TYPES lists event types", () => {
-  if (!Array.isArray(seMod.STUDIO_EVENT_TYPES)) throw new Error("missing");
+assert("EVENT_TYPES lists event types", () => {
+  if (!Array.isArray(seMod.EVENT_TYPES)) throw new Error("missing");
   const expected = ["TASK_STARTED", "TASK_COMPLETED", "TASK_FAILED", "BUDGET_TICK", "GOV_BLOCKED", "SNAPSHOT_AVAILABLE"];
   for (const t of expected) {
-    if (!seMod.STUDIO_EVENT_TYPES.includes(t)) throw new Error(`missing ${t}`);
+    if (!seMod.EVENT_TYPES.includes(t)) throw new Error(`missing ${t}`);
   }
 });
 
 assert("event has correlationId and causationId", () => {
-  const event = seMod.createStudioEvent({
+  const event = seMod.createEvent({
     type: "TASK_COMPLETED",
     streamKey: "feature:auth",
     payload: {},

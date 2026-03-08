@@ -1,0 +1,42 @@
+{
+  "id": "backend-test-module",
+  "title": "Backend Test Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a backend test suite from a behavior spec. Enforces: every behavior scenario has at least one test, no real network calls in unit tests, test isolation (no shared mutable state), typed mocks (no implicit any in mock returns), explicit assertions (not just expect(x).toBeTruthy).",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "test-module-artifact.json",
+    "identifier": "TEST_MODULE"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Coverage", "gates": ["scenarios-covered"] },
+    { "id": 3, "name": "Isolation", "gates": ["no-real-network", "no-shared-state"] },
+    { "id": 4, "name": "Assertion Quality", "gates": ["typed-mocks", "no-weak-assertions"] },
+    { "id": 5, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 6, "name": "Attest", "gates": ["contract-test-module"] }
+  ],
+  "gates": [
+    { "id": "BT001", "name": "spec-valid",           "phase": 1 },
+    { "id": "BT002", "name": "scenarios-covered",    "phase": 2 },
+    { "id": "BT003", "name": "no-real-network",      "phase": 3 },
+    { "id": "BT004", "name": "no-shared-state",      "phase": 3 },
+    { "id": "BT005", "name": "typed-mocks",          "phase": 4 },
+    { "id": "BT006", "name": "no-weak-assertions",   "phase": 4 },
+    { "id": "BT007", "name": "no-todos",             "phase": 5 },
+    { "id": "BT008", "name": "tests-pass",           "phase": 5 },
+    { "id": "BT009", "name": "contract-test-module", "phase": 6 }
+  ],
+  "error_codes": {
+    "BT001": "test-module-spec.json missing or invalid",
+    "BT002": "One or more behavior scenarios have no corresponding test",
+    "BT003": "Real network call (fetch, axios, http) in unit test — use MSW or mock",
+    "BT004": "Shared mutable state between tests (module-level variable mutated)",
+    "BT005": "Mock return value typed as any/unknown — use typed mock helper",
+    "BT006": "Weak assertion: toBeTruthy/toBeFalsy/toBeDefined with no value check",
+    "BT007": "TODO/FIXME/HACK comment found",
+    "BT008": "Tests failed",
+    "BT009": "Test module contract violation"
+  }
+}

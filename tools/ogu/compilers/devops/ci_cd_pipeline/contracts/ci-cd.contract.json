@@ -1,0 +1,85 @@
+{
+  "id": "ci_cd_pipeline",
+  "version": "1.0.0",
+  "description": "Validates CI/CD pipeline specs for platform validity, trigger configuration, job staging, dependency acyclicity, secret hygiene, required quality gates, and deploy branch protection",
+  "rules": [
+    {
+      "id": "CIP001",
+      "gate": "spec-valid",
+      "description": "ci-cd-spec.json must exist, be valid JSON, and declare platform, triggers, stages, and jobs — all as non-empty arrays. Platform must be one of the supported CI providers",
+      "required": true,
+      "mandatoryFields": ["platform", "triggers", "stages", "jobs"],
+      "fields": {
+        "platform": { "enum": ["github", "gitlab", "jenkins", "circleci", "buildkite"] }
+      }
+    },
+    {
+      "id": "CIP002",
+      "gate": "trigger-defined",
+      "description": "At least one valid trigger must be declared. A pipeline with no triggers is inert and will never execute automatically. Unknown trigger names are also rejected — the platform silently ignores them",
+      "required": true,
+      "fields": {
+        "triggers[]": { "enum": ["push", "pull_request", "merge_request", "schedule", "manual", "tag", "workflow_dispatch", "release"] }
+      }
+    },
+    {
+      "id": "CIP003",
+      "gate": "jobs-staged",
+      "description": "Every job must reference a stage declared in spec.stages, must have a name, and must declare at least one step (steps/script/run). Dependency references in needs/requires must point to jobs that actually exist",
+      "required": true,
+      "mandatoryJobFields": ["name"],
+      "constraints": {
+        "stage": "Must match a value in spec.stages",
+        "steps": "At least one of steps/script/run must be declared",
+        "needs": "All referenced job names must exist in spec.jobs"
+      }
+    },
+    {
+      "id": "CIP004",
+      "gate": "no-cyclic-needs",
+      "description": "Job dependency graph must be acyclic. A cycle causes pipeline deadlock — every job in the cycle waits for another job in the same cycle to finish first. Full cycle path is reported for diagnosis",
+      "required": true
+    },
+    {
+      "id": "CIP005",
+      "gate": "no-secret-literals",
+      "description": "ci-cd-spec.json must not contain hardcoded secret values. Lines matching secret-named keys (password, token, api_key, etc.) with a long literal value are flagged. Safe patterns include ${{ secrets.X }}, $MY_VAR, $CI_*, and vault:kv references",
+      "required": true,
+      "safePatterns": ["${{ secrets.X }}", "${MY_VAR}", "$MY_VAR", "$CI_*", "vault:kv/*"],
+      "detectedKeys": ["password", "passwd", "secret", "token", "api_key", "apikey", "private_key", "credentials", "auth_token"]
+    },
+    {
+      "id": "CIP006",
+      "gate": "required-quality-gates",
+      "description": "The pipeline must include a build stage (build/compile/package/bundle) AND a test stage (test/spec/lint/check/validate/quality). A pipeline that only deploys without building or testing is a deployment script, not a CI/CD pipeline",
+      "required": true,
+      "requiredStagePatterns": {
+        "build": ["build", "compile", "package", "bundle"],
+        "test":  ["test", "spec", "lint", "check", "validate", "quality"]
+      }
+    },
+    {
+      "id": "CIP007",
+      "gate": "no-todos",
+      "description": "ci-cd-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "CIP008",
+      "gate": "contract-ci-cd",
+      "description": "Deploy jobs (deploy/release/publish in name or stage) must have a branch filter (branches/only/if/when). Pipelines with more than 3 jobs should declare timeouts. Pipelines with more than 2 jobs should declare at least one artifact or cache entry for reproducibility",
+      "required": true,
+      "constraints": {
+        "deploy-branch-protection": "Deploy jobs must declare branches, only, if, or when to restrict execution",
+        "timeout": "Jobs without timeout are flagged when more than 3 jobs exist",
+        "artifacts-or-cache": "At least one job must declare artifacts, cache, or outputs when more than 2 jobs exist"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "ci-cd-artifact.json",
+    "ir_id_prefix": "CI_CD_PIPELINE:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

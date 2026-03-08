@@ -1,0 +1,37 @@
+{
+  "id": "url-searchparams-contract",
+  "title": "URL Search Params Contract Compiler",
+  "version": "1.0.0",
+  "description": "Compiles typed URL search param schemas with parse/serialize helpers. Enforces total parse (no throws), canonical serialization, and clean-URL defaulting.",
+  "tier": "frontend",
+  "ir": { "input_artifact": null, "output_artifact": "searchparams-artifact.json", "identifier": "SEARCH_PARAMS" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["total-parse", "canonical-serialize", "default-omission"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-searchparams"] }
+  ],
+  "gates": [
+    { "id": "USP001", "name": "spec-valid",           "phase": 1 },
+    { "id": "USP002", "name": "ts-valid",             "phase": 2 },
+    { "id": "USP003", "name": "no-any",               "phase": 2 },
+    { "id": "USP004", "name": "total-parse",          "phase": 3 },
+    { "id": "USP005", "name": "canonical-serialize",  "phase": 3 },
+    { "id": "USP006", "name": "default-omission",     "phase": 3 },
+    { "id": "USP007", "name": "no-todos",             "phase": 4 },
+    { "id": "USP008", "name": "tests-pass",           "phase": 4 },
+    { "id": "USP009", "name": "contract-searchparams","phase": 5 }
+  ],
+  "error_codes": {
+    "USP001": "Invalid searchparams spec",
+    "USP002": "TypeScript compilation failed",
+    "USP003": "Explicit 'any' found",
+    "USP004": "parse() can throw — must return typed result or safe fallback, never throw",
+    "USP005": "serialize() is not canonical — same object must always produce identical URL string",
+    "USP006": "Default values written to URL — clean-URL policy requires omitting params equal to default",
+    "USP007": "TODO/FIXME found",
+    "USP008": "Tests failed",
+    "USP009": "Contract violation"
+  }
+}

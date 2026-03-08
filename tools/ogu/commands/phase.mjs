@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { repoRoot, readJsonSafe } from '../util.mjs';
-import { detectPhase, PHASE_ORDER } from './lib-generic/phase-detector.mjs';
+import { detectPhase, PHASE_ORDER } from './lib/phase-detector.mjs';
 import { ValidTransitions } from '../../contracts/schemas/feature-state.mjs';
 
 export async function phase() {

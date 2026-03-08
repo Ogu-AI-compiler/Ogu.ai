@@ -1,0 +1,37 @@
+{
+  "id": "model-card",
+  "title": "Model Card Compiler",
+  "version": "1.0.0",
+  "description": "Compiles model cards (Google Model Cards standard). Enforces intended use, training data description, evaluation metrics across subgroups, ethical considerations, out-of-scope use cases, and limitations.",
+  "tier": "data-science",
+  "language": "markdown",
+  "ir": { "input_artifact": "evaluation-artifact.json", "output_artifact": "model-card-artifact.json", "identifier": "MODEL_CARD" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Documentation Coverage", "gates": ["intended-use-defined", "training-data-described", "performance-metrics-complete"] },
+    { "id": 3, "name": "Ethics & Governance", "gates": ["ethical-considerations", "out-of-scope-defined", "limitations-documented"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-model-card"] }
+  ],
+  "gates": [
+    { "id": "MC001", "name": "spec-valid",               "phase": 1 },
+    { "id": "MC002", "name": "intended-use-defined",     "phase": 2 },
+    { "id": "MC003", "name": "training-data-described",  "phase": 2 },
+    { "id": "MC004", "name": "performance-metrics-complete","phase": 2 },
+    { "id": "MC005", "name": "ethical-considerations",   "phase": 3 },
+    { "id": "MC006", "name": "out-of-scope-defined",     "phase": 3 },
+    { "id": "MC007", "name": "limitations-documented",   "phase": 3 },
+    { "id": "MC008", "name": "no-todos",                 "phase": 4 },
+    { "id": "MC009", "name": "contract-model-card",      "phase": 4 }
+  ],
+  "error_codes": {
+    "MC001": "Invalid model card spec",
+    "MC002": "Intended use not defined — model card must state purpose and target users",
+    "MC003": "Training data not described — dataset version, size, and splits must be documented",
+    "MC004": "Performance metrics incomplete — metrics for ALL relevant subgroups required",
+    "MC005": "Ethical considerations section missing — bias, fairness, and societal impact required",
+    "MC006": "Out-of-scope use cases not defined — what the model must NOT be used for",
+    "MC007": "Known limitations not documented",
+    "MC008": "TODO/FIXME found",
+    "MC009": "Model card contract violation"
+  }
+}

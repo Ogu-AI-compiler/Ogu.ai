@@ -1,0 +1,35 @@
+{
+  "id": "taxonomy-tagging-policy",
+  "version": "1.0.0",
+  "description": "A taxonomy tagging policy defines the classification system for all content: vocabulary type, per-content-type tag count rules, normalization, and prohibited terms — enforced before any content can be tagged.",
+  "rules": [
+    {
+      "id": "spec-file-exists",
+      "description": "A taxonomy-policy.spec.json file must exist and be valid JSON with vocabularyType and contentTypes fields."
+    },
+    {
+      "id": "vocabulary-type-enum",
+      "description": "vocabularyType must be one of 'controlled', 'free-form', or 'hybrid'. Undeclared or arbitrary values make enforcement impossible."
+    },
+    {
+      "id": "controlled-vocabulary-non-empty",
+      "description": "When vocabularyType is 'controlled', spec.vocabulary must be a non-empty array of tags each with a unique id and a label."
+    },
+    {
+      "id": "per-type-rules-defined",
+      "description": "Every content type in spec.contentTypes must define minTags and maxTags. Missing rules mean tags are applied without any count enforcement."
+    },
+    {
+      "id": "tag-counts-are-numbers",
+      "description": "minTags and maxTags must be non-negative numbers, and min must be <= max. String values like 'a few' are not enforceable."
+    },
+    {
+      "id": "normalization-rules-complete",
+      "description": "spec.normalization must declare rules for 'case', 'specialChars', and 'whitespace'. Incomplete normalization causes taxonomy drift via spelling variants."
+    },
+    {
+      "id": "prohibited-tags-declared",
+      "description": "spec.prohibitedTags must be explicitly present (even as an empty array). Absent key means unknown policy — not 'no prohibited tags'."
+    }
+  ]
+}

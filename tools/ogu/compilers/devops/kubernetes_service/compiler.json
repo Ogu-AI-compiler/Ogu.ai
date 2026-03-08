@@ -1,0 +1,33 @@
+{
+  "id": "kubernetes_service",
+  "title": "Kubernetes Service Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Kubernetes Service manifests. Enforces: selector resolves to a workload, each service port maps to a container port, service type is in the allowed set, no duplicate port names.",
+  "tier": "devops",
+  "ir": { "input_artifact": "k8s-workload-artifact.json", "output_artifact": "k8s-service-artifact.json", "identifier": "K8S_SERVICE" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Selector & Ports",      "gates": ["selector-resolves", "ports-valid", "no-duplicate-ports"] },
+    { "id": 3, "name": "Type Policy",           "gates": ["service-type-allowed"] },
+    { "id": 4, "name": "Quality",               "gates": ["no-todos"] },
+    { "id": 5, "name": "Attest",                "gates": ["contract-k8s-service"] }
+  ],
+  "gates": [
+    { "id": "KS001", "name": "spec-valid",             "phase": 1 },
+    { "id": "KS002", "name": "selector-resolves",      "phase": 2 },
+    { "id": "KS003", "name": "ports-valid",            "phase": 2 },
+    { "id": "KS004", "name": "no-duplicate-ports",     "phase": 2 },
+    { "id": "KS005", "name": "service-type-allowed",   "phase": 3 },
+    { "id": "KS006", "name": "no-todos",               "phase": 4 },
+    { "id": "KS007", "name": "contract-k8s-service",   "phase": 5 }
+  ],
+  "error_codes": {
+    "KS001": "k8s-service-spec.json missing or invalid — required: name, selector, ports[]",
+    "KS002": "Selector does not resolve to any declared workload label set",
+    "KS003": "Service port maps to a container port that does not exist",
+    "KS004": "Duplicate port name or number within the same Service",
+    "KS005": "Service type not in allowed set for the target environment",
+    "KS006": "TODO/FIXME found",
+    "KS007": "Kubernetes Service contract violation"
+  }
+}

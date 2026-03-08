@@ -1,0 +1,35 @@
+{
+  "id": "feature-store-module",
+  "title": "Feature Store Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles feature store definitions. Enforces typed feature definitions, TTL policies, point-in-time correctness for time-series joins, no feature bleed (future data in training), versioned feature groups, and backfill strategy documentation.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "schema-ds-artifact.json", "output_artifact": "feature-store-artifact.json", "identifier": "FEATURE_STORE" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Feature Definitions", "gates": ["feature-definitions-typed", "feature-group-versioned"] },
+    { "id": 3, "name": "Temporal Integrity", "gates": ["ttl-defined", "point-in-time-correct", "no-feature-bleed"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-feature-store"] }
+  ],
+  "gates": [
+    { "id": "FS001", "name": "spec-valid",               "phase": 1 },
+    { "id": "FS002", "name": "feature-definitions-typed","phase": 2 },
+    { "id": "FS003", "name": "feature-group-versioned",  "phase": 2 },
+    { "id": "FS004", "name": "ttl-defined",              "phase": 3 },
+    { "id": "FS005", "name": "point-in-time-correct",    "phase": 3 },
+    { "id": "FS006", "name": "no-feature-bleed",         "phase": 3 },
+    { "id": "FS007", "name": "no-todos",                 "phase": 4 },
+    { "id": "FS008", "name": "contract-feature-store",   "phase": 4 }
+  ],
+  "error_codes": {
+    "FS001": "Invalid feature store spec",
+    "FS002": "Feature missing dtype or description — all features must be typed and documented",
+    "FS003": "Feature group missing version — use semantic versioning (v1, v2)",
+    "FS004": "No TTL (time-to-live) defined for feature group",
+    "FS005": "No event_timestamp for point-in-time correct joins — future features may leak",
+    "FS006": "Feature uses data from after prediction timestamp — feature bleed detected",
+    "FS007": "TODO/FIXME found",
+    "FS008": "Feature store contract violation"
+  }
+}

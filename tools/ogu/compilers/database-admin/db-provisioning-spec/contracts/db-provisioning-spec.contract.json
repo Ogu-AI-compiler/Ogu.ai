@@ -1,0 +1,14 @@
+{
+  "id": "db-provisioning-spec",
+  "version": "1.0.0",
+  "description": "A database provisioning spec declares a fully validated PostgreSQL instance definition — platform, version, storage, HA tier, security posture — with no unsafe defaults.",
+  "rules": [
+    { "id": "required-fields-present", "description": "The spec must declare platform, engine, engine_version, instance_class, storage_type, storage_size_gb, multi_az, deletion_protection, encryption_at_rest, backup_retention_days, and ha_tier. Missing any field makes the spec incomplete." },
+    { "id": "engine-version-not-eol", "description": "engine_version must map to a PostgreSQL major version >= 12. EOL versions (11 and below) receive no security patches and must not be used." },
+    { "id": "pii-requires-encryption", "description": "Any instance with pii: true must have encryption_at_rest: true. Storing plaintext PII violates GDPR Article 25 and HIPAA §164.312." },
+    { "id": "production-requires-deletion-protection", "description": "Any instance with ha_tier: production must have deletion_protection: true. Without it, the entire database can be destroyed with a single API call." },
+    { "id": "production-requires-multi-az", "description": "Any instance with ha_tier: production must have multi_az: true. Single-AZ production databases are a single point of failure for availability." },
+    { "id": "production-backup-retention-minimum", "description": "Production instances must have backup_retention_days >= 7. This baseline satisfies most compliance frameworks including SOC2 and PCI-DSS." },
+    { "id": "storage-type-matches-iops", "description": "If provisioned_iops is declared, storage_type must be io1 or io2. gp2/magnetic are flagged for production use. serverless must not declare provisioned_iops." }
+  ]
+}

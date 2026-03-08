@@ -1,0 +1,74 @@
+{
+  "id": "mutation-module",
+  "title": "Mutation Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles typed useMutation hooks with onSuccess invalidation, optimistic updates, and error handling from API route specs.",
+  "tier": "frontend",
+  "ir": {
+    "input_artifact": "route-artifact.json",
+    "output_artifact": "mutation-artifact.json",
+    "identifier": "MUTATION"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid", "naming-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Scaffold",
+      "gates": ["ts-valid", "no-any"]
+    },
+    {
+      "id": 3,
+      "name": "Implement",
+      "gates": ["invalidation-check", "optimistic-valid", "error-handler"]
+    },
+    {
+      "id": 4,
+      "name": "Test",
+      "gates": ["no-todos", "tests-pass", "coverage"]
+    },
+    {
+      "id": 5,
+      "name": "Cross-Compiler Verify",
+      "gates": ["cross-route", "cross-query"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-mutation"]
+    }
+  ],
+  "gates": [
+    { "id": "MU001", "name": "spec-valid",        "phase": 1 },
+    { "id": "MU002", "name": "naming-valid",       "phase": 1 },
+    { "id": "MU003", "name": "ts-valid",           "phase": 2 },
+    { "id": "MU004", "name": "no-any",             "phase": 2 },
+    { "id": "MU005", "name": "invalidation-check", "phase": 3 },
+    { "id": "MU006", "name": "optimistic-valid",   "phase": 3 },
+    { "id": "MU007", "name": "error-handler",      "phase": 3 },
+    { "id": "MU008", "name": "no-todos",           "phase": 4 },
+    { "id": "MU009", "name": "tests-pass",         "phase": 4 },
+    { "id": "MU010", "name": "coverage",           "phase": 4 },
+    { "id": "MU011", "name": "cross-route",        "phase": 5 },
+    { "id": "MU012", "name": "cross-query",        "phase": 5 },
+    { "id": "MU013", "name": "contract-mutation",  "phase": 6 }
+  ],
+  "error_codes": {
+    "MU001": "Invalid mutation spec",
+    "MU002": "Hook name must start with 'use' and end with 'Mutation'",
+    "MU003": "TypeScript compilation failed",
+    "MU004": "Explicit 'any' type found",
+    "MU005": "No queryClient.invalidateQueries in onSuccess — stale cache risk",
+    "MU006": "Optimistic update missing rollback (onError context restore)",
+    "MU007": "No onError handler — mutations must handle errors explicitly",
+    "MU008": "TODO/FIXME found",
+    "MU009": "Tests failed",
+    "MU010": "Coverage below threshold",
+    "MU011": "Payload type mismatch with route-artifact input_schema",
+    "MU012": "invalidateQueries keys don't match any known query-artifact queryKeys",
+    "MU013": "Contract violation"
+  }
+}

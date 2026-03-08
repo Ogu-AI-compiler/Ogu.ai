@@ -1,0 +1,147 @@
+{
+  "id": "ux-task-flow",
+  "version": "1.0.0",
+  "title": "UX Task Flow Compiler",
+  "description": "Validates task flow specs: step ordering, actor assignments, completion criteria, failure paths, retry caps, and abandonment recovery. Produces task-flow-artifact.json consumed by state-matrix and execution compilers.",
+  "tier": "ux",
+  "ir_prefix": "UTK",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract task-flow-spec.json from feature brief and task definitions",
+      "model": "haiku",
+      "outputs": ["task-flow-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec fields and step ordering",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "step-order"]
+    },
+    {
+      "phase": 2,
+      "id": "coverage",
+      "title": "Coverage",
+      "description": "Validate completion criteria, failure paths, and step actors",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["completion-criteria", "failure-paths", "step-actors"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate retry cap and abandonment recovery policies",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["retry-cap", "abandoned-recovery"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["task-flow-artifact.json"],
+      "gates": ["contract-task-flow"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "task-flow-spec.json exists with task_id, steps array, and completion_criteria array",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "step-order",
+      "title": "Step Order",
+      "description": "Steps have unique sequential order integers (0,1,2... or 1,2,3...) with no gaps",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "completion-criteria",
+      "title": "Completion Criteria",
+      "description": "completion_criteria is non-empty and each criterion has a description string",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "failure-paths",
+      "title": "Failure Paths",
+      "description": "At least one failure or cancellation path exists in the task flow",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "step-actors",
+      "title": "Step Actors",
+      "description": "Every step has actor=user|system|both; parallel steps have parallelGroup id",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "retry-cap",
+      "title": "Retry Cap",
+      "description": "All retryable steps have maxRetries <= 5; retryable:true without maxRetries is forbidden",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "abandoned-recovery",
+      "title": "Abandoned Recovery",
+      "description": "When spec.abandonable=true, resumeFrom or recovery_entry must be declared",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-task-flow",
+      "title": "Task Flow Contract",
+      "description": "Version declared, unique step ids, at least one step with actor=user",
+      "phase": 4,
+      "required": true,
+      "contract": "task-flow"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "task-flow",
+      "file": "contracts/task-flow.contract.json",
+      "description": "Structural requirements for all compiled task flow specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UTK:{task_id}", "UTK:{task_id}:{stepId}"],
+    "output_artifact": "task-flow-artifact.json",
+    "artifact_schema": "task-flow-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "task-flow-artifact-v1",
+    "fields": ["version", "task_id", "step_count", "criteria_count", "failure_path_count", "abandonable", "actor_breakdown", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UTK001": "task-flow-spec.json missing or invalid — task_id, steps, completion_criteria required",
+    "UTK002": "Step order invalid — order values must be unique sequential integers with no gaps",
+    "UTK003": "completion_criteria empty or criterion missing description",
+    "UTK004": "No failure or cancellation path declared in task flow",
+    "UTK005": "Retry violation — retryable step missing maxRetries or maxRetries > 5",
+    "UTK006": "abandonable:true without resumeFrom or recovery_entry",
+    "UTK007": "Step missing actor field or parallel step missing parallelGroup",
+    "UTK008": "Task flow contract violation — version, unique step ids, or user actor missing"
+  }
+}

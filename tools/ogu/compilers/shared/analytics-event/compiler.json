@@ -1,0 +1,37 @@
+{
+  "id": "analytics-event",
+  "title": "Analytics Event Compiler",
+  "version": "1.0.0",
+  "description": "Compiles typed analytics event schemas and typed track() callers. Enforces required properties, no PII leakage, and consistent naming conventions.",
+  "tier": "shared",
+  "ir": { "input_artifact": null, "output_artifact": "analytics-artifact.json", "identifier": "ANALYTICS" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Scaffold", "gates": ["ts-valid", "no-any"] },
+    { "id": 3, "name": "Implement", "gates": ["naming-convention", "no-pii", "required-properties"] },
+    { "id": 4, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-analytics"] }
+  ],
+  "gates": [
+    { "id": "AE001", "name": "spec-valid",          "phase": 1 },
+    { "id": "AE002", "name": "ts-valid",            "phase": 2 },
+    { "id": "AE003", "name": "no-any",              "phase": 2 },
+    { "id": "AE004", "name": "naming-convention",   "phase": 3 },
+    { "id": "AE005", "name": "no-pii",              "phase": 3 },
+    { "id": "AE006", "name": "required-properties", "phase": 3 },
+    { "id": "AE007", "name": "no-todos",            "phase": 4 },
+    { "id": "AE008", "name": "tests-pass",          "phase": 4 },
+    { "id": "AE009", "name": "contract-analytics",  "phase": 5 }
+  ],
+  "error_codes": {
+    "AE001": "Invalid analytics spec",
+    "AE002": "TypeScript compilation failed",
+    "AE003": "Explicit 'any' found",
+    "AE004": "Event name not SCREAMING_SNAKE_CASE or violates naming convention",
+    "AE005": "PII field detected in event payload (email, password, ssn, credit_card)",
+    "AE006": "Required base properties missing (event_name, timestamp, session_id)",
+    "AE007": "TODO/FIXME found",
+    "AE008": "Tests failed",
+    "AE009": "Contract violation"
+  }
+}

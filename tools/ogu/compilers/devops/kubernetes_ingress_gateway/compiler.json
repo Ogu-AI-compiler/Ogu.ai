@@ -1,0 +1,34 @@
+{
+  "id": "kubernetes_ingress_gateway",
+  "title": "Kubernetes Ingress/Gateway Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Kubernetes Ingress, Gateway API, and HTTPRoute manifests. Enforces: every backend service/port resolves, hostnames valid and unique, TLS secret refs exist and hostnames match route hosts.",
+  "tier": "devops",
+  "ir": { "input_artifact": "k8s-service-artifact.json", "output_artifact": "k8s-ingress-artifact.json", "identifier": "K8S_INGRESS" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Backend Resolution",     "gates": ["backends-resolve"] },
+    { "id": 3, "name": "Hostname & TLS",         "gates": ["hostnames-valid", "tls-consistent"] },
+    { "id": 4, "name": "Path Rules",             "gates": ["path-rules-valid"] },
+    { "id": 5, "name": "Quality",                "gates": ["no-todos"] },
+    { "id": 6, "name": "Attest",                 "gates": ["contract-k8s-ingress"] }
+  ],
+  "gates": [
+    { "id": "KI001", "name": "spec-valid",          "phase": 1 },
+    { "id": "KI002", "name": "backends-resolve",    "phase": 2 },
+    { "id": "KI003", "name": "hostnames-valid",     "phase": 3 },
+    { "id": "KI004", "name": "tls-consistent",      "phase": 3 },
+    { "id": "KI005", "name": "path-rules-valid",    "phase": 4 },
+    { "id": "KI006", "name": "no-todos",            "phase": 5 },
+    { "id": "KI007", "name": "contract-k8s-ingress","phase": 6 }
+  ],
+  "error_codes": {
+    "KI001": "k8s-ingress-spec.json missing or invalid — required: name, rules[]",
+    "KI002": "Backend service/port does not resolve to a declared Service",
+    "KI003": "Hostname is not a valid FQDN or is not unique within route scope",
+    "KI004": "TLS secret hostnames do not match route host rules",
+    "KI005": "Path match type or rule structure is invalid",
+    "KI006": "TODO/FIXME found",
+    "KI007": "Kubernetes Ingress/Gateway contract violation"
+  }
+}

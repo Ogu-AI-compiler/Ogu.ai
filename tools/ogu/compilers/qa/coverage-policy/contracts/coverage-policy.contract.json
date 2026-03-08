@@ -1,0 +1,37 @@
+{
+  "contract": "coverage-policy",
+  "version": "1.0.0",
+  "ir_prefix": "COVERAGE_POLICY",
+  "description": "Coverage policy contract — thresholds consistent, anti-cheating enforced, build gates active",
+  "rules": [
+    {
+      "id": "CP-C01",
+      "title": "Thresholds consistent",
+      "description": "branches threshold must be ≤ lines threshold — branch coverage is always harder to achieve",
+      "gate": "QA011"
+    },
+    {
+      "id": "CP-C02",
+      "title": "Thresholds realistic",
+      "description": "Global thresholds must be between 60% and 100% — below 60% indicates a broken policy",
+      "gate": "QA012"
+    },
+    {
+      "id": "CP-C03",
+      "title": "No assertion-free tests",
+      "description": "Every it/test block must contain at least one expect() call",
+      "gate": "QA013"
+    },
+    {
+      "id": "CP-C04",
+      "title": "Build failure enforced",
+      "description": "failBuildBelow must be 'global', 'per-file', or 'both' — never 'none'",
+      "gate": "QA014"
+    }
+  ],
+  "artifact": {
+    "file": "coverage-policy-artifact.json",
+    "required_fields": ["ir_id", "global", "failBuildBelow", "attestation"],
+    "ir_id_pattern": "^COVERAGE_POLICY:.+"
+  }
+}

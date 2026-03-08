@@ -1,0 +1,15 @@
+{
+  "id": "resilience-contract",
+  "version": "1.0.0",
+  "compiler": "route-resilience",
+  "rules": [
+    { "id": "error-boundary", "description": "Must use ErrorBoundary with FallbackComponent" },
+    { "id": "not-found-route", "description": "Must have catch-all route or NotFound component" },
+    { "id": "exported-components", "description": "ErrorFallback and NotFound must be exported" },
+    { "id": "error-reset", "description": "ErrorBoundary must support reset/retry" },
+    { "id": "suspense-fallback", "description": "Lazy routes must have Suspense with fallback" },
+    { "id": "no-unhandled-rejection", "description": "Async errors in routes must be caught" },
+    { "id": "user-friendly-fallback", "description": "Error UI must be user-facing, not raw error messages" },
+    { "id": "no-any", "description": "No explicit any in error handler types" }
+  ]
+}

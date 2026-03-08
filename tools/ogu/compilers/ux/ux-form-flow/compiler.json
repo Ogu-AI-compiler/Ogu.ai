@@ -1,0 +1,147 @@
+{
+  "id": "ux-form-flow",
+  "version": "1.0.0",
+  "title": "UX Form Flow Compiler",
+  "description": "Validates form flow specs: required field validation rules, server error mapping, multi-step progress indicators, draft behavior, success targets, and abandonment handling. Produces form-flow-artifact.json.",
+  "tier": "ux",
+  "ir_prefix": "UFF",
+  "pipeline": [
+    {
+      "phase": 0,
+      "id": "parse",
+      "title": "Parse Intent",
+      "description": "Extract form-flow-spec.json from feature brief and field definitions",
+      "model": "haiku",
+      "outputs": ["form-flow-spec.json"],
+      "gates": []
+    },
+    {
+      "phase": 1,
+      "id": "structure",
+      "title": "Structure",
+      "description": "Validate spec shape and required field validation rules",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["spec-valid", "required-fields-valid"]
+    },
+    {
+      "phase": 2,
+      "id": "behavior",
+      "title": "Behavior",
+      "description": "Validate server error mapping, multi-step progress, and draft behavior",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["server-error-mapping", "multi-step-progress", "draft-behavior"]
+    },
+    {
+      "phase": 3,
+      "id": "policy",
+      "title": "Policy",
+      "description": "Validate success target and abandonment handling",
+      "model": "haiku",
+      "outputs": [],
+      "gates": ["success-target", "abandoned-handling"]
+    },
+    {
+      "phase": 4,
+      "id": "attest",
+      "title": "Attest",
+      "description": "Contract validation and artifact production",
+      "model": "haiku",
+      "outputs": ["form-flow-artifact.json"],
+      "gates": ["contract-form-flow"]
+    }
+  ],
+  "gates": [
+    {
+      "id": "spec-valid",
+      "title": "Spec Valid",
+      "description": "form-flow-spec.json exists with form_id, fields array, and submission object",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "required-fields-valid",
+      "title": "Required Fields Valid",
+      "description": "Every field with required:true has at least one validation rule",
+      "phase": 1,
+      "required": true
+    },
+    {
+      "id": "server-error-mapping",
+      "title": "Server Error Mapping",
+      "description": "If serverErrors array exists, every entry has code and userMessage",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "multi-step-progress",
+      "title": "Multi-Step Progress",
+      "description": "Multi-step forms declare progressIndicator per step or globalProgressIndicator",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "draft-behavior",
+      "title": "Draft Behavior",
+      "description": "When draftEnabled:true, draftSaveTrigger and draftStorageKey must be declared",
+      "phase": 2,
+      "required": true
+    },
+    {
+      "id": "success-target",
+      "title": "Success Target",
+      "description": "submission must declare redirectTo or onSuccess — no form without a success outcome",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "abandoned-handling",
+      "title": "Abandoned Handling",
+      "description": "Multi-step forms must declare abandonedBehavior: save-draft|discard|warn-then-discard",
+      "phase": 3,
+      "required": true
+    },
+    {
+      "id": "contract-form-flow",
+      "title": "Form Flow Contract",
+      "description": "Version, unique field ids, id+type on each field, submission.method declared",
+      "phase": 4,
+      "required": true,
+      "contract": "form-flow"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "form-flow",
+      "file": "contracts/form-flow.contract.json",
+      "description": "Structural requirements for all compiled form flow specs"
+    }
+  ],
+  "ir": {
+    "identifiers": ["UFF:{form_id}", "UFF:{form_id}:{fieldId}"],
+    "output_artifact": "form-flow-artifact.json",
+    "artifact_schema": "form-flow-artifact-v1"
+  },
+  "model_policy": {
+    "default": "claude-haiku-4-5-20251001",
+    "max": "claude-sonnet-4-6",
+    "escalation_enabled": true,
+    "escalation_threshold": 2,
+    "budget_limit_usd": 0.25
+  },
+  "attestation": {
+    "schema": "form-flow-artifact-v1",
+    "fields": ["version", "form_id", "field_count", "required_field_count", "step_count", "multi_step", "draft_enabled", "submission_method", "success_target", "gates_passed", "compiled_at", "compiler_version"]
+  },
+  "error_codes": {
+    "UFF001": "form-flow-spec.json missing or invalid — form_id, fields, submission required",
+    "UFF002": "Required field missing validation rules — required:true fields need validations array",
+    "UFF003": "serverErrors entry missing code or userMessage",
+    "UFF004": "Multi-step form step missing progressIndicator",
+    "UFF005": "draftEnabled:true but draftSaveTrigger or draftStorageKey missing",
+    "UFF006": "submission missing success target — declare redirectTo or onSuccess",
+    "UFF007": "Multi-step form missing abandonedBehavior declaration",
+    "UFF008": "Form flow contract violation — version, unique ids, field types, or submission method missing"
+  }
+}

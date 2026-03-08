@@ -1,0 +1,37 @@
+{
+  "id": "client-runtime-contract-v1",
+  "compiler": "service-client-runtime-module",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "CR-001",
+      "description": "Every outbound HTTP request must have a timeout (AbortSignal or timeout option)",
+      "severity": "error"
+    },
+    {
+      "id": "CR-002",
+      "description": "Secret headers must be declared in secretHeaders[] and redacted in all log statements",
+      "severity": "error"
+    },
+    {
+      "id": "CR-003",
+      "description": "Retry policy must declare allowedMethods or allowedStatuses — no retry-on-all",
+      "severity": "error"
+    },
+    {
+      "id": "CR-004",
+      "description": "Base URLs must come from config, not hardcoded string literals",
+      "severity": "error"
+    },
+    {
+      "id": "CR-005",
+      "description": "Non-2xx responses must be normalized into typed error classes",
+      "severity": "error"
+    },
+    {
+      "id": "CR-006",
+      "description": "Retry must never apply to 4xx client errors (400-499)",
+      "severity": "error"
+    }
+  ]
+}

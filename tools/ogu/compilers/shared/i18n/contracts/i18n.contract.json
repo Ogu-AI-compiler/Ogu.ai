@@ -1,0 +1,13 @@
+{
+  "id": "i18n",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "key-parity", "description": "All locale JSON files must have identical key trees — no missing or extra keys", "severity": "error" },
+    { "id": "interpolation-parity", "description": "Interpolation variables ({{name}}) must be present in all language variants of a key", "severity": "error" },
+    { "id": "no-empty-values", "description": "No translation value may be an empty string", "severity": "error" },
+    { "id": "type-safe-keys", "description": "TypeScript must type translation keys — no bare string indexing", "severity": "error" },
+    { "id": "use-translation-hook", "description": "A useTranslation hook or typed t() function must be exported", "severity": "error" },
+    { "id": "rtl-support", "description": "RTL locales (ar, he, fa) require dir=rtl handling in the layout", "severity": "warning" },
+    { "id": "no-hardcoded-strings", "description": "Components must use t('key') — no hardcoded display strings", "severity": "warning" }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "id": "sast-policy",
+  "title": "SAST Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles static analysis security testing (SAST) configuration. Enforces: OWASP Top 10 categories covered, error severity findings block the build, all suppressions have expiry dates, and all project languages are included in scans.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "sast-policy.compiled.json",
+    "identifier": "SAST_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Rule Coverage",          "gates": ["owasp-categories-covered", "error-severity-blocking"] },
+    { "id": 3, "name": "Suppressions & Scope",   "gates": ["suppressions-have-expiry", "language-coverage-complete"] },
+    { "id": 4, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "ST001", "name": "spec-valid",                   "phase": 1 },
+    { "id": "ST002", "name": "owasp-categories-covered",     "phase": 2 },
+    { "id": "ST003", "name": "error-severity-blocking",      "phase": 2 },
+    { "id": "ST004", "name": "suppressions-have-expiry",     "phase": 3 },
+    { "id": "ST005", "name": "language-coverage-complete",   "phase": 3 },
+    { "id": "ST006", "name": "no-todos",                     "phase": 4 }
+  ],
+  "error_codes": {
+    "ST001": "sast-spec.json missing or invalid — required fields: tool, languages[], rules[], blockOnSeverity",
+    "ST002": "SAST rule set does not cover all OWASP Top 10 categories — missing: injection, broken-auth, xss, etc.",
+    "ST003": "Error-severity SAST findings do not block the build — set blockOnSeverity to 'error' or 'high'",
+    "ST004": "SAST suppression has no expiry date — all suppressions must expire within 90 days",
+    "ST005": "Not all programming languages in the project are covered by the SAST scan configuration",
+    "ST006": "TODO/FIXME/HACK comment found"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "a11y-test",
+  "title": "Accessibility Test Compiler",
+  "version": "1.0.0",
+  "description": "Compiles automated accessibility test suites using axe-core/vitest-axe. Enforces WCAG 2.1 AA compliance checks for keyboard nav, ARIA, color contrast, and focus management.",
+  "tier": "shared",
+  "ir": { "input_artifact": "component-artifact.json", "output_artifact": "a11y-artifact.json", "identifier": "A11Y" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Implement", "gates": ["axe-present", "keyboard-nav", "focus-management"] },
+    { "id": 3, "name": "Test", "gates": ["no-todos", "tests-pass"] },
+    { "id": 4, "name": "Cross-Compiler Verify", "gates": ["cross-component"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-a11y"] }
+  ],
+  "gates": [
+    { "id": "A1001", "name": "spec-valid",       "phase": 1 },
+    { "id": "A1002", "name": "axe-present",      "phase": 2 },
+    { "id": "A1003", "name": "keyboard-nav",     "phase": 2 },
+    { "id": "A1004", "name": "focus-management", "phase": 2 },
+    { "id": "A1005", "name": "no-todos",         "phase": 3 },
+    { "id": "A1006", "name": "tests-pass",       "phase": 3 },
+    { "id": "A1007", "name": "cross-component",  "phase": 4 },
+    { "id": "A1008", "name": "contract-a11y",    "phase": 5 }
+  ],
+  "error_codes": {
+    "A1001": "Invalid a11y spec",
+    "A1002": "axe-core test not found — accessibility tests require toHaveNoViolations()",
+    "A1003": "No keyboard navigation test (Tab, Enter, Escape, Arrow keys)",
+    "A1004": "No focus management test for modals/drawers/dynamic content",
+    "A1005": "TODO/FIXME found",
+    "A1006": "Tests failed",
+    "A1007": "component-artifact not found",
+    "A1008": "Contract violation"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "service-client-contract",
+  "version": "1.0.0",
+  "description": "Contract for service-client-module output artifacts",
+  "rules": [
+    {
+      "id": "SERVICE_CLIENT-001",
+      "description": "Base URL must come from config, not hardcoded string literals",
+      "enforcement": "gate:base-url-from-config"
+    },
+    {
+      "id": "SERVICE_CLIENT-002",
+      "description": "Auth headers injected via interceptor or factory, not repeated per call",
+      "enforcement": "gate:auth-via-interceptor"
+    },
+    {
+      "id": "SERVICE_CLIENT-003",
+      "description": "All endpoint responses mapped to typed domain objects — no Promise<any>",
+      "enforcement": "gate:typed-responses"
+    },
+    {
+      "id": "SERVICE_CLIENT-004",
+      "description": "Non-2xx responses mapped to typed error classes",
+      "enforcement": "gate:error-mapped"
+    },
+    {
+      "id": "SERVICE_CLIENT-005",
+      "description": "At least one resilience strategy declared (timeout required alongside retry)",
+      "enforcement": "gate:resilience-declared"
+    },
+    {
+      "id": "SERVICE_CLIENT-006",
+      "description": "Sensitive fields not logged without redaction",
+      "enforcement": "gate:no-sensitive-logging"
+    }
+  ]
+}

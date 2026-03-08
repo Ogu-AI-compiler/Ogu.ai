@@ -1,0 +1,120 @@
+{
+  "compiler_id": "compiler_domain-modeler",
+  "role": "domain-modeler",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "architecture",
+    "display_name": "Domain Modeler",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "domain-discovery",
+      "bounded-context-design",
+      "aggregate-design",
+      "glossary-building",
+      "validation"
+    ],
+    "consumes": ["PRD.md", "business domain docs", "domain expert input"],
+    "produces": ["domain-model.md", "bounded-contexts.md", "glossary.md", "context-map.md"]
+  },
+
+  "gates": [
+    {
+      "id": "domain-model-exists",
+      "description": "Domain model document must exist",
+      "type": "file_exists",
+      "pattern": "domain-model",
+      "severity": "error"
+    },
+    {
+      "id": "bounded-contexts-defined",
+      "description": "Bounded contexts must be identified and documented",
+      "type": "file_contains",
+      "required_string": "bounded context",
+      "severity": "error"
+    },
+    {
+      "id": "aggregates-defined",
+      "description": "Aggregates with invariants must be defined",
+      "type": "file_contains",
+      "required_string": "aggregate",
+      "severity": "error"
+    },
+    {
+      "id": "glossary-exists",
+      "description": "Ubiquitous language glossary must be created",
+      "type": "file_contains",
+      "required_string": "glossary",
+      "severity": "error"
+    },
+    {
+      "id": "invariants-documented",
+      "description": "Business invariants must be explicitly documented",
+      "type": "file_contains",
+      "required_string": "invariant",
+      "severity": "warn"
+    },
+    {
+      "id": "domain-events-defined",
+      "description": "Domain events (past-tense) must be identified",
+      "type": "file_contains",
+      "required_string": "event",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "anemic-domain-model",
+      "description": "Entities with only getters and setters — all logic in service classes"
+    },
+    {
+      "id": "big-ball-of-mud",
+      "description": "No bounded contexts — one giant model where everything references everything"
+    },
+    {
+      "id": "database-driven-design",
+      "description": "Starting with the database schema and generating code from it"
+    },
+    {
+      "id": "god-entity",
+      "description": "One entity (usually User or Order) with 50 properties and 30 methods"
+    },
+    {
+      "id": "ignoring-domain-expert-input",
+      "description": "Engineers building the model alone with technical terms instead of business terms"
+    }
+  ],
+
+  "escalation_triggers": [
+    "Domain experts disagree on how a business process works",
+    "A discovered invariant conflicts with existing system behavior in production",
+    "Two bounded contexts need to share an aggregate",
+    "Domain model reveals a business rule that contradicts documented requirements",
+    "Performance requirements force denormalization violating the domain model structure"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "PRD.md",
+        "description": "PRD.md with business domain description",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Domain model document exists",
+      "Bounded contexts identified with clear boundaries",
+      "Aggregates defined with explicit invariants",
+      "Ubiquitous language glossary created and shared",
+      "Context map showing relationships between contexts",
+      "Domain events defined for all significant state changes"
+    ]
+  }
+}

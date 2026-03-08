@@ -1,0 +1,12 @@
+{
+  "id": "audit-log-policy",
+  "version": "1.0.0",
+  "description": "An audit-log-policy artifact defines which actions are logged, the required schema for every log entry, PII masking rules, and data retention periods.",
+  "rules": [
+    { "id": "spec-has-feature-and-events", "description": "Policy must declare feature, non-empty events array (each with action and sensitivity), and a schema object." },
+    { "id": "schema-has-required-fields", "description": "Schema must include actor_id, timestamp, source_ip, and action_result." },
+    { "id": "no-pii-logged-in-plaintext", "description": "Schema fields and event logged_fields identified as PII (email, phone, SSN, etc.) must declare mask: true or log_handling: mask/exclude/hash." },
+    { "id": "high-risk-actions-covered", "description": "For features with >3 events, delete, login, and permission_change actions must be covered by audit events." },
+    { "id": "retention-days-declared", "description": "retention_days must be a positive number and at minimum 90 days." }
+  ]
+}

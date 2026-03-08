@@ -1,0 +1,66 @@
+{
+  "id": "db_backup_job",
+  "version": "1.0.0",
+  "description": "Validates database backup jobs for schedule validity, retention policy, checksum generation, no literal credentials, and encryption + storage destination compliance",
+  "rules": [
+    {
+      "id": "DBB001",
+      "gate": "spec-valid",
+      "description": "db-backup-spec.json must exist, be valid JSON, and declare command, destination, schedule, and retentionCount",
+      "required": true,
+      "mandatoryFields": ["command", "destination", "schedule", "retentionCount"]
+    },
+    {
+      "id": "DBB002",
+      "gate": "schedule-valid",
+      "description": "The schedule field must be a valid 5-field cron expression or a recognised shorthand. Each field is validated against its allowed range",
+      "required": true,
+      "shorthands": ["@yearly", "@annually", "@monthly", "@weekly", "@daily", "@midnight", "@hourly"]
+    },
+    {
+      "id": "DBB003",
+      "gate": "retention-set",
+      "description": "At least one of retentionCount or retentionDays must be declared and be a positive integer. Without a retention policy, backups accumulate indefinitely, filling storage and incurring unbounded cost",
+      "required": true,
+      "fields": {
+        "retentionCount": { "type": "integer", "min": 1 },
+        "retentionDays":  { "type": "integer", "min": 1 }
+      },
+      "requiredAtLeastOne": ["retentionCount", "retentionDays"]
+    },
+    {
+      "id": "DBB004",
+      "gate": "checksum-generation",
+      "description": "Backup specs should enable checksum generation so backup integrity can be verified after upload. Backups without checksums cannot be confirmed as uncorrupted",
+      "required": true
+    },
+    {
+      "id": "DBB005",
+      "gate": "no-literal-credentials",
+      "description": "Database connection strings and passwords must be supplied via environment variable references — no literal credential values in the spec. Hardcoded credentials appear in CI logs and source control",
+      "required": true
+    },
+    {
+      "id": "DBB006",
+      "gate": "no-todos",
+      "description": "db-backup-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "DBB007",
+      "gate": "contract-db-backup",
+      "description": "Backup encryption must be configured (encryptionEnabled: true or encryptionKey declared) or skipped with skipEncryptionCheck: true and justification. A storage destination (storageDestination or storageClass) must be declared for auditability",
+      "required": true,
+      "constraints": {
+        "encryption": "encryptionEnabled: true or encryptionKey must be declared (or skipEncryptionCheck: true with justification)",
+        "storage-destination": "storageDestination or storageClass must be declared"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "db-backup-artifact.json",
+    "ir_id_prefix": "DB_BACKUP_JOB:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

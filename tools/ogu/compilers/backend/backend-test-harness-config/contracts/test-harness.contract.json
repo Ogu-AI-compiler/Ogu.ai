@@ -1,0 +1,37 @@
+{
+  "id": "test-harness-contract-v1",
+  "compiler": "backend-test-harness-config",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "TH-001",
+      "description": "Test runner must be 'vitest' or 'jest'",
+      "severity": "error"
+    },
+    {
+      "id": "TH-002",
+      "description": "Coverage thresholds must not all be zero — enforce meaningful coverage",
+      "severity": "error"
+    },
+    {
+      "id": "TH-003",
+      "description": "A unit test environment must be declared with node environment",
+      "severity": "error"
+    },
+    {
+      "id": "TH-004",
+      "description": "Network calls must be blocked in unit test environment by default",
+      "severity": "error"
+    },
+    {
+      "id": "TH-005",
+      "description": "A global setup file must be referenced in the runner config",
+      "severity": "error"
+    },
+    {
+      "id": "TH-006",
+      "description": "Setup file must register teardown hooks (afterAll cleanup for DB, queues, servers)",
+      "severity": "error"
+    }
+  ]
+}

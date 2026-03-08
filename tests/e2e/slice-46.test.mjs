@@ -152,7 +152,7 @@ assert("createCommand builds command envelope", () => {
   const cmd = ipcMod.createCommand({
     action: "task.enqueue",
     payload: { taskId: "t1", featureSlug: "auth" },
-    sender: "studio",
+    sender: "kadima",
   });
   if (!cmd.id) throw new Error("no id");
   if (cmd.action !== "task.enqueue") throw new Error("wrong action");

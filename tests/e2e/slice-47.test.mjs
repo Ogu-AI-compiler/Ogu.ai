@@ -2,7 +2,7 @@
  * Slice 47 — Time Travel + GenUI Widget Schema (P27 + P28 prep)
  *
  * Time Travel: snapshot + delta reconstruction for read-only state replay.
- * GenUI Widgets: dynamic widget schema for Studio runtime rendering.
+ * GenUI Widgets: dynamic widget schema for Kadima UI rendering.
  */
 
 import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";

@@ -1,0 +1,9 @@
+{ "id": "unit-test", "version": "1.0.0", "rules": [
+  { "id": "describe-block", "description": "Tests wrapped in describe()" },
+  { "id": "has-assertions", "description": "Has at least one expect()" },
+  { "id": "no-only", "description": "No .only() calls" },
+  { "id": "no-skip", "description": "No .skip() calls" },
+  { "id": "user-centric-queries", "description": "Uses getByRole/getByLabelText, not getByTestId" },
+  { "id": "no-network-calls", "description": "No real network calls in unit tests" },
+  { "id": "isolated-state", "description": "No shared mutable state without beforeEach reset" }
+]}

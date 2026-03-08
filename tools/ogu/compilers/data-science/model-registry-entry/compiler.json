@@ -1,0 +1,37 @@
+{
+  "id": "model-registry-entry",
+  "title": "Model Registry Entry Compiler",
+  "version": "1.0.0",
+  "description": "Compiles MLflow model registry entries. Enforces model serialization format, complete metadata (params/metrics/dataset version), model card linkage, performance thresholds, reproducibility hash, and semantic versioning.",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": "evaluation-artifact.json", "output_artifact": "registry-artifact.json", "identifier": "MODEL_REGISTRY" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Artifact Completeness", "gates": ["model-serialized", "metadata-complete", "performance-threshold"] },
+    { "id": 3, "name": "Governance", "gates": ["model-card-linked", "reproducibility-hash", "model-version-tagged"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-registry"] }
+  ],
+  "gates": [
+    { "id": "MR001", "name": "spec-valid",            "phase": 1 },
+    { "id": "MR002", "name": "model-serialized",      "phase": 2 },
+    { "id": "MR003", "name": "metadata-complete",     "phase": 2 },
+    { "id": "MR004", "name": "performance-threshold", "phase": 2 },
+    { "id": "MR005", "name": "model-card-linked",     "phase": 3 },
+    { "id": "MR006", "name": "reproducibility-hash",  "phase": 3 },
+    { "id": "MR007", "name": "model-version-tagged",  "phase": 3 },
+    { "id": "MR008", "name": "no-todos",              "phase": 4 },
+    { "id": "MR009", "name": "contract-registry",     "phase": 4 }
+  ],
+  "error_codes": {
+    "MR001": "Invalid model registry spec",
+    "MR002": "Model artifact not serialized (.pkl/.joblib/.onnx/mlflow run)",
+    "MR003": "Model metadata incomplete — params, metrics, and dataset_version must all be logged",
+    "MR004": "Model does not meet minimum performance threshold defined in spec",
+    "MR005": "Model card document not linked in registry entry",
+    "MR006": "Training config reproducibility hash not stored",
+    "MR007": "Model not tagged with semantic version or run_id",
+    "MR008": "TODO/FIXME found",
+    "MR009": "Model registry contract violation"
+  }
+}

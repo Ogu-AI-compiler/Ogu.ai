@@ -6,10 +6,10 @@ import { homedir } from "node:os";
 /**
  * Find the project root directory.
  * Priority: OGU_ROOT env var → walk up from cwd to find .git
- * OGU_ROOT is set by Ogu Studio when operating on a user's project.
+ * OGU_ROOT is set by Kadima when operating on a user's project.
  */
 export function repoRoot() {
-  // When running via Studio, OGU_ROOT points to the user's project
+  // When running via Kadima, OGU_ROOT points to the user's project
   if (process.env.OGU_ROOT) {
     return resolve(process.env.OGU_ROOT);
   }

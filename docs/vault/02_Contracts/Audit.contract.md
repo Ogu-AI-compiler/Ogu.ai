@@ -26,7 +26,7 @@ Every state change in the system produces a structured, append-only audit event.
   "timestamp": "ISO 8601",
   "type": "string (dot-separated, e.g. 'feature.transition')",
   "severity": "info | warn | error | critical",
-  "source": "cli | daemon | studio | agent",
+  "source": "cli | kadima | runner | system",
   "actor": { "type": "human | agent | system", "id": "string" },
   "feature": "string (optional — feature slug)",
   "parentEventId": "UUID (optional — for replay chains)",

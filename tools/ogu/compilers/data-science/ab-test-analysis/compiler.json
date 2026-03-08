@@ -1,0 +1,37 @@
+{
+  "id": "ab-test-analysis",
+  "title": "A/B Test Analysis Compiler",
+  "version": "1.0.0",
+  "description": "Compiles A/B test analysis scripts. Enforces treatment/control definition, pre-calculated sample sizes, randomization verification, single primary metric, guardrail metrics, significance and power settings, and correct interpretation (no p-hacking).",
+  "tier": "data-science",
+  "language": "python",
+  "ir": { "input_artifact": null, "output_artifact": "ab-test-artifact.json", "identifier": "AB_TEST" },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Experiment Design", "gates": ["treatment-control-defined", "sample-size-pre-calculated", "random-assignment-verified"] },
+    { "id": 3, "name": "Metric Discipline", "gates": ["primary-metric-defined", "guardrail-metrics", "significance-and-power"] },
+    { "id": 4, "name": "Attest", "gates": ["no-todos", "contract-ab-test"] }
+  ],
+  "gates": [
+    { "id": "AB001", "name": "spec-valid",                 "phase": 1 },
+    { "id": "AB002", "name": "treatment-control-defined",  "phase": 2 },
+    { "id": "AB003", "name": "sample-size-pre-calculated", "phase": 2 },
+    { "id": "AB004", "name": "random-assignment-verified", "phase": 2 },
+    { "id": "AB005", "name": "primary-metric-defined",     "phase": 3 },
+    { "id": "AB006", "name": "guardrail-metrics",          "phase": 3 },
+    { "id": "AB007", "name": "significance-and-power",     "phase": 3 },
+    { "id": "AB008", "name": "no-todos",                   "phase": 4 },
+    { "id": "AB009", "name": "contract-ab-test",           "phase": 4 }
+  ],
+  "error_codes": {
+    "AB001": "Invalid A/B test spec",
+    "AB002": "Treatment and control groups not clearly defined",
+    "AB003": "Sample size not pre-calculated — test may be underpowered or overrun",
+    "AB004": "Randomization not verified (SRM check missing)",
+    "AB005": "Multiple primary metrics defined — choose exactly one primary metric to avoid p-hacking",
+    "AB006": "No guardrail metrics defined to detect regressions",
+    "AB007": "Significance level (α) or statistical power (β) not set",
+    "AB008": "TODO/FIXME found",
+    "AB009": "A/B test contract violation"
+  }
+}

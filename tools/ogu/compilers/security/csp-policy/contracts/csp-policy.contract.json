@@ -1,0 +1,13 @@
+{
+  "id": "csp-policy",
+  "version": "1.0.0",
+  "description": "A csp-policy artifact defines the Content-Security-Policy directives for a web application, preventing XSS, clickjacking, and data injection attacks.",
+  "rules": [
+    { "id": "spec-has-app-and-directives", "description": "Policy must declare app name and a directives object containing at least default-src." },
+    { "id": "no-unsafe-inline-without-nonce", "description": "script-src must not contain 'unsafe-inline' unless nonce_strategy: true is set." },
+    { "id": "no-unsafe-eval", "description": "script-src must not contain 'unsafe-eval'." },
+    { "id": "base-uri-defined", "description": "base-uri must be explicitly declared as 'self' or a specific origin — not wildcard or absent." },
+    { "id": "frame-ancestors-defined", "description": "frame-ancestors must be declared to prevent clickjacking — use 'none' or 'self'." },
+    { "id": "no-bare-wildcard-in-fetch-directives", "description": "connect-src, style-src, font-src, object-src must not use bare wildcard '*'." }
+  ]
+}

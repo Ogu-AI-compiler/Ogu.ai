@@ -1,0 +1,37 @@
+{
+  "id": "rate-limit-policy-module",
+  "title": "Rate Limit Policy Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a rate limit policy. Enforces: policy has scope (user/ip/api-key), quota and window declared, key builder deterministic, sliding or fixed window strategy, 429 returned with Retry-After header, limits not bypassed for admin/internal calls without explicit bypass declaration.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": null,
+    "output_artifact": "rate-limit-policy-artifact.json",
+    "identifier": "RATE_LIMIT_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Policy Contract", "gates": ["key-deterministic", "retry-after-header"] },
+    { "id": 3, "name": "Bypass Safety", "gates": ["no-undeclared-bypass"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-rate-limit-policy"] }
+  ],
+  "gates": [
+    { "id": "RL001", "name": "spec-valid",                 "phase": 1 },
+    { "id": "RL002", "name": "key-deterministic",          "phase": 2 },
+    { "id": "RL003", "name": "retry-after-header",         "phase": 2 },
+    { "id": "RL004", "name": "no-undeclared-bypass",       "phase": 3 },
+    { "id": "RL005", "name": "no-todos",                   "phase": 4 },
+    { "id": "RL006", "name": "tests-pass",                 "phase": 4 },
+    { "id": "RL007", "name": "contract-rate-limit-policy", "phase": 5 }
+  ],
+  "error_codes": {
+    "RL001": "rate-limit-spec.json missing or invalid",
+    "RL002": "Rate limit key builder uses non-deterministic value (Date.now, random)",
+    "RL003": "429 response missing Retry-After header",
+    "RL004": "Rate limit bypassed without declaration in spec.bypassConditions",
+    "RL005": "TODO/FIXME/HACK comment found",
+    "RL006": "Tests failed",
+    "RL007": "Rate limit policy contract violation"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "ux-sitemap",
+  "version": "1.0.0",
+  "description": "A sitemap artifact is valid when it declares every screen in the product as a node with a unique ID, a valid route, a parent reference forming a DAG, and explicit visibility for all auth-gated screens.",
+  "rules": [
+    {
+      "id": "nodes-present",
+      "description": "sitemap-spec.json must contain a non-empty nodes array. An empty sitemap cannot describe any product structure."
+    },
+    {
+      "id": "required-node-fields",
+      "description": "Every node must have id (string, non-empty), label (string, non-empty), and route (string, non-empty). These three fields are the minimum for any downstream compiler to resolve a screen reference."
+    },
+    {
+      "id": "unique-node-ids",
+      "description": "All node ids must be unique within the sitemap. Duplicate ids cause ambiguous cross-references in navigation-graph and user-flow compilers."
+    },
+    {
+      "id": "valid-parent-references",
+      "description": "Every non-root node (parent is not null/undefined) must reference a parent id that exists in the node list. Dangling parent references produce orphan nodes."
+    },
+    {
+      "id": "no-parent-cycles",
+      "description": "Following parent references from any node must not produce a cycle. A cyclic sitemap cannot be rendered as a tree or navigated with stack-based routing."
+    },
+    {
+      "id": "valid-visibility-values",
+      "description": "When declared, visibility must be 'public', 'authenticated', or a non-empty role string. Empty or null visibility on an auth-required node creates a security ambiguity."
+    },
+    {
+      "id": "authenticated-nodes-declare-visibility",
+      "description": "Nodes with auth=true must declare visibility as 'authenticated' or a named role. auth=true with visibility='public' is a contract violation — it signals an access-control mismatch."
+    },
+    {
+      "id": "valid-route-format",
+      "description": "All non-planned routes must start with '/' and use valid URL path characters. Routes that do not start with '/' cannot be used by frontend routers."
+    },
+    {
+      "id": "unique-routes",
+      "description": "Non-planned nodes must not share the same route. Duplicate routes cause router ambiguity and undefined navigation behavior."
+    },
+    {
+      "id": "not-found-screen-declared",
+      "description": "At least one node must represent the 404/not-found screen, or notFoundHandledExternally must be set to true. Absence of a not-found screen leaves a gap in the navigation contract."
+    },
+    {
+      "id": "root-node-count",
+      "description": "Root-level nodes (parent=null) must not exceed maxRootNodes (default 10). Excessive root-level items indicate a flat, ungrouped information architecture."
+    },
+    {
+      "id": "version-declared",
+      "description": "sitemap-spec.json must declare a version string. Version enables change detection and migration across sitemap iterations."
+    }
+  ]
+}

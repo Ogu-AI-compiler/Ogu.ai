@@ -1,0 +1,43 @@
+{
+  "id": "ux-onboarding-flow",
+  "version": "1.0.0",
+  "description": "An onboarding flow spec is valid when steps are typed correctly, the flow terminates to a non-circular main app target, optional steps declare skip options, returning user and abandonment behaviors are explicit, and all step ids are unique.",
+  "rules": [
+    {
+      "id": "spec-present",
+      "description": "onboarding-spec.json must exist with flow_id (string), steps (array), and terminationTarget (string). Flows without a spec cannot be validated."
+    },
+    {
+      "id": "steps-have-id-title-type",
+      "description": "Every step must declare id, title, and type. Steps without these fields cannot be rendered or navigated to."
+    },
+    {
+      "id": "step-types-in-allowed-set",
+      "description": "Every step.type must be one of: info, setup, permission-prompt, tutorial, verification, celebration. Unknown step types produce undefined rendering behavior."
+    },
+    {
+      "id": "termination-target-non-empty",
+      "description": "terminationTarget must be a non-empty string. An onboarding flow with no exit target traps users inside the flow."
+    },
+    {
+      "id": "termination-target-not-circular",
+      "description": "terminationTarget must not point to a step id within the flow. Circular termination creates an infinite onboarding loop."
+    },
+    {
+      "id": "optional-steps-have-skip-controls",
+      "description": "Every step with required:false must declare skipLabel and skipTarget. Optional steps without skip controls force users through content they chose not to engage with."
+    },
+    {
+      "id": "returning-user-behavior-declared",
+      "description": "Spec must declare returningUserBehavior as one of: skip-entirely, show-summary, start-from-incomplete, always-show. Returning users without a declared policy get the same new-user experience every login."
+    },
+    {
+      "id": "abandoned-behavior-declared",
+      "description": "Spec must declare abandonedBehavior as save-progress, restart, or ask-user unless singleSession:true. Flows without an abandonment policy lose user progress without warning."
+    },
+    {
+      "id": "step-ids-unique",
+      "description": "All step ids must be unique within the flow. Duplicate step ids cause broken navigation, progress tracking, and skip targets."
+    }
+  ]
+}

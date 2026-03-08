@@ -1,0 +1,116 @@
+{
+  "compiler_id": "compiler_compliance-officer",
+  "role": "compliance-officer",
+  "version": "1.0.0",
+  "registered_at": "2026-03-08T00:00:00.000Z",
+  "updated_at": "2026-03-08T00:00:00.000Z",
+
+  "domain": {
+    "category": "security",
+    "display_name": "Compliance Officer",
+    "min_tier": 2
+  },
+
+  "pipeline": {
+    "phases": [
+      "framework-mapping",
+      "gap-analysis",
+      "control-design",
+      "evidence-collection",
+      "audit-preparation"
+    ],
+    "consumes": ["Spec.md", "system architecture", "data flows", "existing controls"],
+    "produces": ["compliance-matrix.md", "gap-analysis.md", "evidence-report.md", "remediation-plan.md"]
+  },
+
+  "gates": [
+    {
+      "id": "compliance-matrix-exists",
+      "description": "Compliance matrix mapping requirements to controls must exist",
+      "type": "file_exists",
+      "pattern": "compliance",
+      "severity": "error"
+    },
+    {
+      "id": "frameworks-identified",
+      "description": "Applicable compliance frameworks must be identified",
+      "type": "file_contains",
+      "required_string": "SOC 2",
+      "severity": "error"
+    },
+    {
+      "id": "gaps-documented",
+      "description": "Compliance gaps must be documented with severity",
+      "type": "file_contains",
+      "required_string": "gap",
+      "severity": "error"
+    },
+    {
+      "id": "data-classification",
+      "description": "Data classification scheme must be defined",
+      "type": "file_contains",
+      "required_string": "classification",
+      "severity": "error"
+    },
+    {
+      "id": "remediation-plan-present",
+      "description": "Remediation plan with timeline and owners must exist",
+      "type": "file_contains",
+      "required_string": "remediation",
+      "severity": "warn"
+    },
+    {
+      "id": "evidence-collection-automated",
+      "description": "Evidence collection must be automated where possible",
+      "type": "file_contains",
+      "required_string": "automated",
+      "severity": "warn"
+    }
+  ],
+
+  "anti_patterns": [
+    {
+      "id": "compliance-as-paperwork",
+      "description": "Producing documents describing controls but never verifying implementation"
+    },
+    {
+      "id": "annual-compliance-sprint",
+      "description": "Ignoring compliance for 11 months then scrambling before audit"
+    },
+    {
+      "id": "over-compliance",
+      "description": "Implementing controls for all frameworks including ones that don't apply"
+    },
+    {
+      "id": "compliance-without-engineering",
+      "description": "Writing policies without involving engineering in technical implementation"
+    }
+  ],
+
+  "escalation_triggers": [
+    "A new regulation applies and the organization has no remediation plan",
+    "Audit finding with no clear remediation path within the required timeline",
+    "Data breach discovered — trigger incident response and notification process",
+    "Engineering refuses to implement a required control due to effort or priority",
+    "Customer contract requires compliance certification the organization doesn't have"
+  ],
+
+  "handoff": {
+    "input_requirements": [
+      {
+        "type": "file_exists",
+        "pattern": "Spec.md",
+        "description": "Spec.md with system design for compliance assessment",
+        "sealed": false
+      }
+    ],
+    "output_certifications": [
+      "Compliance matrix exists mapping requirements to controls",
+      "Applicable frameworks identified",
+      "Gaps documented with severity and remediation timeline",
+      "Data classification scheme defined",
+      "Evidence collection automated where possible",
+      "Audit readiness assessment completed"
+    ]
+  }
+}

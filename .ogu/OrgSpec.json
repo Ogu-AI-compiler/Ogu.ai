@@ -2,7 +2,7 @@
   "version": 1,
   "name": "My Company",
   "description": "Agentic Company OS",
-  "updatedAt": "2026-03-07T00:58:50.124Z",
+  "updatedAt": "2026-03-07T20:39:04+00:00",
   "roles": [
     {
       "roleId": "pm",
@@ -262,10 +262,24 @@
       ],
       "sandbox": {
         "allowedPaths": [
+          "app/**",
           "server/**",
           "api/**",
           "lib/**",
-          "tests/**"
+          "db/**",
+          "types/**",
+          "config/**",
+          "scripts/**",
+          "sanity/**",
+          "docs/**",
+          "tests/**",
+          "components/**",
+          "public/**",
+          "styles/**",
+          "package.json",
+          "package-lock.json",
+          "pnpm-lock.yaml",
+          "yarn.lock"
         ],
         "blockedPaths": [
           ".env",
@@ -330,9 +344,22 @@
       ],
       "sandbox": {
         "allowedPaths": [
+          "app/**",
+          "components/**",
+          "pages/**",
           "src/**",
           "public/**",
-          "tests/**"
+          "styles/**",
+          "lib/**",
+          "hooks/**",
+          "types/**",
+          "sanity/**",
+          "docs/**",
+          "tests/**",
+          "package.json",
+          "package-lock.json",
+          "pnpm-lock.yaml",
+          "yarn.lock"
         ],
         "blockedPaths": [
           ".env",
@@ -402,8 +429,15 @@
       "sandbox": {
         "allowedPaths": [
           "tests/**",
+          "app/**",
+          "components/**",
           "src/**",
-          "docs/**"
+          "docs/**",
+          "lib/**",
+          "package.json",
+          "package-lock.json",
+          "pnpm-lock.yaml",
+          "yarn.lock"
         ],
         "blockedPaths": [
           ".env"
@@ -533,7 +567,21 @@
           ".github/**",
           "docker/**",
           "infra/**",
-          "scripts/**"
+          "scripts/**",
+          "config/**",
+          "app/**",
+          "components/**",
+          "public/**",
+          "lib/**",
+          "sanity/**",
+          "docs/**",
+          ".env.example",
+          "*.config.*",
+          "**/*.config.*",
+          "package.json",
+          "package-lock.json",
+          "pnpm-lock.yaml",
+          "yarn.lock"
         ],
         "blockedPaths": [
           ".env",

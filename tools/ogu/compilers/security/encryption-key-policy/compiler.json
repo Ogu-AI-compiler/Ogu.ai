@@ -1,0 +1,36 @@
+{
+  "id": "encryption-key-policy",
+  "title": "Encryption Key Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the encryption key management policy. Enforces: only approved algorithms (AES-256, RSA-2048+, ChaCha20-Poly1305), minimum key lengths, no key reuse across purposes, both transit and storage covered, and rotation interval within bounds.",
+  "tier": "security",
+  "ir": {
+    "input_artifact": "secret-handling-policy.compiled.json",
+    "output_artifact": "encryption-key-policy.compiled.json",
+    "identifier": "ENCRYPTION_KEY_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid"] },
+    { "id": 2, "name": "Algorithm & Key Checks", "gates": ["approved-algorithms", "minimum-key-length", "no-key-reuse-across-purposes"] },
+    { "id": 3, "name": "Coverage & Rotation",   "gates": ["transit-and-storage-covered", "rotation-interval-reasonable"] },
+    { "id": 4, "name": "Quality",               "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "EK001", "name": "spec-valid",                    "phase": 1 },
+    { "id": "EK002", "name": "approved-algorithms",           "phase": 2 },
+    { "id": "EK003", "name": "minimum-key-length",            "phase": 2 },
+    { "id": "EK004", "name": "no-key-reuse-across-purposes",  "phase": 2 },
+    { "id": "EK005", "name": "transit-and-storage-covered",   "phase": 3 },
+    { "id": "EK006", "name": "rotation-interval-reasonable",  "phase": 3 },
+    { "id": "EK007", "name": "no-todos",                      "phase": 4 }
+  ],
+  "error_codes": {
+    "EK001": "encryption-spec.json missing or invalid — required fields: keys[], algorithms[], rotation",
+    "EK002": "Unapproved encryption algorithm used — allowed: AES-256-GCM, ChaCha20-Poly1305, RSA-2048+, ECDSA P-256+",
+    "EK003": "Key length below minimum — AES must be ≥256-bit, RSA must be ≥2048-bit",
+    "EK004": "Same key used for multiple purposes (e.g., signing and encryption) — use separate keys per purpose",
+    "EK005": "Encryption policy does not cover both transit (TLS) and storage (at-rest) — both are required",
+    "EK006": "Key rotation interval exceeds 365 days or is not defined — rotate keys at least annually",
+    "EK007": "TODO/FIXME/HACK comment found"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "id": "domain-service-module",
+  "title": "Domain Service Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles a typed domain service from a use case spec. Enforces: no HTTP framework imports, no direct process.env access, typed success+failure returns, multi-write flows delegated to transaction-script, idempotent specs include dedupe strategy, side effects declared in constructor.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "repository-artifact.json",
+    "output_artifact": "service-artifact.json",
+    "identifier": "SERVICE"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Type Check",
+      "gates": ["ts-valid", "no-any"]
+    },
+    {
+      "id": 3,
+      "name": "Boundary Check",
+      "gates": ["no-http-imports", "no-env-access", "no-inline-multiwrite"]
+    },
+    {
+      "id": 4,
+      "name": "Contract Check",
+      "gates": ["typed-results", "idempotency-strategy"]
+    },
+    {
+      "id": 5,
+      "name": "Quality",
+      "gates": ["no-todos", "tests-pass"]
+    },
+    {
+      "id": 6,
+      "name": "Attest",
+      "gates": ["contract-service"]
+    }
+  ],
+  "gates": [
+    { "id": "DS001", "name": "spec-valid",           "phase": 1 },
+    { "id": "DS002", "name": "ts-valid",             "phase": 2 },
+    { "id": "DS003", "name": "no-any",               "phase": 2 },
+    { "id": "DS004", "name": "no-http-imports",      "phase": 3 },
+    { "id": "DS005", "name": "no-env-access",        "phase": 3 },
+    { "id": "DS006", "name": "no-inline-multiwrite", "phase": 3 },
+    { "id": "DS007", "name": "typed-results",        "phase": 4 },
+    { "id": "DS008", "name": "idempotency-strategy", "phase": 4 },
+    { "id": "DS009", "name": "no-todos",             "phase": 5 },
+    { "id": "DS010", "name": "tests-pass",           "phase": 5 },
+    { "id": "DS011", "name": "contract-service",     "phase": 6 }
+  ],
+  "error_codes": {
+    "DS001": "service-spec.json missing or invalid",
+    "DS002": "TypeScript compilation failed",
+    "DS003": "Explicit 'any' type found in service",
+    "DS004": "Service imports HTTP framework types (express, fastify, Request, Response)",
+    "DS005": "Service accesses process.env directly — must use config module",
+    "DS006": "Service performs multiple DB writes inline — delegate to transaction-script-module",
+    "DS007": "Service method returns void or untyped — must return typed success or typed failure",
+    "DS008": "Idempotent use case missing dedupe or unique-key strategy",
+    "DS009": "TODO/FIXME/HACK comment found",
+    "DS010": "Tests failed",
+    "DS011": "Service contract violation"
+  }
+}

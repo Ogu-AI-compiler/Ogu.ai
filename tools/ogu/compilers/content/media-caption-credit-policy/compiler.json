@@ -1,0 +1,39 @@
+{
+  "id": "media-caption-credit-policy",
+  "title": "Media Caption & Credit Policy Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the media caption and credit attribution policy. Enforces: every media type declares caption and credit requirements, credit format template defined, template variables are valid, externally sourced media requires a license declaration, attribution placement declared, and expiry monitoring set for time-limited rights.",
+  "tier": "content",
+  "ir": {
+    "input_artifact": "alt-text-policy.json",
+    "output_artifact": "media-caption-credit-policy.json",
+    "identifier": "MEDIA_CAPTION_CREDIT_POLICY"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec",  "gates": ["spec-valid"] },
+    { "id": 2, "name": "Declaration Coverage",   "gates": ["caption-credit-declared", "credit-template-defined"] },
+    { "id": 3, "name": "Template & Licensing",   "gates": ["template-vars-valid", "license-required-external"] },
+    { "id": 4, "name": "Attribution",            "gates": ["attribution-placement-declared", "expiry-monitoring-set"] },
+    { "id": 5, "name": "Quality",                "gates": ["no-todos"] }
+  ],
+  "gates": [
+    { "id": "MCP001", "name": "spec-valid",                      "phase": 1 },
+    { "id": "MCP002", "name": "caption-credit-declared",         "phase": 2 },
+    { "id": "MCP003", "name": "credit-template-defined",         "phase": 2 },
+    { "id": "MCP004", "name": "template-vars-valid",             "phase": 3 },
+    { "id": "MCP005", "name": "license-required-external",       "phase": 3 },
+    { "id": "MCP006", "name": "attribution-placement-declared",  "phase": 4 },
+    { "id": "MCP007", "name": "expiry-monitoring-set",           "phase": 4 },
+    { "id": "MCP008", "name": "no-todos",                        "phase": 5 }
+  ],
+  "error_codes": {
+    "MCP001": "media-caption-credit-policy.json missing or invalid — required fields: media_types[] with caption_required, credit_required",
+    "MCP002": "Media type missing caption_required or credit_required declaration — both must be explicitly declared per media type",
+    "MCP003": "Credit format template not defined for media type requiring credit — declare a credit template string with named variables",
+    "MCP004": "Credit format template contains undefined variable — all {variable} placeholders must be declared in the variables list",
+    "MCP005": "Externally sourced media type missing license declaration requirement — all external media must require a license field",
+    "MCP006": "Attribution placement not declared — specify: inline | footer | metadata-only for each media type",
+    "MCP007": "Expiry monitoring not set for time-limited licensed media — licensed assets with expiry dates must have monitoring enabled",
+    "MCP008": "TODO/FIXME/HACK comment found"
+  }
+}

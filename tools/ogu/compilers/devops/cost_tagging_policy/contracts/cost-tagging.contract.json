@@ -1,0 +1,73 @@
+{
+  "id": "cost_tagging_policy",
+  "version": "1.0.0",
+  "description": "Validates cloud cost tagging policies for required billing tag definitions, valid tag key/value formats, resource type coverage, explicit enforcement mode, and contract-level key uniqueness",
+  "rules": [
+    {
+      "id": "CT001",
+      "gate": "spec-valid",
+      "description": "cost-tagging-spec.json must exist, be valid JSON, and declare organization and a non-empty requiredTags array",
+      "required": true,
+      "mandatoryFields": ["organization", "requiredTags"],
+      "constraints": {
+        "requiredTags": "must be a non-empty array"
+      }
+    },
+    {
+      "id": "CT002",
+      "gate": "required-tags-defined",
+      "description": "Every tag entry must declare a key and a description. Tags without descriptions cannot be communicated to engineering teams. Common billing tags (team, service, environment, cost-center, project, owner) should be covered — set skipBillingTagCheck: true for exemption",
+      "required": true,
+      "mandatoryTagFields": ["key", "description"],
+      "recommendedBillingTags": ["team", "service", "environment", "cost-center", "project", "owner"]
+    },
+    {
+      "id": "CT003",
+      "gate": "tag-values-valid",
+      "description": "Tag keys must match [a-zA-Z0-9_\\-:/.]{1,128} — invalid keys are silently truncated or rejected by AWS/GCP/Azure. allowedValues entries must match [a-zA-Z0-9_\\-:/.@]{0,256}. defaultValue must be in allowedValues when allowedValues is declared",
+      "required": true,
+      "keyPattern": "^[a-zA-Z0-9_\\-:/.]{1,128}$",
+      "valuePattern": "^[a-zA-Z0-9_\\-:/.@]{0,256}$",
+      "constraints": {
+        "default-in-allowed": "defaultValue must be in allowedValues when allowedValues is declared"
+      }
+    },
+    {
+      "id": "CT004",
+      "gate": "resource-types-covered",
+      "description": "When resourceTypes is declared, compute, storage, and network categories must be covered. A tagging policy that omits entire resource categories creates blind spots in cost attribution. Set skipResourceTypeCoverage: true for exemption. Gate skipped when resourceTypes is absent (policy applies to all resources)",
+      "required": true,
+      "minimumCategories": ["compute", "storage", "network"],
+      "note": "Skipped when spec.resourceTypes is absent"
+    },
+    {
+      "id": "CT005",
+      "gate": "enforcement-mode-set",
+      "description": "An explicit enforcementMode must be declared. Without a mode the policy intent is ambiguous — it is unclear whether missing tags should block resource creation, generate warnings, or only be logged",
+      "required": true,
+      "enum": ["audit", "enforce", "warn"]
+    },
+    {
+      "id": "CT006",
+      "gate": "no-todos",
+      "description": "cost-tagging-spec.json must not contain TODO, FIXME, HACK, XXX, or PLACEHOLDER markers. Placeholder tag keys or allowed values will be applied to cloud resources generating invalid tags that billing systems silently ignore",
+      "required": true,
+      "forbidden": ["TODO", "FIXME", "HACK", "XXX", "PLACEHOLDER"]
+    },
+    {
+      "id": "CT007",
+      "gate": "contract-cost-tagging",
+      "description": "No duplicate tag keys are permitted — duplicate keys in the policy create ambiguous enforcement. enforcementMode=enforce requires enforcementTargets to be declared — enforcement without targets blocks all resource creation globally",
+      "required": true,
+      "constraints": {
+        "no-duplicate-keys": "each tag key must be unique across the requiredTags array",
+        "enforce-requires-targets": "enforcementMode=enforce requires enforcementTargets to be declared"
+      }
+    }
+  ],
+  "artifact": {
+    "file": "cost-tagging-artifact.json",
+    "ir_id_prefix": "COST_TAGGING_POLICY:",
+    "required_fields": ["compiler", "version", "tier", "pass", "gatesRun", "passed", "failed", "skipped", "hash", "timestamp", "gates"]
+  }
+}

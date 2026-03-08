@@ -1,0 +1,110 @@
+{
+  "id": "helm_chart",
+  "title": "Helm Chart Compiler",
+  "version": "1.0.0",
+  "description": "Compiles Helm chart structure and templates. Enforces: helm lint passes, helm template renders, chart metadata present, no unresolved template expressions, all values.yaml keys consumed.",
+  "tier": "devops",
+  "ir": {
+    "input_artifact": "k8s-workload-artifact.json",
+    "output_artifact": "helm-chart-artifact.json",
+    "identifier": "HELM_CHART"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": [
+        "spec-valid"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Structure Check",
+      "gates": [
+        "chart-yaml-valid",
+        "values-yaml-valid"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Security/Policy Check",
+      "gates": [
+        "templates-render",
+        "no-unresolved-expressions"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": [
+        "values-coverage"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": [
+        "no-todos"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Phase 6",
+      "gates": [
+        "contract-helm-chart"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "HC001",
+      "name": "spec-valid",
+      "phase": 1
+    },
+    {
+      "id": "HC002",
+      "name": "chart-yaml-valid",
+      "phase": 2
+    },
+    {
+      "id": "HC003",
+      "name": "values-yaml-valid",
+      "phase": 2
+    },
+    {
+      "id": "HC004",
+      "name": "templates-render",
+      "phase": 3
+    },
+    {
+      "id": "HC005",
+      "name": "no-unresolved-expressions",
+      "phase": 3
+    },
+    {
+      "id": "HC006",
+      "name": "values-coverage",
+      "phase": 4
+    },
+    {
+      "id": "HC007",
+      "name": "no-todos",
+      "phase": 5
+    },
+    {
+      "id": "HC008",
+      "name": "contract-helm-chart",
+      "phase": 6
+    }
+  ],
+  "error_codes": {
+    "HC001": "helm-chart-spec.json missing — required: chartName, version, appVersion",
+    "HC002": "Chart.yaml missing required fields: name, version, apiVersion",
+    "HC003": "values.yaml is invalid or empty",
+    "HC004": "helm template renders with errors",
+    "HC005": "Unresolved template expression {{ }} found in rendered output",
+    "HC006": "Template references a values key not present in values.yaml",
+    "HC007": "TODO/FIXME found",
+    "HC008": "Helm chart contract violation"
+  }
+}

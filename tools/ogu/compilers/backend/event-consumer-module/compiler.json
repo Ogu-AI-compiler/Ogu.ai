@@ -1,0 +1,41 @@
+{
+  "id": "event-consumer-module",
+  "title": "Event Consumer Module Compiler",
+  "version": "1.0.0",
+  "description": "Compiles an event consumer with at-least-once delivery semantics. Enforces: envelope validated on receipt, idempotency key persisted before processing, handler errors classified (retryable vs dead-letter), subscription scoped to declared channels only.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "event-publisher-artifact.json",
+    "output_artifact": "event-consumer-artifact.json",
+    "identifier": "EVENT_CONSUMER"
+  },
+  "phases": [
+    { "id": 1, "name": "Parse & Validate Spec", "gates": ["spec-valid", "cross-publisher"] },
+    { "id": 2, "name": "Receipt Contract", "gates": ["envelope-validated-on-receipt", "idempotency-persisted"] },
+    { "id": 3, "name": "Error Handling", "gates": ["errors-classified", "channel-scoped"] },
+    { "id": 4, "name": "Quality", "gates": ["no-todos", "tests-pass"] },
+    { "id": 5, "name": "Attest", "gates": ["contract-event-consumer"] }
+  ],
+  "gates": [
+    { "id": "EC001", "name": "spec-valid",                    "phase": 1 },
+    { "id": "EC002", "name": "cross-publisher",               "phase": 1 },
+    { "id": "EC003", "name": "envelope-validated-on-receipt", "phase": 2 },
+    { "id": "EC004", "name": "idempotency-persisted",         "phase": 2 },
+    { "id": "EC005", "name": "errors-classified",             "phase": 3 },
+    { "id": "EC006", "name": "channel-scoped",                "phase": 3 },
+    { "id": "EC007", "name": "no-todos",                      "phase": 4 },
+    { "id": "EC008", "name": "tests-pass",                    "phase": 4 },
+    { "id": "EC009", "name": "contract-event-consumer",       "phase": 5 }
+  ],
+  "error_codes": {
+    "EC001": "event-consumer-spec.json missing or invalid",
+    "EC002": "event-publisher-artifact.json not found — compile publisher first",
+    "EC003": "Event envelope not validated on receipt (missing schema parse)",
+    "EC004": "Idempotency key not persisted before processing (at-least-once not guaranteed)",
+    "EC005": "Handler errors not classified (no dead-letter / retry distinction)",
+    "EC006": "Consumer subscribes to undeclared channel",
+    "EC007": "TODO/FIXME/HACK comment found",
+    "EC008": "Tests failed",
+    "EC009": "Event consumer contract violation"
+  }
+}

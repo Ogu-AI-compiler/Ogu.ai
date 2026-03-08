@@ -1,0 +1,47 @@
+{
+  "id": "migration",
+  "version": "1.0.0",
+  "description": "Structural requirements for all compiled database migrations",
+  "rules": [
+    {
+      "id": "file-naming",
+      "description": "Migration files must be named: {version}_{snake_case_name}.up.sql and {version}_{snake_case_name}.down.sql",
+      "check": "e.g. 001_create_users.up.sql, 001_create_users.down.sql"
+    },
+    {
+      "id": "timestamp-columns",
+      "description": "Every CREATE TABLE must include created_at TIMESTAMP NOT NULL DEFAULT NOW() and updated_at TIMESTAMP NOT NULL DEFAULT NOW()",
+      "check": "presence of created_at and updated_at with NOT NULL DEFAULT NOW()"
+    },
+    {
+      "id": "soft-delete",
+      "description": "If spec.softDelete is true, table must include deleted_at TIMESTAMP NULL",
+      "check": "conditional on spec.softDelete"
+    },
+    {
+      "id": "id-convention",
+      "description": "Primary key must be named 'id' and use UUID or BIGSERIAL — never INT without explicit justification",
+      "check": "id UUID PRIMARY KEY or id BIGSERIAL PRIMARY KEY"
+    },
+    {
+      "id": "snake-case-columns",
+      "description": "All column names must be snake_case — never camelCase in SQL",
+      "check": "absence of camelCase column names"
+    },
+    {
+      "id": "index-naming",
+      "description": "Index names must follow: {table}_{column(s)}_{type}_idx (e.g. users_email_unique_idx)",
+      "check": "naming pattern validation"
+    },
+    {
+      "id": "fk-naming",
+      "description": "Foreign key constraints must be named: fk_{table}_{referenced_table} (e.g. fk_orders_users)",
+      "check": "naming pattern validation"
+    },
+    {
+      "id": "no-select-in-migration",
+      "description": "Migration files must not contain SELECT statements — migrations only change structure, not query data",
+      "check": "absence of SELECT in up.sql (except in DO $$ blocks for conditional logic)"
+    }
+  ]
+}

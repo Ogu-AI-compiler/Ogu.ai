@@ -1,0 +1,15 @@
+{
+  "id": "a11y-contract",
+  "version": "1.0.0",
+  "compiler": "a11y-test",
+  "rules": [
+    { "id": "axe-import", "description": "Must import axe from vitest-axe, jest-axe, or @axe-core" },
+    { "id": "no-violations-assertion", "description": "Must assert toHaveNoViolations()" },
+    { "id": "render-in-test", "description": "Component must be rendered with render() in the test" },
+    { "id": "keyboard-test", "description": "Must include at least one keyboard interaction test" },
+    { "id": "aria-assertions", "description": "Should assert ARIA attributes via getByRole or aria-*" },
+    { "id": "wcag-aa", "description": "Tests must target WCAG 2.1 AA compliance level" },
+    { "id": "focus-management", "description": "Modal/dialog/drawer components must test focus trap" },
+    { "id": "color-contrast", "description": "Color contrast violations must be caught by axe-core" }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "id": "backend-test-harness-config",
+  "title": "Backend Test Harness Config Compiler",
+  "version": "1.0.0",
+  "description": "Compiles the test runner configuration and test infrastructure (vitest/jest config, setup files, factories, helpers) for a backend project. Enforces that network is blocked in unit mode, coverage thresholds are machine-readable, and test environments are correctly split.",
+  "tier": "backend",
+  "ir": {
+    "input_artifact": "config-artifact.json",
+    "output_artifact": "backend-test-harness-artifact.json",
+    "identifier": "BACKEND_TEST_HARNESS"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Parse & Validate Spec",
+      "gates": ["spec-valid"]
+    },
+    {
+      "id": 2,
+      "name": "Config Check",
+      "gates": ["runner-config-valid", "env-split-valid"]
+    },
+    {
+      "id": 3,
+      "name": "Safety Check",
+      "gates": ["network-blocked", "coverage-enforced"]
+    },
+    {
+      "id": 4,
+      "name": "Quality",
+      "gates": ["setup-registered", "no-todos"]
+    },
+    {
+      "id": 5,
+      "name": "Attest",
+      "gates": ["contract-test-harness"]
+    }
+  ],
+  "gates": [
+    { "id": "TH001", "name": "spec-valid",           "phase": 1 },
+    { "id": "TH002", "name": "runner-config-valid",  "phase": 2 },
+    { "id": "TH003", "name": "env-split-valid",      "phase": 2 },
+    { "id": "TH004", "name": "network-blocked",      "phase": 3 },
+    { "id": "TH005", "name": "coverage-enforced",    "phase": 3 },
+    { "id": "TH006", "name": "setup-registered",     "phase": 4 },
+    { "id": "TH007", "name": "no-todos",             "phase": 4 },
+    { "id": "TH008", "name": "contract-test-harness","phase": 5 }
+  ],
+  "error_codes": {
+    "TH001": "test-harness-spec.json missing or invalid — required fields: runner, coverageThresholds, environments[]",
+    "TH002": "Test runner config file missing or does not load without runtime errors",
+    "TH003": "Unit and integration test environments not explicitly split",
+    "TH004": "Network calls not blocked by default in unit test mode",
+    "TH005": "Coverage thresholds not machine-readable or not enforced in config",
+    "TH006": "Global setup file missing or does not register matchers/teardown hooks",
+    "TH007": "TODO/FIXME/HACK comment found",
+    "TH008": "Test harness contract violation"
+  }
+}

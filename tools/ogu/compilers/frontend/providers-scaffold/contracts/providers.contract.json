@@ -1,0 +1,12 @@
+{
+  "id": "providers-scaffold",
+  "version": "1.0.0",
+  "rules": [
+    { "id": "queryclient-module-scope", "description": "QueryClient must be created at module scope, not inside a render function", "severity": "error" },
+    { "id": "provider-order", "description": "ErrorBoundary > QueryClientProvider > Router > Store > Theme (outermost first)", "severity": "error" },
+    { "id": "no-duplicates", "description": "Each provider may appear only once in the tree", "severity": "error" },
+    { "id": "error-boundary-present", "description": "ErrorBoundary must be the outermost provider", "severity": "warning" },
+    { "id": "accepts-children", "description": "Providers wrapper must accept and render children prop", "severity": "error" },
+    { "id": "queryclient-configured", "description": "QueryClient must have defaultOptions with at minimum staleTime and retry", "severity": "warning" }
+  ]
+}
